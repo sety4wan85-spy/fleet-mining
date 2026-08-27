@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mining Fleet Simulator - OB / CO / CoHauling</title>
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-12">
+
+  <!-- Header & Navigation -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-4 py-3 shadow-md">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i data-lucide="truck" class="text-amber-500 w-6 h-6"></i>
+        <h1 class="font-bold text-base md:text-lg text-white">Mining Fleet Manager</h1>
+      </div>
+      <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-700">
+        <button id="tab-sim-btn" onclick="switchTab('sim')" class="px-3 py-1 text-xs md:text-sm font-medium rounded-md bg-amber-500 text-slate-950 font-bold transition">Simulasi</button>
+        <button id="tab-master-btn" onclick="switchTab('master')" class="px-3 py-1 text-xs md:text-sm font-medium rounded-md text-slate-400 hover:text-white transition">Master Data</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-4 space-y-4">
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: SIMULATOR FLEET -->
+    <!-- ======================================================== -->
+    <div id="tab-sim" class="space-y-4">
+      
+      <!-- PILIHAN TIPE PEKERJAAN (OB / CO / CoHauling) -->
+      <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+        <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Tipe Pekerjaan (Job Type)</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" id="btn-job-OB" onclick="setJobType('OB')" class="py-2 px-3 rounded-lg border text-xs md:text-sm font-bold flex flex-col items-center justify-center transition bg-amber-500 text-slate-950 border-amber-400 shadow">
+            <span>Overburden (OB)</span>
+            <span class="text-[10px] font-normal opacity-90">Satuan: BCM</span>
+          </button>
+          <button type="button" id="btn-job-CO" onclick="setJobType('CO')" class="py-2 px-3 rounded-lg border text-xs md:text-sm font-medium flex flex-col items-center justify-center transition bg-slate-900 text-slate-400 border-slate-700 hover:text-white">
+            <span>Coal / Batubara (CO)</span>
+            <span class="text-[10px] font-normal opacity-75">Satuan: Ton</span>
+          </button>
+          <button type="button" id="btn-job-CoHauling" onclick="setJobType('CoHauling')" class="py-2 px-3 rounded-lg border text-xs md:text-sm font-medium flex flex-col items-center justify-center transition bg-slate-900 text-slate-400 border-slate-700 hover:text-white">
+            <span>Coal Hauling</span>
+            <span class="text-[10px] font-normal opacity-75">Satuan: Ton.Km</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Executive Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+          <div class="text-xs text-slate-400">Match Factor (MF)</div>
+          <div id="res-mf" class="text-xl font-bold mt-1 text-white">0.00</div>
+          <div id="res-mf-badge" class="text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">-</div>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+          <div class="text-xs text-slate-400" id="label-prod-primary">Produksi (BCM/Jam)</div>
+          <div id="res-prod-primary" class="text-xl font-bold mt-1 text-amber-400">0.0</div>
+          <div id="res-prod-secondary" class="text-[10px] text-slate-400 mt-1">0.0 Ton/Jam</div>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+          <div class="text-xs text-slate-400" id="label-unit-cost">Unit Cost ($/BCM)</div>
+          <div id="res-unit-cost" class="text-xl font-bold mt-1 text-rose-400">$0.000</div>
+          <div id="res-total-cost" class="text-[10px] text-slate-400 mt-1">$0.00/Jam Total</div>
+        </div>
+        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+          <div class="text-xs text-slate-400">Net Profit ($/Jam)</div>
+          <div id="res-profit-hr" class="text-xl font-bold mt-1 text-emerald-400">$0.00</div>
+          <div id="res-profit-unit" class="text-[10px] text-slate-400 mt-1">$0.000/BCM Margin</div>
+        </div>
+      </div>
+
+      <!-- Break-Even Distance Banner -->
+      <div class="bg-gradient-to-r from-slate-800 to-slate-850 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+        <div>
+          <div class="text-xs text-slate-400 font-medium">Batas Jarak Impas (Break-Even Distance)</div>
+          <div class="text-lg font-bold text-amber-400"><span id="res-bep-dist">0.00</span> km <span class="text-xs text-slate-400 font-normal">satu arah</span></div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-slate-400" id="label-bep-prod">BEP Prod (BCM/Jam)</div>
+          <div id="res-bep-prod" class="text-sm font-semibold text-slate-200">0.0</div>
+        </div>
+      </div>
+
+      <!-- Armada Selection Card -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-4">
+        <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-4 h-4"></i> Konfigurasi Armada
+        </h2>
+
+        <!-- Loader Selection -->
+        <div class="grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-12 md:col-span-7">
+            <label class="block text-xs text-slate-400 mb-1">Loading Unit (Excavator)</label>
+            <select id="sim-loader" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"></select>
+          </div>
+          <div class="col-span-12 md:col-span-5 flex gap-2">
+            <div class="flex-1">
+              <label class="block text-xs text-slate-400 mb-1">Jumlah Unit</label>
+              <input type="number" id="sim-loader-qty" value="1" min="1" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs text-slate-400 mb-1">Rate Sewa</label>
+              <div id="sim-loader-rate" class="bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center text-slate-300 font-mono">$0.00/h</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hauler Selection -->
+        <div class="grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-12 md:col-span-7">
+            <label class="block text-xs text-slate-400 mb-1">Hauling Unit (Dump Truck)</label>
+            <select id="sim-hauler" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"></select>
+          </div>
+          <div class="col-span-12 md:col-span-5 flex gap-2">
+            <div class="flex-1">
+              <label class="block text-xs text-slate-400 mb-1">Jumlah Unit</label>
+              <input type="number" id="sim-hauler-qty" value="5" min="1" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs text-slate-400 mb-1">Rate Sewa</label>
+              <div id="sim-hauler-rate" class="bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center text-slate-300 font-mono">$0.00/h</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Support Units Section -->
+        <div class="pt-2 border-t border-slate-700 space-y-2">
+          <label class="block text-xs text-slate-400 font-semibold">Alat Support (Dozer, Grader, WT)</label>
+          <div id="support-container" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- Operational Parameters Card -->
+      <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-3">
+        <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="sliders" class="w-4 h-4"></i> Parameter Lapangan
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Jarak Haul (km)</label>
+            <input type="number" id="param-dist" value="2.5" step="0.1" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1" id="label-param-rate">Tarif Revenue ($/BCM)</label>
+            <input type="number" id="param-rate" value="3.25" step="0.05" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Speed Loaded (km/h)</label>
+            <input type="number" id="param-speed-l" value="20" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Speed Empty (km/h)</label>
+            <input type="number" id="param-speed-e" value="26" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Densitas Insitu (Ton/m³)</label>
+            <input type="number" id="param-density" value="2.1" step="0.05" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Swell Factor (SF)</label>
+            <input type="number" id="param-sf" value="0.80" step="0.05" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Efisiensi Kerja (%)</label>
+            <input type="number" id="param-eff" value="83" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Jam/Shift (Jam)</label>
+            <input type="number" id="param-shift" value="10" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: MASTER DATA MANAGER -->
+    <!-- ======================================================== -->
+    <div id="tab-master" class="hidden space-y-4">
+      
+      <!-- Action Bar -->
+      <div class="flex flex-wrap justify-between items-center gap-2 bg-slate-800 p-3 rounded-xl border border-slate-700">
+        <div class="text-xs text-slate-300 font-semibold">Kelola Database Alat & Biaya OOC</div>
+        <div class="flex gap-2">
+          <button onclick="openModalAddUnit()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Unit
+          </button>
+          <button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Backup JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- Master Unit Lists -->
+      <div class="space-y-3">
+        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
+          <h3 class="text-xs font-bold text-amber-400 uppercase mb-2">Master Excavator / Loader</h3>
+          <div id="master-loader-list" class="divide-y divide-slate-700 text-xs"></div>
+        </div>
+
+        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
+          <h3 class="text-xs font-bold text-amber-400 uppercase mb-2">Master Dump Truck / Hauler</h3>
+          <div id="master-hauler-list" class="divide-y divide-slate-700 text-xs"></div>
+        </div>
+
+        <div class="bg-slate-800 rounded-xl p-3 border border-slate-700">
+          <h3 class="text-xs font-bold text-amber-400 uppercase mb-2">Master Support Unit</h3>
+          <div id="master-support-list" class="divide-y divide-slate-700 text-xs"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modal Add / Edit Unit -->
+  <div id="unit-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-xl">
+      <h3 id="modal-title" class="text-base font-bold text-white">Tambah Unit Baru</h3>
+      
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Kategori Unit</label>
+          <select id="modal-cat" onchange="toggleModalFields()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+            <option value="loader">Loader (Excavator)</option>
+            <option value="hauler">Hauler (Dump Truck)</option>
+            <option value="support">Support Unit</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Model / Tipe Unit</label>
+          <input type="text" id="modal-name" placeholder="Contoh: KOMATSU PC1250SP-8R" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Tarif Sewa / Operating Cost ($/jam)</label>
+          <input type="number" id="modal-cost" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+
+        <div id="modal-field-loader" class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-400 mb-1">Kapasitas Bucket (m³)</label>
+            <input type="number" id="modal-bucket" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Cycle Time (detik)</label>
+            <input type="number" id="modal-ct-sec" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+          </div>
+        </div>
+
+        <div id="modal-field-hauler" class="grid grid-cols-2 gap-2 hidden">
+          <div>
+            <label class="block text-slate-400 mb-1">Kapasitas Vessel (m³)</label>
+            <input type="number" id="modal-vessel" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Maneuver + Dump (mnt)</label>
+            <input type="number" id="modal-dump" step="0.1" value="1.2" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+          </div>
+        </div>
+
+        <div id="modal-field-support" class="hidden">
+          <label class="block text-slate-400 mb-1">Fungsi Utama</label>
+          <input type="text" id="modal-role" placeholder="Contoh: Ripping & Spreading" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
+        <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white">Batal</button>
+        <button onclick="saveUnit()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-xs">Simpan Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // Master Database
+    const defaultDatabase = {
+      loaders: [
+        { id: 1, name: "KOMATSU PC1250SP-8R", bucket: 6.70, ctSec: 26.0, bff: 0.90, cost: 223.27 },
+        { id: 2, name: "KOMATSU PC200-8", bucket: 0.93, ctSec: 20.0, bff: 0.85, cost: 37.66 },
+        { id: 3, name: "KOMATSU PC300SE-8", bucket: 1.60, ctSec: 22.0, bff: 0.88, cost: 65.00 },
+        { id: 4, name: "KOMATSU PC400LC-7", bucket: 2.20, ctSec: 23.0, bff: 0.90, cost: 83.67 },
+        { id: 5, name: "KOMATSU PC400SE-8", bucket: 2.20, ctSec: 23.0, bff: 0.90, cost: 83.95 },
+        { id: 6, name: "HITACHI ZX200-3G", bucket: 0.91, ctSec: 20.0, bff: 0.85, cost: 37.78 },
+        { id: 7, name: "HITACHI ZX330", bucket: 1.62, ctSec: 22.0, bff: 0.88, cost: 63.48 },
+        { id: 8, name: "HITACHI ZX470H-5G", bucket: 2.50, ctSec: 23.0, bff: 0.90, cost: 81.24 },
+        { id: 9, name: "HITACHI ZX870H-5G", bucket: 4.50, ctSec: 25.0, bff: 0.90, cost: 147.62 },
+        { id: 10, name: "DOOSAN S500LC-V", bucket: 2.70, ctSec: 24.0, bff: 0.90, cost: 77.19 }
+      ],
+      haulers: [
+        { id: 1, name: "KOMATSU HD785-7", vessel: 60.0, payload: 91.0, dumpMin: 1.50, cost: 200.42 },
+        { id: 2, name: "HINO FM260TI", vessel: 14.0, payload: 24.0, dumpMin: 1.10, cost: 29.79 },
+        { id: 3, name: "HINO FM320TI", vessel: 15.0, payload: 25.0, dumpMin: 1.10, cost: 29.02 },
+        { id: 4, name: "HINO ZY1E/700", vessel: 20.0, payload: 32.0, dumpMin: 1.20, cost: 41.74 },
+        { id: 5, name: "MERCEDES BENZ ACTROSS 4843K", vessel: 24.0, payload: 38.0, dumpMin: 1.20, cost: 36.13 },
+        { id: 6, name: "MERCEDES BENZ ACTROSS 4043K", vessel: 22.0, payload: 35.0, dumpMin: 1.20, cost: 42.67 },
+        { id: 7, name: "DONGFENG 375FT", vessel: 20.0, payload: 30.0, dumpMin: 1.20, cost: 22.66 },
+        { id: 8, name: "CATERPILLAR CAT740B", vessel: 24.0, payload: 39.5, dumpMin: 1.30, cost: 96.82 },
+        { id: 9, name: "CMT96 (Wide Body)", vessel: 35.0, payload: 60.0, dumpMin: 1.30, cost: 62.84 },
+        { id: 10, name: "BEIBEN 3842", vessel: 22.0, payload: 35.0, dumpMin: 1.20, cost: 32.87 }
+      ],
+      supports: [
+        { id: 1, name: "KOMATSU D375A-6R", role: "Ripping & Spreading", cost: 210.05 },
+        { id: 2, name: "KOMATSU D155A-6R", role: "Ripping & Spreading", cost: 118.30 },
+        { id: 3, name: "KOMATSU D85E-SS-2", role: "Pit Maintenance", cost: 70.84 },
+        { id: 4, name: "KOMATSU D65P", role: "Clean Up Loading", cost: 61.20 },
+        { id: 5, name: "KOMATSU GD705A-4", role: "Road Maintenance", cost: 71.73 },
+        { id: 6, name: "INGERSOLL RAND SD100D", role: "Road Compaction", cost: 22.02 },
+        { id: 7, name: "SAKAI SV515E", role: "Road Compaction", cost: 21.67 },
+        { id: 8, name: "Water Truck 40,000L", role: "Dust Suppression", cost: 45.00 },
+        { id: 9, name: "None (Tidak Pakai)", role: "-", cost: 0.00 }
+      ]
+    };
+
+    let db = JSON.parse(localStorage.getItem("mining_fleet_db")) || defaultDatabase;
+    let currentJobType = "OB"; // Default: OB
+
+    function saveDB() {
+      localStorage.setItem("mining_fleet_db", JSON.stringify(db));
+      renderDropdowns();
+      renderMasterTables();
+      runSimulation();
+    }
+
+    let supportSlots = [
+      { id: 1, unitName: "KOMATSU D375A-6R", qty: 1 },
+      { id: 2, unitName: "KOMATSU GD705A-4", qty: 1 },
+      { id: 3, unitName: "None (Tidak Pakai)", qty: 0 }
+    ];
+
+    function setJobType(type) {
+      currentJobType = type;
+      
+      const btnOB = document.getElementById("btn-job-OB");
+      const btnCO = document.getElementById("btn-job-CO");
+      const btnCH = document.getElementById("btn-job-CoHauling");
+
+      [btnOB, btnCO, btnCH].forEach(btn => {
+        btn.className = "py-2 px-3 rounded-lg border text-xs md:text-sm font-medium flex flex-col items-center justify-center transition bg-slate-900 text-slate-400 border-slate-700 hover:text-white";
+      });
+
+      if (type === "OB") {
+        btnOB.className = "py-2 px-3 rounded-lg border text-xs md:text-sm font-bold flex flex-col items-center justify-center transition bg-amber-500 text-slate-950 border-amber-400 shadow";
+        document.getElementById("param-density").value = "2.1"; // default OB density
+        document.getElementById("param-sf").value = "0.80";
+        document.getElementById("param-rate").value = "3.25";
+      } else if (type === "CO") {
+        btnCO.className = "py-2 px-3 rounded-lg border text-xs md:text-sm font-bold flex flex-col items-center justify-center transition bg-amber-500 text-slate-950 border-amber-400 shadow";
+        document.getElementById("param-density").value = "1.3"; // default Coal density
+        document.getElementById("param-sf").value = "0.75";
+        document.getElementById("param-rate").value = "2.80";
+      } else if (type === "CoHauling") {
+        btnCH.className = "py-2 px-3 rounded-lg border text-xs md:text-sm font-bold flex flex-col items-center justify-center transition bg-amber-500 text-slate-950 border-amber-400 shadow";
+        document.getElementById("param-density").value = "1.3";
+        document.getElementById("param-sf").value = "0.75";
+        document.getElementById("param-rate").value = "0.15"; // default rate per Ton.Km
+      }
+
+      runSimulation();
+    }
+
+    function switchTab(tab) {
+      if (tab === 'sim') {
+        document.getElementById('tab-sim').classList.remove('hidden');
+        document.getElementById('tab-master').classList.add('hidden');
+        document.getElementById('tab-sim-btn').className = "px-3 py-1 text-xs md:text-sm font-medium rounded-md bg-amber-500 text-slate-950 font-bold transition";
+        document.getElementById('tab-master-btn').className = "px-3 py-1 text-xs md:text-sm font-medium rounded-md text-slate-400 hover:text-white transition";
+      } else {
+        document.getElementById('tab-sim').classList.add('hidden');
+        document.getElementById('tab-master').classList.remove('hidden');
+        document.getElementById('tab-master-btn').className = "px-3 py-1 text-xs md:text-sm font-medium rounded-md bg-amber-500 text-slate-950 font-bold transition";
+        document.getElementById('tab-sim-btn').className = "px-3 py-1 text-xs md:text-sm font-medium rounded-md text-slate-400 hover:text-white transition";
+        renderMasterTables();
+      }
+    }
+
+    function renderDropdowns() {
+      const loaderSelect = document.getElementById("sim-loader");
+      const haulerSelect = document.getElementById("sim-hauler");
+      
+      const currentLoader = loaderSelect.value || "KOMATSU PC1250SP-8R";
+      const currentHauler = haulerSelect.value || "KOMATSU HD785-7";
+
+      loaderSelect.innerHTML = db.loaders.map(u => `<option value="${u.name}">${u.name} (${u.bucket}m³)</option>`).join('');
+      haulerSelect.innerHTML = db.haulers.map(u => `<option value="${u.name}">${u.name} (${u.vessel}m³)</option>`).join('');
+
+      loaderSelect.value = db.loaders.some(u => u.name === currentLoader) ? currentLoader : db.loaders[0].name;
+      haulerSelect.value = db.haulers.some(u => u.name === currentHauler) ? currentHauler : db.haulers[0].name;
+
+      renderSupportSlots();
+    }
+
+    function renderSupportSlots() {
+      const container = document.getElementById("support-container");
+      container.innerHTML = supportSlots.map((slot, idx) => {
+        return `
+          <div class="flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700/60">
+            <div class="flex-1">
+              <select onchange="updateSupportSlot(${idx}, 'unitName', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                ${db.supports.map(s => `<option value="${s.name}" ${s.name === slot.unitName ? 'selected' : ''}>${s.name} ($${s.cost.toFixed(2)}/h)</option>`).join('')}
+              </select>
+            </div>
+            <div class="w-20">
+              <input type="number" min="0" value="${slot.qty}" onchange="updateSupportSlot(${idx}, 'qty', parseInt(this.value) || 0)" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-center text-white" placeholder="Qty">
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateSupportSlot(idx, key, val) {
+      supportSlots[idx][key] = val;
+      runSimulation();
+    }
+
+    // -------------------------------------------------------------
+    // Core Simulator Calculation Engine
+    // -------------------------------------------------------------
+    function runSimulation() {
+      const loaderName = document.getElementById("sim-loader").value;
+      const haulerName = document.getElementById("sim-hauler").value;
+      const loaderQty = parseFloat(document.getElementById("sim-loader-qty").value) || 1;
+      const haulerQty = parseFloat(document.getElementById("sim-hauler-qty").value) || 1;
+
+      const loader = db.loaders.find(u => u.name === loaderName) || db.loaders[0];
+      const hauler = db.haulers.find(u => u.name === haulerName) || db.haulers[0];
+
+      document.getElementById("sim-loader-rate").innerText = `$${loader.cost.toFixed(2)}/h`;
+      document.getElementById("sim-hauler-rate").innerText = `$${hauler.cost.toFixed(2)}/h`;
+
+      const dist = parseFloat(document.getElementById("param-dist").value) || 2.5;
+      const rateInput = parseFloat(document.getElementById("param-rate").value) || 0;
+      const speedL = parseFloat(document.getElementById("param-speed-l").value) || 20.0;
+      const speedE = parseFloat(document.getElementById("param-speed-e").value) || 26.0;
+      const density = parseFloat(document.getElementById("param-density").value) || 1.5;
+      const sf = parseFloat(document.getElementById("param-sf").value) || 0.8;
+      const eff = (parseFloat(document.getElementById("param-eff").value) || 83) / 100.0;
+
+      // Update Labels depending on Job Type
+      let unitLabel = "BCM";
+      if (currentJobType === "OB") {
+        unitLabel = "BCM";
+        document.getElementById("label-param-rate").innerText = "Tarif Revenue ($/BCM)";
+        document.getElementById("label-prod-primary").innerText = "Produksi (BCM/Jam)";
+        document.getElementById("label-unit-cost").innerText = "Unit Cost ($/BCM)";
+        document.getElementById("label-bep-prod").innerText = "BEP Prod (BCM/Jam)";
+      } else if (currentJobType === "CO") {
+        unitLabel = "Ton";
+        document.getElementById("label-param-rate").innerText = "Tarif Revenue ($/Ton)";
+        document.getElementById("label-prod-primary").innerText = "Produksi (Ton/Jam)";
+        document.getElementById("label-unit-cost").innerText = "Unit Cost ($/Ton)";
+        document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton/Jam)";
+      } else if (currentJobType === "CoHauling") {
+        unitLabel = "Ton.Km";
+        document.getElementById("label-param-rate").innerText = "Tarif Revenue ($/Ton.Km)";
+        document.getElementById("label-prod-primary").innerText = "Produksi (Ton.Km/Jam)";
+        document.getElementById("label-unit-cost").innerText = "Unit Cost ($/Ton.Km)";
+        document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
+      }
+
+      // Calculations
+      const passes = hauler.vessel / loader.bucket;
+      const loadingTimeMin = passes * (loader.ctSec / 60.0);
+      const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE)); // min per km
+      const travelTimeMin = dist * travelFactor;
+      const totalHaulerCtMin = loadingTimeMin + travelTimeMin + hauler.dumpMin;
+
+      // Match Factor
+      const mf = (haulerQty * loadingTimeMin) / (loaderQty * totalHaulerCtMin);
+
+      // Volumes
+      const looseM3PerTrip = hauler.vessel;
+      const bcmPerTrip = looseM3PerTrip * sf;
+      const tonPerTrip = bcmPerTrip * density;
+
+      const tripsPerHour = (60.0 / totalHaulerCtMin) * eff * haulerQty;
+      const prodBcmHr = tripsPerHour * bcmPerTrip;
+      const prodTonHr = tripsPerHour * tonPerTrip;
+      const prodTonKmHr = prodTonHr * dist;
+
+      // Total Operating Cost
+      let totalSupportCost = 0;
+      supportSlots.forEach(slot => {
+        const sup = db.supports.find(s => s.name === slot.unitName);
+        if (sup) totalSupportCost += (sup.cost * slot.qty);
+      });
+
+      const totalFleetCostHr = (loader.cost * loaderQty) + (hauler.cost * haulerQty) + totalSupportCost;
+
+      // Unit Cost, Revenue, Margin according to Job Type
+      let mainProdValue = prodBcmHr;
+      let secondaryProdText = `${prodTonHr.toFixed(1)} Ton/Jam`;
+
+      if (currentJobType === "OB") {
+        mainProdValue = prodBcmHr;
+        secondaryProdText = `${prodTonHr.toFixed(1)} Ton/Jam`;
+      } else if (currentJobType === "CO") {
+        mainProdValue = prodTonHr;
+        secondaryProdText = `${prodBcmHr.toFixed(1)} BCM/Jam`;
+      } else if (currentJobType === "CoHauling") {
+        mainProdValue = prodTonKmHr;
+        secondaryProdText = `${prodTonHr.toFixed(1)} Ton/h | ${dist} km`;
+      }
+
+      const unitCost = mainProdValue > 0 ? (totalFleetCostHr / mainProdValue) : 0;
+      const grossRevenueHr = mainProdValue * rateInput;
+      const netProfitHr = grossRevenueHr - totalFleetCostHr;
+      const netProfitPerUnit = mainProdValue > 0 ? (netProfitHr / mainProdValue) : 0;
+
+      // Break-Even Distance calculation
+      const fixedTime = loadingTimeMin + hauler.dumpMin;
+      let bepDistance = 0;
+
+      if (currentJobType === "OB") {
+        const revNumerator = 60.0 * bcmPerTrip * eff * haulerQty * rateInput;
+        const ctBEP = revNumerator / totalFleetCostHr;
+        bepDistance = Math.max(0, (ctBEP - fixedTime) / travelFactor);
+      } else if (currentJobType === "CO") {
+        const revNumerator = 60.0 * tonPerTrip * eff * haulerQty * rateInput;
+        const ctBEP = revNumerator / totalFleetCostHr;
+        bepDistance = Math.max(0, (ctBEP - fixedTime) / travelFactor);
+      } else if (currentJobType === "CoHauling") {
+        // CoHauling Revenue = (60 / (fixedTime + travelFactor*D)) * tonPerTrip * eff * haulerQty * D * rateTonKm
+        // Break even: Rev(D) = totalFleetCostHr
+        // (60 * tonPerTrip * eff * haulerQty * rateTonKm) * D = totalFleetCostHr * (fixedTime + travelFactor * D)
+        const A = 60.0 * tonPerTrip * eff * haulerQty * rateInput;
+        const B = totalFleetCostHr * travelFactor;
+        if (A > B) {
+          bepDistance = (totalFleetCostHr * fixedTime) / (A - B); // BEP minimum distance or profitable above this
+        } else {
+          bepDistance = 0;
+        }
+      }
+
+      const bepProd = rateInput > 0 ? (totalFleetCostHr / rateInput) : 0;
+
+      // Update UI displays
+      document.getElementById("res-mf").innerText = mf.toFixed(2);
+      const mfBadge = document.getElementById("res-mf-badge");
+      if (mf < 0.95) {
+        mfBadge.innerText = "Under-trucked (Loader Antri)";
+        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300";
+      } else if (mf > 1.05) {
+        mfBadge.innerText = "Over-trucked (Truck Antri)";
+        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300";
+      } else {
+        mfBadge.innerText = "Optimal Match (Ideal)";
+        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
+      }
+
+      document.getElementById("res-prod-primary").innerText = mainProdValue.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      document.getElementById("res-prod-secondary").innerText = secondaryProdText;
+      document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
+      document.getElementById("res-total-cost").innerText = `$${totalFleetCostHr.toFixed(2)}/Jam Total`;
+
+      const profitEl = document.getElementById("res-profit-hr");
+      profitEl.innerText = `$${netProfitHr.toFixed(2)}`;
+      profitEl.className = netProfitHr >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
+      document.getElementById("res-profit-unit").innerText = `$${netProfitPerUnit.toFixed(3)}/${unitLabel} Margin`;
+
+      document.getElementById("res-bep-dist").innerText = bepDistance.toFixed(2);
+      document.getElementById("res-bep-prod").innerText = `${bepProd.toFixed(1)} ${unitLabel}`;
+    }
+
+    // -------------------------------------------------------------
+    // Master Data UI Rendering
+    // -------------------------------------------------------------
+    function renderMasterTables() {
+      document.getElementById("master-loader-list").innerHTML = db.loaders.map(u => `
+        <div class="py-2 flex justify-between items-center">
+          <div>
+            <div class="font-bold text-white">${u.name}</div>
+            <div class="text-slate-400">Bucket: ${u.bucket}m³ | Cycle: ${u.ctSec}s</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-amber-400 font-semibold">$${u.cost.toFixed(2)}/h</span>
+            <button onclick="deleteUnit('loaders', ${u.id})" class="text-rose-400 hover:text-rose-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById("master-hauler-list").innerHTML = db.haulers.map(u => `
+        <div class="py-2 flex justify-between items-center">
+          <div>
+            <div class="font-bold text-white">${u.name}</div>
+            <div class="text-slate-400">Vessel: ${u.vessel}m³ | Dump: ${u.dumpMin}m</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-amber-400 font-semibold">$${u.cost.toFixed(2)}/h</span>
+            <button onclick="deleteUnit('haulers', ${u.id})" class="text-rose-400 hover:text-rose-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById("master-support-list").innerHTML = db.supports.map(u => `
+        <div class="py-2 flex justify-between items-center">
+          <div>
+            <div class="font-bold text-white">${u.name}</div>
+            <div class="text-slate-400">Fungsi: ${u.role}</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-amber-400 font-semibold">$${u.cost.toFixed(2)}/h</span>
+            ${u.name.includes("None") ? '' : `<button onclick="deleteUnit('supports', ${u.id})" class="text-rose-400 hover:text-rose-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`}
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function deleteUnit(category, id) {
+      if (confirm("Hapus unit ini dari master data?")) {
+        db[category] = db[category].filter(item => item.id !== id);
+        saveDB();
+      }
+    }
+
+    function openModalAddUnit() {
+      document.getElementById("unit-modal").classList.remove("hidden");
+      toggleModalFields();
+    }
+
+    function closeModal() {
+      document.getElementById("unit-modal").classList.add("hidden");
+    }
+
+    function toggleModalFields() {
+      const cat = document.getElementById("modal-cat").value;
+      document.getElementById("modal-field-loader").classList.toggle("hidden", cat !== "loader");
+      document.getElementById("modal-field-hauler").classList.toggle("hidden", cat !== "hauler");
+      document.getElementById("modal-field-support").classList.toggle("hidden", cat !== "support");
+    }
+
+    function saveUnit() {
+      const cat = document.getElementById("modal-cat").value;
+      const name = document.getElementById("modal-name").value.trim();
+      const cost = parseFloat(document.getElementById("modal-cost").value) || 0;
+
+      if (!name) { alert("Nama unit wajib diisi!"); return; }
+
+      const newId = Date.now();
+
+      if (cat === "loader") {
+        const bucket = parseFloat(document.getElementById("modal-bucket").value) || 1.0;
+        const ctSec = parseFloat(document.getElementById("modal-ct-sec").value) || 22.0;
+        db.loaders.push({ id: newId, name, bucket, ctSec, bff: 0.90, cost });
+      } else if (cat === "hauler") {
+        const vessel = parseFloat(document.getElementById("modal-vessel").value) || 20.0;
+        const dumpMin = parseFloat(document.getElementById("modal-dump").value) || 1.2;
+        db.haulers.push({ id: newId, name, vessel, payload: vessel * 1.5, dumpMin, cost });
+      } else {
+        const role = document.getElementById("modal-role").value || "General Support";
+        db.supports.unshift({ id: newId, name, role, cost });
+      }
+
+      closeModal();
+      saveDB();
+      alert(`Unit ${name} berhasil ditambahkan!`);
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Master_Mining_Fleet_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderDropdowns();
+      runSimulation();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
