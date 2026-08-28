@@ -84,6 +84,37 @@
         </div>
       </div>
 
+      <!-- Detail Waktu Putar / Cycle Time Breakdown Card -->
+      <div class="bg-slate-800/90 rounded-xl p-4 border border-slate-700 space-y-2">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-700/60">
+          <div class="flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+            <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Breakdown Cycle Time Hauler</span>
+          </div>
+          <div class="text-xs text-slate-300">
+            Total CT: <strong id="ct-total" class="text-amber-400 font-mono text-sm">0.00</strong> menit (<span id="ct-ritase" class="text-slate-200 font-mono">0.00</span> rit/jam/unit)
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-1 text-xs">
+          <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-750">
+            <span class="text-slate-400 block text-[11px]">1. Loading Time</span>
+            <div id="ct-load" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
+          </div>
+          <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-750">
+            <span class="text-slate-400 block text-[11px]">2. Hauling (Loaded)</span>
+            <div id="ct-travel-l" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
+          </div>
+          <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-750">
+            <span class="text-slate-400 block text-[11px]">3. Dumping / Spot</span>
+            <div id="ct-dump" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
+          </div>
+          <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-750">
+            <span class="text-slate-400 block text-[11px]">4. Return (Empty)</span>
+            <div id="ct-travel-e" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Break-Even Distance Card -->
       <div class="bg-gradient-to-r from-slate-800 to-slate-850 rounded-xl p-3.5 border border-slate-700 flex justify-between items-center">
         <div>
@@ -545,11 +576,13 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
+      // Perhitungan Rinci Cycle Time
       const passes = hauler.vessel / loader.bucket;
       const loadingTimeMin = passes * (loader.ctSec / 60.0);
+      const travelLoadedMin = (dist / speedL) * 60.0;
+      const travelEmptyMin = (dist / speedE) * 60.0;
       const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE));
-      const travelTimeMin = dist * travelFactor;
-      const totalHaulerCtMin = loadingTimeMin + travelTimeMin + hauler.dumpMin;
+      const dumpSpotMin = hauler.dumpMin;
 
       const looseM3PerTrip = hauler.vessel;
       const bcmPerTrip = looseM3PerTrip * sf;
@@ -559,23 +592,26 @@
       let prodBcmHr = 0;
       let prodTonHr = 0;
       let prodTonKmHr = 0;
+      let displayCT = 0;
+      let effectiveLoadTime = loadingTimeMin;
 
       if (currentJobType === "CoHauling" && haulerQty > 0) {
-        const effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0;
-        const customHaulerCtMin = effectiveLoadTime + travelTimeMin + hauler.dumpMin;
+        effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0; // Fixed 3 menit muat di ROM/Hopper jika loader 0
+        displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
         
-        const tripsPerHour = (60.0 / customHaulerCtMin) * eff * haulerQty;
+        const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
         prodBcmHr = tripsPerHour * bcmPerTrip;
         prodTonHr = tripsPerHour * tonPerTrip;
         prodTonKmHr = prodTonHr * dist;
 
         if (loaderQty > 0) {
-          mf = (haulerQty * loadingTimeMin) / (loaderQty * customHaulerCtMin);
+          mf = (haulerQty * loadingTimeMin) / (loaderQty * displayCT);
         }
       } else if (loaderQty > 0 && haulerQty > 0) {
-        mf = (haulerQty * loadingTimeMin) / (loaderQty * totalHaulerCtMin);
+        displayCT = loadingTimeMin + travelLoadedMin + dumpSpotMin + travelEmptyMin;
+        mf = (haulerQty * loadingTimeMin) / (loaderQty * displayCT);
 
-        const tripsPerHour = (60.0 / totalHaulerCtMin) * eff * haulerQty;
+        const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
         const rawProdBcmHr = tripsPerHour * bcmPerTrip;
         const rawProdTonHr = tripsPerHour * tonPerTrip;
 
@@ -588,6 +624,17 @@
         prodTonKmHr = prodTonHr * dist;
       }
 
+      // Update Tampilan Breakdown Cycle Time
+      document.getElementById("ct-load").innerText = `${effectiveLoadTime.toFixed(2)} mnt`;
+      document.getElementById("ct-travel-l").innerText = `${travelLoadedMin.toFixed(2)} mnt`;
+      document.getElementById("ct-dump").innerText = `${dumpSpotMin.toFixed(2)} mnt`;
+      document.getElementById("ct-travel-e").innerText = `${travelEmptyMin.toFixed(2)} mnt`;
+      document.getElementById("ct-total").innerText = displayCT.toFixed(2);
+      
+      const ritasePerUnit = displayCT > 0 ? ((60.0 / displayCT) * eff) : 0;
+      document.getElementById("ct-ritase").innerText = ritasePerUnit.toFixed(2);
+
+      // Total Cost
       let supportCostHr = 0;
       for (let i = 1; i <= supportSlotCount; i++) {
         const sName = document.getElementById(`sim-support-${i}`).value;
@@ -633,6 +680,7 @@
         }
       }
 
+      // Update UI Status & Badges
       document.getElementById("res-mf").innerText = mf.toFixed(2);
       const mfBadge = document.getElementById("res-mf-badge");
       if (currentJobType === "CoHauling" && loaderQty === 0) {
