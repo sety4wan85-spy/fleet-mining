@@ -483,9 +483,14 @@
       const bcmPerTrip = looseM3PerTrip * sf;
       const tonPerTrip = bcmPerTrip * density;
 
+      // Kapasitas Ritase Hauler
       const tripsPerHour = (60.0 / totalHaulerCtMin) * eff * haulerQty;
-      const prodBcmHr = tripsPerHour * bcmPerTrip;
-      const prodTonHr = tripsPerHour * tonPerTrip;
+      const rawProdBcmHr = tripsPerHour * bcmPerTrip;
+      const rawProdTonHr = tripsPerHour * tonPerTrip;
+
+      // Koreksi Bottleneck: Jika MF > 1.0 (over-trucked), produksi terkunci di kapasitas loader
+      const prodBcmHr = mf > 1.0 ? (rawProdBcmHr / mf) : rawProdBcmHr;
+      const prodTonHr = mf > 1.0 ? (rawProdTonHr / mf) : rawProdTonHr;
       const prodTonKmHr = prodTonHr * dist;
 
       // Total Operating Cost
