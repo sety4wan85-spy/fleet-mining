@@ -136,7 +136,7 @@
         </h2>
 
         <!-- Loader Row -->
-        <div>
+        <div id="container-loader-row">
           <label class="block text-xs text-slate-400 mb-1">Loading Unit (Excavator)</label>
           <div class="flex gap-2">
             <select id="sim-loader" onchange="runSimulation()" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none"></select>
@@ -174,7 +174,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
             <label class="block text-xs text-slate-400 mb-1">Jarak Haul (km)</label>
-            <input type="number" step="0.1" id="param-dist" value="2.5" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+            <input type="number" step="0.1" id="param-dist" value="2.0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
           </div>
           <div>
             <label class="block text-xs text-slate-400 mb-1">Speed Loaded (km/h)</label>
@@ -405,7 +405,7 @@
 
       renderDatabaseTables();
       lucide.createIcons();
-      runSimulation();
+      setJobType("OB"); // default start with OB profile
     }
 
     function toggleLockModal() {
@@ -493,12 +493,36 @@
         }
       }
 
+      // Penyesuaian Otomatis Parameter Lapangan & Armada sesuai Job Type
       if (type === "OB") {
+        document.getElementById("param-dist").value = "2.0";
+        document.getElementById("param-speed-l").value = "20";
+        document.getElementById("param-speed-e").value = "26";
         document.getElementById("param-density").value = "2.1";
         document.getElementById("param-sf").value = "0.80";
-      } else {
+        document.getElementById("sim-loader-qty").value = "1";
+        document.getElementById("sim-hauler-qty").value = "5";
+        document.getElementById("sim-loader").value = "KOMATSU PC1250SP-8R (6.7m³)";
+        document.getElementById("sim-hauler").value = "KOMATSU HD785-7 (60m³)";
+      } else if (type === "CO") {
+        document.getElementById("param-dist").value = "3.0";
+        document.getElementById("param-speed-l").value = "22";
+        document.getElementById("param-speed-e").value = "28";
         document.getElementById("param-density").value = "1.3";
         document.getElementById("param-sf").value = "0.85";
+        document.getElementById("sim-loader-qty").value = "1";
+        document.getElementById("sim-hauler-qty").value = "5";
+        document.getElementById("sim-loader").value = "KOMATSU PC400LC-7 (2.2m³)";
+        document.getElementById("sim-hauler").value = "CMT96 (Wide Body) (35m³)";
+      } else if (type === "CoHauling") {
+        document.getElementById("param-dist").value = "50.0";
+        document.getElementById("param-speed-l").value = "30";
+        document.getElementById("param-speed-e").value = "40";
+        document.getElementById("param-density").value = "1.3";
+        document.getElementById("param-sf").value = "0.85";
+        document.getElementById("sim-loader-qty").value = "0"; // Loader 0 untuk hauling mandiri
+        document.getElementById("sim-hauler-qty").value = "20";
+        document.getElementById("sim-hauler").value = "HINO ZY1E/700 (20m³)";
       }
 
       runSimulation();
@@ -596,7 +620,7 @@
       let effectiveLoadTime = loadingTimeMin;
 
       if (currentJobType === "CoHauling" && haulerQty > 0) {
-        effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0; // Fixed 3 menit muat di ROM/Hopper jika loader 0
+        effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0; // Standar 3 menit muat di ROM/Hopper jika loader 0
         displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
         
         const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
