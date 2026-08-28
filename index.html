@@ -429,9 +429,10 @@
     function runSimulation() {
       const loaderName = document.getElementById("sim-loader").value;
       const haulerName = document.getElementById("sim-hauler").value;
-      const loaderQty = parseFloat(document.getElementById("sim-loader-qty").value) || 1;
-      const haulerQty = parseFloat(document.getElementById("sim-hauler-qty").value) || 1;
-
+      const loaderQtyInput = document.getElementById("sim-loader-qty").value;
+      const haulerQtyInput = document.getElementById("sim-hauler-qty").value;
+      const loaderQty = loaderQtyInput === "" ? 0 : parseFloat(loaderQtyInput);
+      const haulerQty = haulerQtyInput === "" ? 0 : parseFloat(haulerQtyInput);
       const loader = db.loaders.find(u => u.name === loaderName) || db.loaders[0];
       const hauler = db.haulers.find(u => u.name === haulerName) || db.haulers[0];
 
@@ -468,30 +469,42 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
-      // Calculations
+     // Calculations
       const passes = hauler.vessel / loader.bucket;
       const loadingTimeMin = passes * (loader.ctSec / 60.0);
       const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE)); // min per km
       const travelTimeMin = dist * travelFactor;
       const totalHaulerCtMin = loadingTimeMin + travelTimeMin + hauler.dumpMin;
 
-      // Match Factor
-      const mf = (haulerQty * loadingTimeMin) / (loaderQty * totalHaulerCtMin);
-
       // Volumes
       const looseM3PerTrip = hauler.vessel;
       const bcmPerTrip = looseM3PerTrip * sf;
       const tonPerTrip = bcmPerTrip * density;
 
-      // Kapasitas Ritase Hauler
-      const tripsPerHour = (60.0 / totalHaulerCtMin) * eff * haulerQty;
-      const rawProdBcmHr = tripsPerHour * bcmPerTrip;
-      const rawProdTonHr = tripsPerHour * tonPerTrip;
+      // Cek apakah ada unit yang 0
+      let mf = 0;
+      let prodBcmHr = 0;
+      let prodTonHr = 0;
+      let prodTonKmHr = 0;
 
-      // Koreksi Bottleneck: Jika MF > 1.0 (over-trucked), produksi terkunci di kapasitas loader
-      const prodBcmHr = mf > 1.0 ? (rawProdBcmHr / mf) : rawProdBcmHr;
-      const prodTonHr = mf > 1.0 ? (rawProdTonHr / mf) : rawProdTonHr;
-      const prodTonKmHr = prodTonHr * dist;
+      if (loaderQty > 0 && haulerQty > 0) {
+        mf = (haulerQty * loadingTimeMin) / (loaderQty * totalHaulerCtMin);
+
+        // Kapasitas Ritase Hauler Total
+        const tripsPerHour = (60.0 / totalHaulerCtMin) * eff * haulerQty;
+        const rawProdBcmHr = tripsPerHour * bcmPerTrip;
+        const rawProdTonHr = tripsPerHour * tonPerTrip;
+
+        // Kapasitas Maksimal Loader (Bottleneck limit saat MF > 1.0)
+        const loaderMaxTripsPerHour = (60.0 / loadingTimeMin) * eff * loaderQty;
+        const loaderMaxProdBcmHr = loaderMaxTripsPerHour * bcmPerTrip;
+        const loaderMaxProdTonHr = loaderMaxTripsPerHour * tonPerTrip;
+
+        // Output Produksi Nyata
+        prodBcmHr = Math.min(rawProdBcmHr, loaderMaxProdBcmHr);
+        prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
+        prodTonKmHr = prodTonHr * dist;
+      }
 
       // Total Operating Cost
       let totalSupportCost = 0;
