@@ -177,24 +177,50 @@
     <!-- ==================== TAB 2: MASTER DATA ==================== -->
     <div id="tab-database" class="space-y-4 hidden">
       
-      <!-- Confidential Master Rates -->
-      <div class="bg-slate-800 border border-amber-500/40 rounded-xl p-4 shadow-lg">
-        <div class="flex items-center gap-2 mb-3">
-          <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
-          <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wide">Tarif Kontrak Revenue (Confidential)</h3>
+      <!-- Confidential Master Rates with PIN Protection -->
+      <div class="bg-slate-800 border border-amber-500/40 rounded-xl p-4 shadow-lg relative overflow-hidden">
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex items-center gap-2">
+            <i id="lock-icon" data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+            <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wide">Tarif Kontrak Revenue (Confidential)</h3>
+          </div>
+          <button id="btn-lock-toggle" onclick="toggleLockModal()" class="px-2.5 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-amber-300 flex items-center gap-1 font-semibold transition">
+            <i id="btn-lock-icon" data-lucide="key" class="w-3.5 h-3.5"></i>
+            <span id="btn-lock-text">Buka Kunci (Unlock)</span>
+          </button>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Overburden ($/BCM)</label>
-            <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
+
+        <!-- Locked Overlay Notice -->
+        <div id="rate-locked-view" class="bg-slate-900/90 border border-slate-700 rounded-lg p-4 text-center space-y-2">
+          <div class="text-xs text-slate-400">Tarif kontrak bersifat rahasia & sedang terkunci. Nilai tarif aktif tetap digunakan untuk menghitung simulasi di latar belakang.</div>
+          <button onclick="promptUnlock()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow transition">
+            Masukkan PIN untuk Melihat / Edit Tarif
+          </button>
+        </div>
+
+        <!-- Unlocked View (Hidden by default) -->
+        <div id="rate-unlocked-view" class="hidden space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Overburden ($/BCM)</label>
+              <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="saveRates()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal / Batubara ($/Ton)</label>
+              <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="saveRates()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal Hauling ($/Ton.Km)</label>
+              <input type="number" step="0.01" id="master-rate-cohauling" value="0.45" oninput="saveRates()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal / Batubara ($/Ton)</label>
-            <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal Hauling ($/Ton.Km)</label>
-            <input type="number" step="0.01" id="master-rate-cohauling" value="0.45" oninput="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
+          <div class="flex justify-between items-center pt-2 border-t border-slate-700/60 text-xs">
+            <button onclick="changePin()" class="text-slate-400 hover:text-amber-300 flex items-center gap-1">
+              <i data-lucide="settings" class="w-3.5 h-3.5"></i> Ganti PIN Keamanan
+            </button>
+            <button onclick="lockRates()" class="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold">
+              <i data-lucide="lock" class="w-3.5 h-3.5"></i> Kunci Kembali Sekarang
+            </button>
           </div>
         </div>
       </div>
@@ -305,7 +331,23 @@
     let currentJobType = "OB";
     const supportSlotCount = 3;
 
+    // PIN Protection State & Storage
+    let appPin = localStorage.getItem("fleet_app_pin") || "1234";
+    let isRateUnlocked = false;
+
+    // Saved Rates Storage
+    let savedRates = JSON.parse(localStorage.getItem("fleet_saved_rates")) || {
+      ob: 1.80,
+      co: 3.50,
+      cohauling: 0.45
+    };
+
     function initApp() {
+      // Load stored rates to inputs
+      document.getElementById("master-rate-ob").value = savedRates.ob;
+      document.getElementById("master-rate-co").value = savedRates.co;
+      document.getElementById("master-rate-cohauling").value = savedRates.cohauling;
+
       // Populate Loaders Dropdown
       const loaderSelect = document.getElementById("sim-loader");
       db.loaders.forEach(l => {
@@ -337,9 +379,63 @@
         `;
       }
 
-      // Populate Master Data Tables
       renderDatabaseTables();
       lucide.createIcons();
+      runSimulation();
+    }
+
+    // --- PIN & Confidentiality Handlers ---
+    function toggleLockModal() {
+      if (isRateUnlocked) {
+        lockRates();
+      } else {
+        promptUnlock();
+      }
+    }
+
+    function promptUnlock() {
+      const entered = prompt("Masukkan PIN Keamanan untuk membuka Tarif Kontrak:");
+      if (entered === null) return;
+      if (entered === appPin) {
+        isRateUnlocked = true;
+        document.getElementById("rate-locked-view").classList.add("hidden");
+        document.getElementById("rate-unlocked-view").classList.remove("hidden");
+        document.getElementById("btn-lock-text").innerText = "Kunci (Lock)";
+        lucide.createIcons();
+      } else {
+        alert("PIN salah! Akses ditolak.");
+      }
+    }
+
+    function lockRates() {
+      isRateUnlocked = false;
+      document.getElementById("rate-locked-view").classList.remove("hidden");
+      document.getElementById("rate-unlocked-view").classList.add("hidden");
+      document.getElementById("btn-lock-text").innerText = "Buka Kunci (Unlock)";
+      lucide.createIcons();
+    }
+
+    function changePin() {
+      const oldPin = prompt("Masukkan PIN Lama:");
+      if (oldPin !== appPin) {
+        alert("PIN lama tidak sesuai!");
+        return;
+      }
+      const newPin = prompt("Masukkan PIN Baru (minimal 4 digit):");
+      if (newPin && newPin.trim().length >= 4) {
+        appPin = newPin.trim();
+        localStorage.setItem("fleet_app_pin", appPin);
+        alert("PIN berhasil diubah!");
+      } else {
+        alert("PIN baru tidak valid / dibatalkan.");
+      }
+    }
+
+    function saveRates() {
+      savedRates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
+      savedRates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
+      savedRates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
+      localStorage.setItem("fleet_saved_rates", JSON.stringify(savedRates));
       runSimulation();
     }
 
@@ -374,7 +470,6 @@
         }
       }
 
-      // Parameter Defaults sesuai Job Type
       if (type === "OB") {
         document.getElementById("param-density").value = "2.1";
         document.getElementById("param-sf").value = "0.80";
@@ -437,24 +532,24 @@
       const sf = parseFloat(document.getElementById("param-sf").value) || 0.8;
       const eff = (parseFloat(document.getElementById("param-eff").value) || 83) / 100.0;
 
-      // Ambil Tarif Confidential dari Master Data
+      // Ambil Tarif Confidential dari Penyimpanan Master Data
       let contractRate = 0;
       let unitLabel = "BCM";
       if (currentJobType === "OB") {
         unitLabel = "BCM";
-        contractRate = parseFloat(document.getElementById("master-rate-ob").value) || 0;
+        contractRate = savedRates.ob;
         document.getElementById("label-prod-primary").innerText = "Produksi (BCM/Jam)";
         document.getElementById("label-unit-cost").innerText = "Unit Cost ($/BCM)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (BCM/Jam)";
       } else if (currentJobType === "CO") {
         unitLabel = "Ton";
-        contractRate = parseFloat(document.getElementById("master-rate-co").value) || 0;
+        contractRate = savedRates.co;
         document.getElementById("label-prod-primary").innerText = "Produksi (Ton/Jam)";
         document.getElementById("label-unit-cost").innerText = "Unit Cost ($/Ton)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton/Jam)";
       } else if (currentJobType === "CoHauling") {
         unitLabel = "Ton.Km";
-        contractRate = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
+        contractRate = savedRates.cohauling;
         document.getElementById("label-prod-primary").innerText = "Produksi (Ton.Km/Jam)";
         document.getElementById("label-unit-cost").innerText = "Unit Cost ($/Ton.Km)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
@@ -535,7 +630,7 @@
       if (haulerQty > 0 && contractRate > 0 && totalFleetCostHr > 0) {
         let payload = (currentJobType === "OB") ? bcmPerTrip : tonPerTrip;
         if (currentJobType === "CoHauling") {
-          bepDistance = 0; // Pada CoHauling revenue bertambah linear terhadap jarak
+          bepDistance = 0;
         } else {
           const maxCycleTimeAllowed = (60.0 * payload * eff * haulerQty * contractRate) / totalFleetCostHr;
           const maxTravelTimeAllowed = maxCycleTimeAllowed - loadingTimeMin - hauler.dumpMin;
