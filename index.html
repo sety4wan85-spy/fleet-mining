@@ -137,7 +137,7 @@
 
         <!-- Loader Row -->
         <div id="container-loader-row">
-          <label class="block text-xs text-slate-400 mb-1">Loading Unit (Excavator)</label>
+          <label class="block text-xs text-slate-400 mb-1">Loading Unit di ROM / Pit (Excavator)</label>
           <div class="flex gap-2">
             <select id="sim-loader" onchange="runSimulation()" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none"></select>
             <div class="w-24">
@@ -264,7 +264,7 @@
         </button>
       </div>
 
-      <!-- Master Loaders -->
+      <!-- Master Loaders (Editable) -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
         <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
           <i data-lucide="wrench" class="w-4 h-4"></i> Master Loading Unit (Excavator)
@@ -605,8 +605,9 @@
         document.getElementById("param-speed-e").value = "40";
         document.getElementById("param-density").value = "1.3";
         document.getElementById("param-sf").value = "0.85";
-        document.getElementById("sim-loader-qty").value = "0";
+        document.getElementById("sim-loader-qty").value = "0"; // Loader 0 (milik owner ROM)
         document.getElementById("sim-hauler-qty").value = "20";
+        document.getElementById("sim-loader").value = "KOMATSU PC400LC-7 (2.2m³)";
         document.getElementById("sim-hauler").value = "HINO ZY1E/700 (20m³)";
       }
 
@@ -657,8 +658,9 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
+      // Perhitungan Rinci Cycle Time & Bottleneck Loader
       const passes = hauler.vessel / loader.bucket;
-      const loadingTimeMin = passes * (loader.ctSec / 60.0);
+      const calculatedLoadTimeMin = passes * (loader.ctSec / 60.0);
       const travelLoadedMin = (dist / speedL) * 60.0;
       const travelEmptyMin = (dist / speedE) * 60.0;
       const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE));
@@ -673,35 +675,54 @@
       let prodTonHr = 0;
       let prodTonKmHr = 0;
       let displayCT = 0;
-      let effectiveLoadTime = loadingTimeMin;
+      let effectiveLoadTime = calculatedLoadTimeMin;
+      let isLoaderBottleneck = false;
+      let loaderMaxCapacityTonHr = 0;
 
       if (currentJobType === "CoHauling" && haulerQty > 0) {
-        effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0;
+        // Mode Coal Hauling (Jasa Pengangkutan):
+        effectiveLoadTime = calculatedLoadTimeMin;
         displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
-        
+
+        // 1. Kapasitas Pengangkutan Armada Truk (Ton/Jam)
         const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
-        prodBcmHr = tripsPerHour * bcmPerTrip;
-        prodTonHr = tripsPerHour * tonPerTrip;
+        const rawHaulerTonHr = tripsPerHour * tonPerTrip;
+
+        // 2. Kapasitas Maksimal Loader di ROM (Diasumsikan 1 unit loader aktif di ROM jika Qty diisi 0)
+        const activeLoaderQty = loaderQty > 0 ? loaderQty : 1;
+        loaderMaxCapacityTonHr = (3600.0 / loader.ctSec) * (loader.bucket * sf * density) * eff * activeLoaderQty;
+
+        // 3. Mengunci Produksi ke Kapasitas Maksimal Loader
+        prodTonHr = Math.min(rawHaulerTonHr, loaderMaxCapacityTonHr);
+        prodBcmHr = prodTonHr / density;
         prodTonKmHr = prodTonHr * dist;
 
-        if (loaderQty > 0) {
-          mf = (haulerQty * loadingTimeMin) / (loaderQty * displayCT);
+        if (rawHaulerTonHr > loaderMaxCapacityTonHr) {
+          isLoaderBottleneck = true;
         }
+
+        mf = (haulerQty * effectiveLoadTime) / (activeLoaderQty * displayCT);
+
       } else if (loaderQty > 0 && haulerQty > 0) {
-        displayCT = loadingTimeMin + travelLoadedMin + dumpSpotMin + travelEmptyMin;
-        mf = (haulerQty * loadingTimeMin) / (loaderQty * displayCT);
+        // Mode OB & Coal Getting (Pit Operation)
+        displayCT = calculatedLoadTimeMin + travelLoadedMin + dumpSpotMin + travelEmptyMin;
+        mf = (haulerQty * calculatedLoadTimeMin) / (loaderQty * displayCT);
 
         const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
         const rawProdBcmHr = tripsPerHour * bcmPerTrip;
         const rawProdTonHr = tripsPerHour * tonPerTrip;
 
-        const loaderMaxTripsPerHour = (60.0 / loadingTimeMin) * eff * loaderQty;
+        const loaderMaxTripsPerHour = (60.0 / calculatedLoadTimeMin) * eff * loaderQty;
         const loaderMaxProdBcmHr = loaderMaxTripsPerHour * bcmPerTrip;
         const loaderMaxProdTonHr = loaderMaxTripsPerHour * tonPerTrip;
 
         prodBcmHr = Math.min(rawProdBcmHr, loaderMaxProdBcmHr);
         prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
         prodTonKmHr = prodTonHr * dist;
+
+        if (rawProdBcmHr > loaderMaxProdBcmHr) {
+          isLoaderBottleneck = true;
+        }
       }
 
       document.getElementById("ct-load").innerText = `${effectiveLoadTime.toFixed(2)} mnt`;
@@ -760,9 +781,20 @@
 
       document.getElementById("res-mf").innerText = mf.toFixed(2);
       const mfBadge = document.getElementById("res-mf-badge");
-      if (currentJobType === "CoHauling" && loaderQty === 0) {
-        mfBadge.innerText = "Hauler Only (ROM/Port)";
-        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
+      if (currentJobType === "CoHauling") {
+        if (haulerQty === 0) {
+          mfBadge.innerText = "No Operation";
+          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-700 text-slate-400";
+        } else if (isLoaderBottleneck) {
+          mfBadge.innerText = `Terkunci Max Loader ROM (${loaderMaxCapacityTonHr.toFixed(0)} T/h)`;
+          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-rose-900/60 text-rose-300 font-bold animate-pulse";
+        } else if (mf > 1.05) {
+          mfBadge.innerText = "Over-trucked (Truk Antri di ROM)";
+          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300";
+        } else {
+          mfBadge.innerText = "Hauling Optimal (ROM Flow Lancar)";
+          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
+        }
       } else if (loaderQty === 0 || haulerQty === 0) {
         mfBadge.innerText = "No Operation";
         mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-700 text-slate-400";
@@ -770,7 +802,7 @@
         mfBadge.innerText = "Under-trucked (Loader Antri)";
         mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300";
       } else if (mf > 1.05) {
-        mfBadge.innerText = "Over-trucked (Truck Antri)";
+        mfBadge.innerText = isLoaderBottleneck ? "Terkunci Max Loader (Over-trucked)" : "Over-trucked (Truck Antri)";
         mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300";
       } else {
         mfBadge.innerText = "Optimal Match (Ideal)";
