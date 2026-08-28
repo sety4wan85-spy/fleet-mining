@@ -135,7 +135,7 @@
         </div>
       </div>
 
-      <!-- Operational Parameters Card (Tanpa Tarif Revenue) -->
+      <!-- Operational Parameters Card -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-3">
         <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
           <i data-lucide="sliders" class="w-4 h-4"></i> Parameter Lapangan
@@ -190,7 +190,7 @@
           </button>
         </div>
 
-        <!-- Locked Overlay Notice -->
+        <!-- Locked Notice -->
         <div id="rate-locked-view" class="bg-slate-900/90 border border-slate-700 rounded-lg p-4 text-center space-y-2">
           <div class="text-xs text-slate-400">Tarif kontrak bersifat rahasia & sedang terkunci. Nilai tarif aktif tetap digunakan untuk menghitung simulasi di latar belakang.</div>
           <button onclick="promptUnlock()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow transition">
@@ -198,7 +198,7 @@
           </button>
         </div>
 
-        <!-- Unlocked View (Hidden by default) -->
+        <!-- Unlocked View -->
         <div id="rate-unlocked-view" class="hidden space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
@@ -289,7 +289,6 @@
   </main>
 
   <script>
-    // Database Master (OOC 2024 Benchmark)
     const db = {
       loaders: [
         { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
@@ -331,11 +330,9 @@
     let currentJobType = "OB";
     const supportSlotCount = 3;
 
-    // PIN Protection State & Storage
     let appPin = localStorage.getItem("fleet_app_pin") || "1234";
     let isRateUnlocked = false;
 
-    // Saved Rates Storage
     let savedRates = JSON.parse(localStorage.getItem("fleet_saved_rates")) || {
       ob: 1.80,
       co: 3.50,
@@ -343,24 +340,20 @@
     };
 
     function initApp() {
-      // Load stored rates to inputs
       document.getElementById("master-rate-ob").value = savedRates.ob;
       document.getElementById("master-rate-co").value = savedRates.co;
       document.getElementById("master-rate-cohauling").value = savedRates.cohauling;
 
-      // Populate Loaders Dropdown
       const loaderSelect = document.getElementById("sim-loader");
       db.loaders.forEach(l => {
         loaderSelect.innerHTML += `<option value="${l.name}">${l.name}</option>`;
       });
 
-      // Populate Haulers Dropdown
       const haulerSelect = document.getElementById("sim-hauler");
       db.haulers.forEach(h => {
         haulerSelect.innerHTML += `<option value="${h.name}">${h.name}</option>`;
       });
 
-      // Build Support Slots
       const supportContainer = document.getElementById("support-container");
       for (let i = 1; i <= supportSlotCount; i++) {
         let defaultSupportName = i === 1 ? "KOMATSU D375A-6R" : "None (Tidak Pakai)";
@@ -384,7 +377,6 @@
       runSimulation();
     }
 
-    // --- PIN & Confidentiality Handlers ---
     function toggleLockModal() {
       if (isRateUnlocked) {
         lockRates();
@@ -513,7 +505,6 @@
       const loaderName = document.getElementById("sim-loader").value;
       const haulerName = document.getElementById("sim-hauler").value;
 
-      // Handling input angka 0 yang benar
       const loaderQtyInput = document.getElementById("sim-loader-qty").value;
       const haulerQtyInput = document.getElementById("sim-hauler-qty").value;
       const loaderQty = loaderQtyInput === "" ? 0 : parseFloat(loaderQtyInput);
@@ -528,11 +519,10 @@
       const dist = parseFloat(document.getElementById("param-dist").value) || 0.1;
       const speedL = parseFloat(document.getElementById("param-speed-l").value) || 20.0;
       const speedE = parseFloat(document.getElementById("param-speed-e").value) || 26.0;
-      const density = parseFloat(document.getElementById("param-density").value) || 2.1;
-      const sf = parseFloat(document.getElementById("param-sf").value) || 0.8;
+      const density = parseFloat(document.getElementById("param-density").value) || 1.3;
+      const sf = parseFloat(document.getElementById("param-sf").value) || 0.85;
       const eff = (parseFloat(document.getElementById("param-eff").value) || 83) / 100.0;
 
-      // Ambil Tarif Confidential dari Penyimpanan Master Data
       let contractRate = 0;
       let unitLabel = "BCM";
       if (currentJobType === "OB") {
@@ -555,7 +545,6 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
-      // Perhitungan Cycle Time & Kapasitas
       const passes = hauler.vessel / loader.bucket;
       const loadingTimeMin = passes * (loader.ctSec / 60.0);
       const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE));
@@ -571,26 +560,34 @@
       let prodTonHr = 0;
       let prodTonKmHr = 0;
 
-      if (loaderQty > 0 && haulerQty > 0) {
+      if (currentJobType === "CoHauling" && haulerQty > 0) {
+        const effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0;
+        const customHaulerCtMin = effectiveLoadTime + travelTimeMin + hauler.dumpMin;
+        
+        const tripsPerHour = (60.0 / customHaulerCtMin) * eff * haulerQty;
+        prodBcmHr = tripsPerHour * bcmPerTrip;
+        prodTonHr = tripsPerHour * tonPerTrip;
+        prodTonKmHr = prodTonHr * dist;
+
+        if (loaderQty > 0) {
+          mf = (haulerQty * loadingTimeMin) / (loaderQty * customHaulerCtMin);
+        }
+      } else if (loaderQty > 0 && haulerQty > 0) {
         mf = (haulerQty * loadingTimeMin) / (loaderQty * totalHaulerCtMin);
 
-        // Kapasitas Ritase Hauler Total
         const tripsPerHour = (60.0 / totalHaulerCtMin) * eff * haulerQty;
         const rawProdBcmHr = tripsPerHour * bcmPerTrip;
         const rawProdTonHr = tripsPerHour * tonPerTrip;
 
-        // Kapasitas Maksimal Loader (Bottleneck limit)
         const loaderMaxTripsPerHour = (60.0 / loadingTimeMin) * eff * loaderQty;
         const loaderMaxProdBcmHr = loaderMaxTripsPerHour * bcmPerTrip;
         const loaderMaxProdTonHr = loaderMaxTripsPerHour * tonPerTrip;
 
-        // Produksi Nyata (Prinsip Math.min)
         prodBcmHr = Math.min(rawProdBcmHr, loaderMaxProdBcmHr);
         prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
         prodTonKmHr = prodTonHr * dist;
       }
 
-      // Perhitungan Biaya Support Unit
       let supportCostHr = 0;
       for (let i = 1; i <= supportSlotCount; i++) {
         const sName = document.getElementById(`sim-support-${i}`).value;
@@ -600,10 +597,8 @@
         if (sObj) supportCostHr += (sObj.cost * sQty);
       }
 
-      // Total Biaya Armada Gabungan
       const totalFleetCostHr = (loader.cost * loaderQty) + (hauler.cost * haulerQty) + supportCostHr;
 
-      // Hasil Produksi Utama Sesuai Job Type
       let mainProdValue = 0;
       let secondaryProdText = "";
       if (currentJobType === "OB") {
@@ -614,16 +609,14 @@
         secondaryProdText = `${prodBcmHr.toFixed(1)} BCM/Jam`;
       } else if (currentJobType === "CoHauling") {
         mainProdValue = prodTonKmHr;
-        secondaryProdText = `${prodTonHr.toFixed(1)} Ton/h | ${dist} km`;
+        secondaryProdText = `${prodTonHr.toFixed(1)} Ton/Jam | ${dist} km`;
       }
 
-      // Finansial
       const unitCost = mainProdValue > 0 ? (totalFleetCostHr / mainProdValue) : 0;
       const grossRevenueHr = mainProdValue * contractRate;
       const netProfitHr = grossRevenueHr - totalFleetCostHr;
       const netProfitPerUnit = mainProdValue > 0 ? (netProfitHr / mainProdValue) : 0;
 
-      // Break-Even Calculation
       const bepProd = contractRate > 0 ? (totalFleetCostHr / contractRate) : 0;
       let bepDistance = 0;
 
@@ -640,10 +633,12 @@
         }
       }
 
-      // Update UI Ringkasan Eksekutif
       document.getElementById("res-mf").innerText = mf.toFixed(2);
       const mfBadge = document.getElementById("res-mf-badge");
-      if (loaderQty === 0 || haulerQty === 0) {
+      if (currentJobType === "CoHauling" && loaderQty === 0) {
+        mfBadge.innerText = "Hauler Only (ROM/Port)";
+        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
+      } else if (loaderQty === 0 || haulerQty === 0) {
         mfBadge.innerText = "No Operation";
         mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-700 text-slate-400";
       } else if (mf < 0.95) {
@@ -671,7 +666,6 @@
       document.getElementById("res-bep-prod").innerText = `${bepProd.toFixed(1)} ${unitLabel}`;
     }
 
-    // Initialize on load
     window.onload = initApp;
   </script>
 </body>
