@@ -242,7 +242,7 @@
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal Hauling ($/Ton.Km)</label>
-              <input type="number" step="0.01" id="master-rate-cohauling" value="0.45" oninput="saveRates()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
+              <input type="number" step="0.01" id="master-rate-cohauling" value="0.12" oninput="saveRates()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
             </div>
           </div>
           <div class="flex justify-between items-center pt-2 border-t border-slate-700/60 text-xs">
@@ -256,6 +256,14 @@
         </div>
       </div>
 
+      <!-- Action Bar Master Data -->
+      <div class="flex justify-between items-center">
+        <p class="text-xs text-slate-400">Anda dapat mengubah langsung angka spesifikasi teknis dan biaya sewa armada di bawah ini (tersimpan otomatis).</p>
+        <button onclick="resetDbToDefault()" class="px-2.5 py-1 text-xs rounded border border-rose-500/40 text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-1">
+          <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset Default OOC
+        </button>
+      </div>
+
       <!-- Master Loaders -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
         <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
@@ -266,9 +274,9 @@
             <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
               <tr>
                 <th class="p-2">Model</th>
-                <th class="p-2">Bucket (m³)</th>
-                <th class="p-2">CT (dtk)</th>
-                <th class="p-2">Cost ($/h)</th>
+                <th class="p-2 w-28 text-center">Bucket (m³)</th>
+                <th class="p-2 w-28 text-center">CT (dtk)</th>
+                <th class="p-2 w-28 text-center">Cost ($/h)</th>
               </tr>
             </thead>
             <tbody id="table-loaders" class="divide-y divide-slate-700"></tbody>
@@ -276,7 +284,7 @@
         </div>
       </div>
 
-      <!-- Master Haulers -->
+      <!-- Master Haulers (Editable) -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
         <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
           <i data-lucide="truck" class="w-4 h-4"></i> Master Hauling Unit (Dump Truck)
@@ -286,9 +294,9 @@
             <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
               <tr>
                 <th class="p-2">Model</th>
-                <th class="p-2">Vessel (m³)</th>
-                <th class="p-2">Dump (mnt)</th>
-                <th class="p-2">Cost ($/h)</th>
+                <th class="p-2 w-28 text-center">Vessel (m³)</th>
+                <th class="p-2 w-28 text-center">Dump (mnt)</th>
+                <th class="p-2 w-28 text-center">Cost ($/h)</th>
               </tr>
             </thead>
             <tbody id="table-haulers" class="divide-y divide-slate-700"></tbody>
@@ -296,7 +304,7 @@
         </div>
       </div>
 
-      <!-- Master Supports -->
+      <!-- Master Supports (Editable) -->
       <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
         <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
           <i data-lucide="shield" class="w-4 h-4"></i> Master Support Unit
@@ -307,7 +315,7 @@
               <tr>
                 <th class="p-2">Model</th>
                 <th class="p-2">Fungsi</th>
-                <th class="p-2">Cost ($/h)</th>
+                <th class="p-2 w-32 text-center">Cost ($/h)</th>
               </tr>
             </thead>
             <tbody id="table-supports" class="divide-y divide-slate-700"></tbody>
@@ -320,7 +328,7 @@
   </main>
 
   <script>
-    const db = {
+    const defaultDb = {
       loaders: [
         { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
         { name: "HITACHI ZX870H-5G (4.5m³)", bucket: 4.50, ctSec: 25.0, cost: 147.62 },
@@ -358,6 +366,8 @@
       ]
     };
 
+    let db = JSON.parse(localStorage.getItem("fleet_custom_db")) || JSON.parse(JSON.stringify(defaultDb));
+
     let currentJobType = "OB";
     const supportSlotCount = 3;
 
@@ -367,7 +377,7 @@
     let savedRates = JSON.parse(localStorage.getItem("fleet_saved_rates")) || {
       ob: 1.80,
       co: 3.50,
-      cohauling: 0.45
+      cohauling: 0.12
     };
 
     function initApp() {
@@ -375,17 +385,10 @@
       document.getElementById("master-rate-co").value = savedRates.co;
       document.getElementById("master-rate-cohauling").value = savedRates.cohauling;
 
-      const loaderSelect = document.getElementById("sim-loader");
-      db.loaders.forEach(l => {
-        loaderSelect.innerHTML += `<option value="${l.name}">${l.name}</option>`;
-      });
-
-      const haulerSelect = document.getElementById("sim-hauler");
-      db.haulers.forEach(h => {
-        haulerSelect.innerHTML += `<option value="${h.name}">${h.name}</option>`;
-      });
+      rebuildDropdowns();
 
       const supportContainer = document.getElementById("support-container");
+      supportContainer.innerHTML = "";
       for (let i = 1; i <= supportSlotCount; i++) {
         let defaultSupportName = i === 1 ? "KOMATSU D375A-6R" : "None (Tidak Pakai)";
         let defaultQty = i === 1 ? 1 : 0;
@@ -406,6 +409,89 @@
       renderDatabaseTables();
       lucide.createIcons();
       setJobType("OB");
+    }
+
+    function rebuildDropdowns() {
+      const currentLoader = document.getElementById("sim-loader").value;
+      const currentHauler = document.getElementById("sim-hauler").value;
+
+      const loaderSelect = document.getElementById("sim-loader");
+      loaderSelect.innerHTML = db.loaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
+
+      const haulerSelect = document.getElementById("sim-hauler");
+      haulerSelect.innerHTML = db.haulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
+    }
+
+    function updateLoaderParam(idx, field, value) {
+      db.loaders[idx][field] = parseFloat(value) || 0;
+      saveCustomDb();
+    }
+
+    function updateHaulerParam(idx, field, value) {
+      db.haulers[idx][field] = parseFloat(value) || 0;
+      saveCustomDb();
+    }
+
+    function updateSupportParam(idx, field, value) {
+      db.supports[idx][field] = parseFloat(value) || 0;
+      saveCustomDb();
+    }
+
+    function saveCustomDb() {
+      localStorage.setItem("fleet_custom_db", JSON.stringify(db));
+      runSimulation();
+    }
+
+    function resetDbToDefault() {
+      if (confirm("Kembalikan seluruh database alat ke spesifikasi standar pabrikan OOC?")) {
+        db = JSON.parse(JSON.stringify(defaultDb));
+        saveCustomDb();
+        renderDatabaseTables();
+        rebuildDropdowns();
+        runSimulation();
+      }
+    }
+
+    function renderDatabaseTables() {
+      document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
+        <tr class="hover:bg-slate-750">
+          <td class="p-2 font-medium">${l.name}</td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.01" value="${l.bucket}" onchange="updateLoaderParam(${idx}, 'bucket', this.value)" class="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.5" value="${l.ctSec}" onchange="updateLoaderParam(${idx}, 'ctSec', this.value)" class="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.01" value="${l.cost}" onchange="updateLoaderParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
+          </td>
+        </tr>
+      `).join("");
+
+      document.getElementById("table-haulers").innerHTML = db.haulers.map((h, idx) => `
+        <tr class="hover:bg-slate-750">
+          <td class="p-2 font-medium">${h.name}</td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="w-20 bg-slate-900 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Ubah kapasitas bak/vessel disini">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.1" value="${h.dumpMin}" onchange="updateHaulerParam(${idx}, 'dumpMin', this.value)" class="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.01" value="${h.cost}" onchange="updateHaulerParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
+          </td>
+        </tr>
+      `).join("");
+
+      document.getElementById("table-supports").innerHTML = db.supports.map((s, idx) => `
+        <tr class="hover:bg-slate-750">
+          <td class="p-2 font-medium">${s.name}</td>
+          <td class="p-2 text-slate-400">${s.role}</td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.01" value="${s.cost}" onchange="updateSupportParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
+          </td>
+        </tr>
+      `).join("");
     }
 
     function toggleLockModal() {
@@ -493,7 +579,6 @@
         }
       }
 
-      // Penyesuaian Otomatis Parameter Lapangan & Armada sesuai Job Type
       if (type === "OB") {
         document.getElementById("param-dist").value = "2.0";
         document.getElementById("param-speed-l").value = "20";
@@ -526,34 +611,6 @@
       }
 
       runSimulation();
-    }
-
-    function renderDatabaseTables() {
-      document.getElementById("table-loaders").innerHTML = db.loaders.map(l => `
-        <tr class="hover:bg-slate-750">
-          <td class="p-2 font-medium">${l.name}</td>
-          <td class="p-2 text-right">${l.bucket.toFixed(2)}</td>
-          <td class="p-2 text-right">${l.ctSec.toFixed(1)}</td>
-          <td class="p-2 text-right text-amber-400 font-mono">$${l.cost.toFixed(2)}</td>
-        </tr>
-      `).join("");
-
-      document.getElementById("table-haulers").innerHTML = db.haulers.map(h => `
-        <tr class="hover:bg-slate-750">
-          <td class="p-2 font-medium">${h.name}</td>
-          <td class="p-2 text-right">${h.vessel.toFixed(1)}</td>
-          <td class="p-2 text-right">${h.dumpMin.toFixed(2)}</td>
-          <td class="p-2 text-right text-amber-400 font-mono">$${h.cost.toFixed(2)}</td>
-        </tr>
-      `).join("");
-
-      document.getElementById("table-supports").innerHTML = db.supports.map(s => `
-        <tr class="hover:bg-slate-750">
-          <td class="p-2 font-medium">${s.name}</td>
-          <td class="p-2 text-slate-400">${s.role}</td>
-          <td class="p-2 text-right text-amber-400 font-mono">$${s.cost.toFixed(2)}</td>
-        </tr>
-      `).join("");
     }
 
     function runSimulation() {
@@ -600,7 +657,6 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
-      // Perhitungan Rinci Cycle Time
       const passes = hauler.vessel / loader.bucket;
       const loadingTimeMin = passes * (loader.ctSec / 60.0);
       const travelLoadedMin = (dist / speedL) * 60.0;
@@ -620,7 +676,7 @@
       let effectiveLoadTime = loadingTimeMin;
 
       if (currentJobType === "CoHauling" && haulerQty > 0) {
-        effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0; // Standar 3 menit muat di ROM/Hopper jika loader 0
+        effectiveLoadTime = loaderQty > 0 ? loadingTimeMin : 3.0;
         displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
         
         const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
@@ -648,7 +704,6 @@
         prodTonKmHr = prodTonHr * dist;
       }
 
-      // Update Tampilan Breakdown Cycle Time
       document.getElementById("ct-load").innerText = `${effectiveLoadTime.toFixed(2)} mnt`;
       document.getElementById("ct-travel-l").innerText = `${travelLoadedMin.toFixed(2)} mnt`;
       document.getElementById("ct-dump").innerText = `${dumpSpotMin.toFixed(2)} mnt`;
@@ -658,7 +713,6 @@
       const ritasePerUnit = displayCT > 0 ? ((60.0 / displayCT) * eff) : 0;
       document.getElementById("ct-ritase").innerText = ritasePerUnit.toFixed(2);
 
-      // Total Cost
       let supportCostHr = 0;
       for (let i = 1; i <= supportSlotCount; i++) {
         const sName = document.getElementById(`sim-support-${i}`).value;
@@ -704,7 +758,6 @@
         }
       }
 
-      // Update UI Status & Badges
       document.getElementById("res-mf").innerText = mf.toFixed(2);
       const mfBadge = document.getElementById("res-mf-badge");
       if (currentJobType === "CoHauling" && loaderQty === 0) {
