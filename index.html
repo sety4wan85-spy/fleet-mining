@@ -790,8 +790,11 @@
       if (currentUser && currentUser.role === 'operational') return;
       if (field === 'name') {
         obMaterialSpecs[matKey][field] = value.trim();
+      } else if (field === 'blastingCostBcm') {
+        obMaterialSpecs[matKey][field] = parseFloat(value) || 0.0; // Biaya blasting jika kosong = $0.00
       } else {
-        obMaterialSpecs[matKey][field] = parseFloat(value) || 0;
+        // Jika kolom Cost Factor dikosongkan, otomatis kembali ke 1.00 (Biaya Normal 100%)
+        obMaterialSpecs[matKey][field] = parseFloat(value) || 1.00;
       }
       localStorage.setItem("fleet_custom_mat_ob", JSON.stringify(obMaterialSpecs));
       updateMaterialButtonLabels();
