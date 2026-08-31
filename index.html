@@ -175,7 +175,7 @@
           </div>
 
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
-            <span id="label-unit-cost" class="text-xs text-slate-400">Net Profit ($/Jam)</span>
+            <span class="text-xs text-slate-400">Net Profit ($/Jam)</span>
             <div id="res-profit-hr" class="text-xl font-bold mt-1 text-emerald-400">$0.00</div>
             <span id="res-profit-unit" class="text-[11px] text-slate-400 mt-1 block">$0.000/BCM Margin</span>
           </div>
@@ -703,10 +703,8 @@
 
     // --- 1. LOADER CSV HANDLERS ---
     function downloadLoaderCsvTemplate() {
-      const headers = "Model Unit,Bucket,CT,Cost
-";
-      const sampleRows = db.loaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("
-");
+      const headers = "Model Unit,Bucket,CT,Cost\n";
+      const sampleRows = db.loaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvContent);
@@ -757,10 +755,8 @@
 
     // --- 2. HAULER CSV HANDLERS ---
     function downloadHaulerCsvTemplate() {
-      const headers = "Model Unit,Vessel,Dump,Cost
-";
-      const sampleRows = db.haulers.map(h => `"${h.name}",${h.vessel},${h.dumpMin},${h.cost}`).join("
-");
+      const headers = "Model Unit,Vessel,Dump,Cost\n";
+      const sampleRows = db.haulers.map(h => `"${h.name}",${h.vessel},${h.dumpMin},${h.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvContent);
@@ -811,10 +807,8 @@
 
     // --- 3. SUPPORT CSV HANDLERS ---
     function downloadSupportCsvTemplate() {
-      const headers = "Model Unit,Fungsi Lapangan,Cost
-";
-      const sampleRows = db.supports.map(s => `"${s.name}","${s.role}",${s.cost}`).join("
-");
+      const headers = "Model Unit,Fungsi Lapangan,Cost\n";
+      const sampleRows = db.supports.map(s => `"${s.name}","${s.role}",${s.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvContent);
