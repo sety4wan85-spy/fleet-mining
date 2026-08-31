@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Blasting & Overhead Cost Engine</title>
+  <title>Mining Fleet Manager - CSV Upload & Fleet Master</title>
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -156,28 +156,24 @@
 
         <!-- Executive KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <!-- Match Factor Card -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800 relative overflow-hidden">
             <span class="text-xs text-slate-400">Match Factor (MF)</span>
             <div id="res-mf" class="text-xl font-bold mt-1 text-white">0.00</div>
             <span id="res-mf-badge" class="text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">-</span>
           </div>
 
-          <!-- Productivity Card -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-prod-primary" class="text-xs text-slate-400">Produksi (BCM/Jam)</span>
             <div id="res-prod-primary" class="text-xl font-bold mt-1 text-amber-400">0.0</div>
             <span id="res-prod-secondary" class="text-[11px] text-slate-400 mt-1 block">0.0 Ton/Jam</span>
           </div>
 
-          <!-- Unit Cost Card (With Breakdown) -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-unit-cost" class="text-xs text-slate-400">Unit Cost ($/BCM)</span>
             <div id="res-unit-cost" class="text-xl font-bold mt-1 text-rose-400">$0.000</div>
             <span id="res-total-cost" class="text-[11px] text-slate-400 mt-1 block font-mono">$0.00/Jam Total</span>
           </div>
 
-          <!-- Net Profit Card -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span class="text-xs text-slate-400">Net Profit ($/Jam)</span>
             <div id="res-profit-hr" class="text-xl font-bold mt-1 text-emerald-400">$0.00</div>
@@ -185,7 +181,7 @@
           </div>
         </div>
 
-        <!-- Detail Cost Breakdown & Overhead Banner -->
+        <!-- Detail Cost Breakdown -->
         <div id="cost-breakdown-banner" class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs">
           <div class="flex items-center gap-4">
             <div class="text-slate-400">Komposisi Biaya per Jam:</div>
@@ -197,7 +193,7 @@
           <div class="text-slate-400 font-mono text-[11px]" id="cb-total-summary">Total: $0.00/h</div>
         </div>
 
-        <!-- Detail Waktu Putar / Cycle Time Breakdown Card -->
+        <!-- Detail Cycle Time Breakdown -->
         <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 space-y-2">
           <div class="flex justify-between items-center pb-2 border-b border-slate-800">
             <div class="flex items-center gap-2">
@@ -248,7 +244,6 @@
             <i data-lucide="layers" class="w-4 h-4"></i> Konfigurasi Unit
           </h2>
 
-          <!-- Loader Row with Ownership Selection -->
           <div id="container-loader-row" class="space-y-1.5">
             <div class="flex justify-between items-center">
               <label class="block text-xs text-slate-400">Loading Unit di Pit / ROM (Excavator)</label>
@@ -269,7 +264,6 @@
             </div>
           </div>
 
-          <!-- Hauler Row -->
           <div>
             <label class="block text-xs text-slate-400 mb-1">Hauling Unit (Dump Truck)</label>
             <div class="flex gap-2">
@@ -281,7 +275,6 @@
             </div>
           </div>
 
-          <!-- Support Units Section -->
           <div class="pt-2 border-t border-slate-800 space-y-2">
             <label class="block text-xs text-slate-400 font-semibold">Alat Support (Dozer, Grader, WT)</label>
             <div id="support-container" class="space-y-2"></div>
@@ -383,7 +376,7 @@
           </div>
         </div>
 
-        <!-- Master Karakteristik Material OB Table (With Blasting Cost $/BCM and Cost Multipliers) -->
+        <!-- Master Karakteristik Material OB Table -->
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
           <div class="flex justify-between items-center">
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
@@ -409,15 +402,24 @@
           </div>
         </div>
 
-        <!-- Master Loaders -->
+        <!-- Master Loaders (With CSV Upload & Template Download) -->
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
-          <div class="flex justify-between items-center">
+          <div class="flex flex-wrap justify-between items-center gap-2">
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
               <i data-lucide="wrench" class="w-4 h-4"></i> Master Loading Unit (Excavator)
             </h3>
-            <button onclick="addNewLoaderRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
-              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Excavator Baru
-            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="downloadLoaderCsvTemplate()" class="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Template
+              </button>
+              <label class="px-2.5 py-1 text-xs rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer transition flex items-center gap-1 shadow">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CSV
+                <input type="file" id="csv-loader-input" accept=".csv" onchange="handleLoaderCsvUpload(event)" class="hidden">
+              </label>
+              <button onclick="addNewLoaderRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Unit
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-slate-300">
@@ -500,42 +502,10 @@
     ];
 
     const defaultObMaterialSpecs = {
-      softsoil: { 
-        name: "Soft Soil (Lunak)", 
-        bff: 1.05, 
-        ctFactor: 0.90, 
-        blastingCostBcm: 0.0, 
-        loaderCostFactor: 0.95, 
-        haulerCostFactor: 0.95, 
-        supportCostFactor: 0.95 
-      },
-      hardsoil: { 
-        name: "Hard Soil / Clay", 
-        bff: 0.95, 
-        ctFactor: 1.00, 
-        blastingCostBcm: 0.0, 
-        loaderCostFactor: 1.00, 
-        haulerCostFactor: 1.00, 
-        supportCostFactor: 1.00 
-      },
-      blasting: { 
-        name: "Blasting / Rock", 
-        bff: 0.85, 
-        ctFactor: 1.15, 
-        blastingCostBcm: 0.45, 
-        loaderCostFactor: 1.15, 
-        haulerCostFactor: 1.10, 
-        supportCostFactor: 1.15 
-      },
-      mud: { 
-        name: "Lumpur / Mud", 
-        bff: 0.80, 
-        ctFactor: 1.10, 
-        blastingCostBcm: 0.0, 
-        loaderCostFactor: 1.10, 
-        haulerCostFactor: 1.12, 
-        supportCostFactor: 1.10 
-      }
+      softsoil: { name: "Soft Soil (Lunak)", bff: 1.05, ctFactor: 0.90, blastingCostBcm: 0.0, loaderCostFactor: 0.95, haulerCostFactor: 0.95, supportCostFactor: 0.95 },
+      hardsoil: { name: "Hard Soil / Clay", bff: 0.95, ctFactor: 1.00, blastingCostBcm: 0.0, loaderCostFactor: 1.00, haulerCostFactor: 1.00, supportCostFactor: 1.00 },
+      blasting: { name: "Blasting / Rock", bff: 0.85, ctFactor: 1.15, blastingCostBcm: 0.45, loaderCostFactor: 1.15, haulerCostFactor: 1.10, supportCostFactor: 1.15 },
+      mud:      { name: "Lumpur / Mud", bff: 0.80, ctFactor: 1.10, blastingCostBcm: 0.0, loaderCostFactor: 1.10, haulerCostFactor: 1.12, supportCostFactor: 1.10 }
     };
 
     const defaultDb = {
@@ -706,6 +676,64 @@
       haulerSelect.innerHTML = db.haulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
+    // --- CSV Template Download & Upload Handler ---
+    function downloadLoaderCsvTemplate() {
+      const headers = "Model Unit,Bucket,CT,Cost\n";
+      const sampleRows = db.loaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("\n");
+      const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", csvContent);
+      downloadAnchor.setAttribute("download", "master_loading_units_template.csv");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function handleLoaderCsvUpload(event) {
+      if (currentUser && currentUser.role === 'operational') return;
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== "");
+        if (lines.length <= 1) {
+          alert("File CSV kosong atau tidak memiliki data!");
+          return;
+        }
+
+        const newLoaders = [];
+        // Skip header row
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i];
+          // Handle standard CSV matching comma separation with quotes
+          const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 4) {
+            const name = cols[0];
+            const bucket = parseFloat(cols[1]) || 0;
+            const ctSec = parseFloat(cols[2]) || 25.0;
+            const cost = parseFloat(cols[3]) || 0;
+            if (name && bucket > 0) {
+              newLoaders.push({ name, bucket, ctSec, cost });
+            }
+          }
+        }
+
+        if (newLoaders.length > 0) {
+          db.loaders = newLoaders;
+          saveCustomDb();
+          renderDatabaseTables();
+          rebuildDropdowns();
+          runSimulation();
+          alert(`Berhasil mengimpor ${newLoaders.length} unit Excavator dari file CSV!`);
+        } else {
+          alert("Format baris CSV tidak sesuai! Pastikan memiliki 4 kolom: Model, Bucket, CT, Cost.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
     function addNewLoaderRow() {
       if (currentUser && currentUser.role === 'operational') return;
       const name = prompt("Masukkan Nama / Model Excavator Baru:", "CATERPILLAR CAT390D (5.5m³)");
@@ -787,15 +815,12 @@
     }
 
     function updateMaterialParam(matKey, field, value) {
-      function updateMaterialParam(matKey, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
       if (field === 'name') {
         obMaterialSpecs[matKey][field] = value.trim();
       } else if (field === 'blastingCostBcm') {
-        // Biaya Blasting jika kosong diisi $0.00
         obMaterialSpecs[matKey][field] = value === "" ? 0.0 : (parseFloat(value) || 0.0);
       } else {
-        // Kolom BFF, Faktor CT, Cost Loader, Cost Hauler, Cost Support jika kosong OTOMATIS = 1.00 (Biaya Normal)
         obMaterialSpecs[matKey][field] = value === "" ? 1.00 : (parseFloat(value) || 1.00);
       }
       localStorage.setItem("fleet_custom_mat_ob", JSON.stringify(obMaterialSpecs));
@@ -839,7 +864,7 @@
     }
 
     function renderDatabaseTables() {
-      // 1. Table Material OB with Cost Multipliers & Blasting Cost $/BCM
+      // 1. Table Material OB
       document.getElementById("table-materials-ob").innerHTML = Object.entries(obMaterialSpecs).map(([key, m]) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
