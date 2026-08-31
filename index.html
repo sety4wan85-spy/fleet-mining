@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Advanced Fleet & Material Engine</title>
+  <title>Mining Fleet Manager - Material & Fleet Master</title>
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -68,7 +68,7 @@
         </div>
         <div class="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-800">
           <span>👔 <strong>Management</strong>: NIK <code>1001</code> (PIN: <code>1234</code>)</span>
-          <span class="text-blue-400 font-mono">Master Alat (No Rate)</span>
+          <span class="text-blue-400 font-mono">Master Alat & Material</span>
         </div>
         <div class="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-800">
           <span>👷 <strong>Operasional</strong>: NIK <code>2001</code> (PIN: <code>0000</code>)</span>
@@ -127,30 +127,30 @@
           </div>
         </div>
 
-        <!-- NEW: Material Sub-Category for OB (Affects Bucket Fill Factor, CT, Density, SF) -->
+        <!-- Material Sub-Category for OB -->
         <div id="container-ob-material" class="bg-slate-900 rounded-xl p-3 border border-amber-500/30">
           <div class="flex justify-between items-center mb-2">
             <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="layers-3" class="w-3.5 h-3.5"></i> Karakteristik Material Overburden (OB)
             </label>
-            <span id="badge-material-effect" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">BFF: 1.00 | CT: Normal</span>
+            <span id="badge-material-effect" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">BFF: 0.95 | CT: Normal</span>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
             <button type="button" id="btn-mat-softsoil" onclick="setObMaterial('softsoil')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
-              <div class="font-bold text-slate-100">Soft Soil (Lunak)</div>
-              <div class="text-[10px] text-emerald-400 mt-0.5">BFF 1.05 | CT Cepat</div>
+              <div class="font-bold text-slate-100" id="label-mat-name-softsoil">Soft Soil (Lunak)</div>
+              <div class="text-[10px] text-emerald-400 mt-0.5" id="label-mat-sub-softsoil">BFF 1.05 | CT Cepat</div>
             </button>
             <button type="button" id="btn-mat-hardsoil" onclick="setObMaterial('hardsoil')" class="p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition">
-              <div class="font-bold">Hard Soil / Clay</div>
-              <div class="text-[10px] opacity-90 mt-0.5">BFF 0.95 | CT Standar</div>
+              <div class="font-bold" id="label-mat-name-hardsoil">Hard Soil / Clay</div>
+              <div class="text-[10px] opacity-90 mt-0.5" id="label-mat-sub-hardsoil">BFF 0.95 | CT Standar</div>
             </button>
             <button type="button" id="btn-mat-blasting" onclick="setObMaterial('blasting')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
-              <div class="font-bold text-slate-100">Blasting / Rock</div>
-              <div class="text-[10px] text-amber-400 mt-0.5">BFF 0.85 | CT Berat</div>
+              <div class="font-bold text-slate-100" id="label-mat-name-blasting">Blasting / Rock</div>
+              <div class="text-[10px] text-amber-400 mt-0.5" id="label-mat-sub-blasting">BFF 0.85 | CT Berat</div>
             </button>
             <button type="button" id="btn-mat-mud" onclick="setObMaterial('mud')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
-              <div class="font-bold text-slate-100">Lumpur / Mud</div>
-              <div class="text-[10px] text-cyan-400 mt-0.5">BFF 0.80 | Densitas 1.6</div>
+              <div class="font-bold text-slate-100" id="label-mat-name-mud">Lumpur / Mud</div>
+              <div class="text-[10px] text-cyan-400 mt-0.5" id="label-mat-sub-mud">BFF 0.80 | Densitas 1.65</div>
             </button>
           </div>
         </div>
@@ -333,7 +333,7 @@
           </div>
 
           <div id="rate-locked-view" class="bg-slate-950/90 border border-slate-800 rounded-lg p-4 text-center space-y-2">
-            <div class="text-xs text-slate-400">Tarif kontrak bersifat rahasia. Management hanya diizinkan mengedit spesifikasi armada alat.</div>
+            <div class="text-xs text-slate-400">Tarif kontrak bersifat rahasia. Management hanya diizinkan mengedit spesifikasi armada dan material.</div>
             <button id="btn-prompt-unlock" onclick="promptUnlock()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow transition">
               Masukkan PIN Admin untuk Melihat / Edit Tarif
             </button>
@@ -362,6 +362,30 @@
                 <i data-lucide="lock" class="w-3.5 h-3.5"></i> Kunci Kembali Sekarang
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- NEW: Master Karakteristik Material OB Table (Editable) -->
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+              <i data-lucide="layers-3" class="w-4 h-4"></i> Master Karakteristik Material Overburden (OB)
+            </h3>
+            <span class="text-[11px] text-slate-400">Pengaruh fisik material terhadap Bucket Fill Factor, CT, Densitas, & SF</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left text-slate-300">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+                <tr>
+                  <th class="p-2">Tipe Material</th>
+                  <th class="p-2 w-28 text-center">Fill Factor (BFF)</th>
+                  <th class="p-2 w-28 text-center">Faktor CT Loader</th>
+                  <th class="p-2 w-28 text-center">Densitas (Ton/m³)</th>
+                  <th class="p-2 w-28 text-center">Swell Factor (SF)</th>
+                </tr>
+              </thead>
+              <tbody id="table-materials-ob" class="divide-y divide-slate-800"></tbody>
+            </table>
           </div>
         </div>
 
@@ -456,6 +480,13 @@
       { nik: "2002", name: "Foreman Pit & Hauling", role: "operational", pin: "0000" }
     ];
 
+    const defaultObMaterialSpecs = {
+      softsoil: { name: "Soft Soil (Lunak)", bff: 1.05, ctFactor: 0.90, density: 1.80, sf: 0.82, sub: "BFF 1.05 | CT Cepat" },
+      hardsoil: { name: "Hard Soil / Clay", bff: 0.95, ctFactor: 1.00, density: 2.10, sf: 0.80, sub: "BFF 0.95 | CT Standar" },
+      blasting: { name: "Blasting / Rock", bff: 0.85, ctFactor: 1.15, density: 2.50, sf: 0.68, sub: "BFF 0.85 | CT Berat" },
+      mud:      { name: "Lumpur / Mud", bff: 0.80, ctFactor: 1.10, density: 1.65, sf: 0.85, sub: "BFF 0.80 | Densitas 1.65" }
+    };
+
     const defaultDb = {
       loaders: [
         { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
@@ -495,8 +526,10 @@
     };
 
     let db = JSON.parse(localStorage.getItem("fleet_custom_db")) || JSON.parse(JSON.stringify(defaultDb));
+    let obMaterialSpecs = JSON.parse(localStorage.getItem("fleet_custom_mat_ob")) || JSON.parse(JSON.stringify(defaultObMaterialSpecs));
+
     let currentJobType = "OB";
-    let currentObMaterial = "hardsoil"; // softsoil, hardsoil, blasting, mud
+    let currentObMaterial = "hardsoil";
     const supportSlotCount = 3;
 
     let adminPin = localStorage.getItem("fleet_admin_pin") || "1234";
@@ -507,14 +540,6 @@
       ob: 1.80,
       co: 3.50,
       cohauling: 0.12
-    };
-
-    // Material Physical Multipliers for OB
-    const obMaterialSpecs = {
-      softsoil: { bff: 1.05, ctFactor: 0.90, density: 1.80, sf: 0.82, label: "BFF: 1.05 (+5%) | CT: -10% Cepat" },
-      hardsoil: { bff: 0.95, ctFactor: 1.00, density: 2.10, sf: 0.80, label: "BFF: 0.95 | CT: Normal" },
-      blasting: { bff: 0.85, ctFactor: 1.15, density: 2.50, sf: 0.68, label: "BFF: 0.85 (-15%) | CT: +15% Berat" },
-      mud:      { bff: 0.80, ctFactor: 1.10, density: 1.65, sf: 0.85, label: "BFF: 0.80 (Cair/Lumpur) | Densitas 1.65" }
     };
 
     function togglePassVisibility() {
@@ -563,7 +588,7 @@
         navDb.classList.remove("hidden");
         confidentialRateSection.classList.remove("hidden");
       } else if (user.role === 'management') {
-        userBadge.innerHTML = `<i data-lucide="briefcase" class="w-3 h-3 text-blue-400"></i> <span class="text-blue-300 font-bold">${user.name} (Management - Master Fleet Only)</span>`;
+        userBadge.innerHTML = `<i data-lucide="briefcase" class="w-3 h-3 text-blue-400"></i> <span class="text-blue-300 font-bold">${user.name} (Management - Master Fleet & Material)</span>`;
         navDb.classList.remove("hidden");
         confidentialRateSection.classList.add("hidden");
       } else {
@@ -612,6 +637,7 @@
       }
 
       renderDatabaseTables();
+      updateMaterialButtonLabels();
       lucide.createIcons();
       setJobType("OB");
     }
@@ -708,6 +734,33 @@
       saveCustomDb();
     }
 
+    // Material OB Live Update
+    function updateMaterialParam(matKey, field, value) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (field === 'name') {
+        obMaterialSpecs[matKey][field] = value.trim();
+      } else {
+        obMaterialSpecs[matKey][field] = parseFloat(value) || 0;
+      }
+      localStorage.setItem("fleet_custom_mat_ob", JSON.stringify(obMaterialSpecs));
+      updateMaterialButtonLabels();
+      if (currentJobType === "OB") {
+        setObMaterial(currentObMaterial);
+      }
+    }
+
+    function updateMaterialButtonLabels() {
+      for (const [k, spec] of Object.entries(obMaterialSpecs)) {
+        const nameEl = document.getElementById(`label-mat-name-${k}`);
+        const subEl = document.getElementById(`label-mat-sub-${k}`);
+        if (nameEl) nameEl.innerText = spec.name;
+        if (subEl) {
+          const ctLabel = spec.ctFactor === 1.0 ? "CT Standar" : spec.ctFactor < 1.0 ? `CT ${(1.0 - spec.ctFactor) * 100}% Cepat` : `CT +${((spec.ctFactor - 1.0) * 100).toFixed(0)}% Berat`;
+          subEl.innerText = `BFF ${spec.bff.toFixed(2)} | ${ctLabel}`;
+        }
+      }
+    }
+
     function saveCustomDb() {
       localStorage.setItem("fleet_custom_db", JSON.stringify(db));
       runSimulation();
@@ -715,16 +768,41 @@
 
     function resetDbToDefault() {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm("Kembalikan seluruh database alat ke spesifikasi standar pabrikan OOC?")) {
+      if (confirm("Kembalikan seluruh database alat & material ke spesifikasi standar pabrikan OOC?")) {
         db = JSON.parse(JSON.stringify(defaultDb));
+        obMaterialSpecs = JSON.parse(JSON.stringify(defaultObMaterialSpecs));
+        localStorage.removeItem("fleet_custom_mat_ob");
         saveCustomDb();
         renderDatabaseTables();
+        updateMaterialButtonLabels();
         rebuildDropdowns();
         runSimulation();
       }
     }
 
     function renderDatabaseTables() {
+      // 1. Table Material OB
+      document.getElementById("table-materials-ob").innerHTML = Object.entries(obMaterialSpecs).map(([key, m]) => `
+        <tr class="hover:bg-slate-800">
+          <td class="p-2 font-medium">
+            <input type="text" value="${m.name}" onchange="updateMaterialParam('${key}', 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.01" value="${m.bff}" onchange="updateMaterialParam('${key}', 'bff', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500" title="Bucket Fill Factor (0.70 - 1.10)">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500" title="Pengali CT (1.0 = Normal, 0.9 = Cepat, 1.15 = Lambat)">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.05" value="${m.density}" onchange="updateMaterialParam('${key}', 'density', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.02" value="${m.sf}" onchange="updateMaterialParam('${key}', 'sf', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
+          </td>
+        </tr>
+      `).join("");
+
+      // 2. Table Loaders
       document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
@@ -747,6 +825,7 @@
         </tr>
       `).join("");
 
+      // 3. Table Haulers
       document.getElementById("table-haulers").innerHTML = db.haulers.map((h, idx) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
@@ -769,6 +848,7 @@
         </tr>
       `).join("");
 
+      // 4. Table Supports
       document.getElementById("table-supports").innerHTML = db.supports.map((s, idx) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">${s.name}</td>
@@ -801,7 +881,8 @@
       }
 
       const spec = obMaterialSpecs[matType];
-      document.getElementById("badge-material-effect").innerText = spec.label;
+      const ctLabel = spec.ctFactor === 1.0 ? "CT: Normal" : spec.ctFactor < 1.0 ? `CT: -${((1.0 - spec.ctFactor) * 100).toFixed(0)}% Cepat` : `CT: +${((spec.ctFactor - 1.0) * 100).toFixed(0)}% Berat`;
+      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | ${ctLabel}`;
       document.getElementById("param-density").value = spec.density.toFixed(2);
       document.getElementById("param-sf").value = spec.sf.toFixed(2);
 
