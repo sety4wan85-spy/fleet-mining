@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Material & Fleet Master</title>
+  <title>Mining Fleet Manager - Advanced Fleet & Material Engine</title>
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -133,24 +133,24 @@
             <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="layers-3" class="w-3.5 h-3.5"></i> Karakteristik Material Overburden (OB)
             </label>
-            <span id="badge-material-effect" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">BFF: 0.95 | CT: Normal</span>
+            <span id="badge-material-effect" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">BFF: 0.95 | CT: Normal | Cost Factor: 1.00x</span>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
             <button type="button" id="btn-mat-softsoil" onclick="setObMaterial('softsoil')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
               <div class="font-bold text-slate-100" id="label-mat-name-softsoil">Soft Soil (Lunak)</div>
-              <div class="text-[10px] text-emerald-400 mt-0.5" id="label-mat-sub-softsoil">BFF 1.05 | CT Cepat</div>
+              <div class="text-[10px] text-emerald-400 mt-0.5" id="label-mat-sub-softsoil">BFF 1.05 | Cost -5%</div>
             </button>
             <button type="button" id="btn-mat-hardsoil" onclick="setObMaterial('hardsoil')" class="p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition">
               <div class="font-bold" id="label-mat-name-hardsoil">Hard Soil / Clay</div>
-              <div class="text-[10px] opacity-90 mt-0.5" id="label-mat-sub-hardsoil">BFF 0.95 | CT Standar</div>
+              <div class="text-[10px] opacity-90 mt-0.5" id="label-mat-sub-hardsoil">BFF 0.95 | Cost Standar</div>
             </button>
             <button type="button" id="btn-mat-blasting" onclick="setObMaterial('blasting')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
               <div class="font-bold text-slate-100" id="label-mat-name-blasting">Blasting / Rock</div>
-              <div class="text-[10px] text-amber-400 mt-0.5" id="label-mat-sub-blasting">BFF 0.85 | CT Berat</div>
+              <div class="text-[10px] text-amber-400 mt-0.5" id="label-mat-sub-blasting">BFF 0.85 | Cost +15%</div>
             </button>
             <button type="button" id="btn-mat-mud" onclick="setObMaterial('mud')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
               <div class="font-bold text-slate-100" id="label-mat-name-mud">Lumpur / Mud</div>
-              <div class="text-[10px] text-cyan-400 mt-0.5" id="label-mat-sub-mud">BFF 0.80 | Densitas 1.65</div>
+              <div class="text-[10px] text-cyan-400 mt-0.5" id="label-mat-sub-mud">BFF 0.80 | Cost +5%</div>
             </button>
           </div>
         </div>
@@ -365,23 +365,24 @@
           </div>
         </div>
 
-        <!-- NEW: Master Karakteristik Material OB Table (Editable) -->
+        <!-- NEW: Master Karakteristik Material OB Table (With Cost Factors per Unit Type) -->
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
           <div class="flex justify-between items-center">
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-              <i data-lucide="layers-3" class="w-4 h-4"></i> Master Karakteristik Material Overburden (OB)
+              <i data-lucide="layers-3" class="w-4 h-4"></i> Master Karakteristik & Faktor Biaya Material OB
             </h3>
-            <span class="text-[11px] text-slate-400">Pengaruh fisik material terhadap Bucket Fill Factor, CT, Densitas, & SF</span>
+            <span class="text-[11px] text-slate-400">Pengaruh fisik material terhadap BFF, CT, & Kenaikan Biaya ($/Jam)</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-slate-300">
               <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
                 <tr>
                   <th class="p-2">Tipe Material</th>
-                  <th class="p-2 w-28 text-center">Fill Factor (BFF)</th>
-                  <th class="p-2 w-28 text-center">Faktor CT Loader</th>
-                  <th class="p-2 w-28 text-center">Densitas (Ton/m³)</th>
-                  <th class="p-2 w-28 text-center">Swell Factor (SF)</th>
+                  <th class="p-2 w-24 text-center">Fill Factor (BFF)</th>
+                  <th class="p-2 w-24 text-center">Faktor CT Loader</th>
+                  <th class="p-2 w-24 text-center text-amber-300 font-bold">Cost Factor Loader</th>
+                  <th class="p-2 w-24 text-center text-amber-300 font-bold">Cost Factor Hauler</th>
+                  <th class="p-2 w-24 text-center text-amber-300 font-bold">Cost Factor Support</th>
                 </tr>
               </thead>
               <tbody id="table-materials-ob" class="divide-y divide-slate-800"></tbody>
@@ -406,7 +407,7 @@
                   <th class="p-2">Model Unit</th>
                   <th class="p-2 w-28 text-center">Bucket (m³)</th>
                   <th class="p-2 w-28 text-center">CT (dtk)</th>
-                  <th class="p-2 w-28 text-center">Cost ($/h)</th>
+                  <th class="p-2 w-28 text-center">Base Cost ($/h)</th>
                   <th class="p-2 w-12 text-center">Aksi</th>
                 </tr>
               </thead>
@@ -432,7 +433,7 @@
                   <th class="p-2">Model Unit</th>
                   <th class="p-2 w-28 text-center">Vessel (m³)</th>
                   <th class="p-2 w-28 text-center">Dump (mnt)</th>
-                  <th class="p-2 w-28 text-center">Cost ($/h)</th>
+                  <th class="p-2 w-28 text-center">Base Cost ($/h)</th>
                   <th class="p-2 w-12 text-center">Aksi</th>
                 </tr>
               </thead>
@@ -457,7 +458,7 @@
                 <tr>
                   <th class="p-2">Model</th>
                   <th class="p-2">Fungsi Lapangan</th>
-                  <th class="p-2 w-32 text-center">Cost ($/h)</th>
+                  <th class="p-2 w-32 text-center">Base Cost ($/h)</th>
                 </tr>
               </thead>
               <tbody id="table-supports" class="divide-y divide-slate-800"></tbody>
@@ -480,11 +481,12 @@
       { nik: "2002", name: "Foreman Pit & Hauling", role: "operational", pin: "0000" }
     ];
 
+    // Default Material OB Characteristics including Cost Multipliers for Loader, Hauler, and Support
     const defaultObMaterialSpecs = {
-      softsoil: { name: "Soft Soil (Lunak)", bff: 1.05, ctFactor: 0.90, density: 1.80, sf: 0.82, sub: "BFF 1.05 | CT Cepat" },
-      hardsoil: { name: "Hard Soil / Clay", bff: 0.95, ctFactor: 1.00, density: 2.10, sf: 0.80, sub: "BFF 0.95 | CT Standar" },
-      blasting: { name: "Blasting / Rock", bff: 0.85, ctFactor: 1.15, density: 2.50, sf: 0.68, sub: "BFF 0.85 | CT Berat" },
-      mud:      { name: "Lumpur / Mud", bff: 0.80, ctFactor: 1.10, density: 1.65, sf: 0.85, sub: "BFF 0.80 | Densitas 1.65" }
+      softsoil: { name: "Soft Soil (Lunak)", bff: 1.05, ctFactor: 0.90, costFactorLoader: 0.95, costFactorHauler: 0.95, costFactorSupport: 0.90 },
+      hardsoil: { name: "Hard Soil / Clay", bff: 0.95, ctFactor: 1.00, costFactorLoader: 1.00, costFactorHauler: 1.00, costFactorSupport: 1.00 },
+      blasting: { name: "Blasting / Rock", bff: 0.85, ctFactor: 1.15, costFactorLoader: 1.15, costFactorHauler: 1.10, costFactorSupport: 1.20 },
+      mud:      { name: "Lumpur / Mud", bff: 0.80, ctFactor: 1.10, costFactorLoader: 1.05, costFactorHauler: 1.05, costFactorSupport: 1.10 }
     };
 
     const defaultDb = {
@@ -653,14 +655,13 @@
       haulerSelect.innerHTML = db.haulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
-    // --- Dynamic Unit Addition & Deletion Handlers ---
     function addNewLoaderRow() {
       if (currentUser && currentUser.role === 'operational') return;
       const name = prompt("Masukkan Nama / Model Excavator Baru:", "CATERPILLAR CAT390D (5.5m³)");
       if (!name || name.trim() === "") return;
       const bucket = parseFloat(prompt("Kapasitas Bucket (m³):", "5.5")) || 5.0;
       const ctSec = parseFloat(prompt("Cycle Time Standar (detik):", "25.0")) || 25.0;
-      const cost = parseFloat(prompt("Rate Sewa / Operating Cost ($/jam):", "180.00")) || 150.0;
+      const cost = parseFloat(prompt("Rate Sewa / Base Cost ($/jam):", "180.00")) || 150.0;
 
       db.loaders.push({ name: name.trim(), bucket, ctSec, cost });
       saveCustomDb();
@@ -686,7 +687,7 @@
       if (!name || name.trim() === "") return;
       const vessel = parseFloat(prompt("Kapasitas Bak / Vessel (m³):", "30.0")) || 30.0;
       const dumpMin = parseFloat(prompt("Waktu Dumping & Spotting (menit):", "1.2")) || 1.2;
-      const cost = parseFloat(prompt("Rate Sewa / Operating Cost ($/jam):", "55.00")) || 50.0;
+      const cost = parseFloat(prompt("Rate Sewa / Base Cost ($/jam):", "55.00")) || 50.0;
 
       db.haulers.push({ name: name.trim(), vessel, dumpMin, cost });
       saveCustomDb();
@@ -734,7 +735,6 @@
       saveCustomDb();
     }
 
-    // Material OB Live Update
     function updateMaterialParam(matKey, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
       if (field === 'name') {
@@ -744,9 +744,7 @@
       }
       localStorage.setItem("fleet_custom_mat_ob", JSON.stringify(obMaterialSpecs));
       updateMaterialButtonLabels();
-      if (currentJobType === "OB") {
-        setObMaterial(currentObMaterial);
-      }
+      runSimulation();
     }
 
     function updateMaterialButtonLabels() {
@@ -755,8 +753,9 @@
         const subEl = document.getElementById(`label-mat-sub-${k}`);
         if (nameEl) nameEl.innerText = spec.name;
         if (subEl) {
-          const ctLabel = spec.ctFactor === 1.0 ? "CT Standar" : spec.ctFactor < 1.0 ? `CT ${(1.0 - spec.ctFactor) * 100}% Cepat` : `CT +${((spec.ctFactor - 1.0) * 100).toFixed(0)}% Berat`;
-          subEl.innerText = `BFF ${spec.bff.toFixed(2)} | ${ctLabel}`;
+          const costFactorPercent = ((spec.costFactorLoader - 1.0) * 100).toFixed(0);
+          const costText = costFactorPercent == 0 ? "Cost Normal" : costFactorPercent > 0 ? `Cost +${costFactorPercent}%` : `Cost ${costFactorPercent}%`;
+          subEl.innerText = `BFF ${spec.bff.toFixed(2)} | ${costText}`;
         }
       }
     }
@@ -788,16 +787,19 @@
             <input type="text" value="${m.name}" onchange="updateMaterialParam('${key}', 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
           </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${m.bff}" onchange="updateMaterialParam('${key}', 'bff', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500" title="Bucket Fill Factor (0.70 - 1.10)">
+            <input type="number" step="0.01" value="${m.bff}" onchange="updateMaterialParam('${key}', 'bff', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500" title="Bucket Fill Factor">
           </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500" title="Pengali CT (1.0 = Normal, 0.9 = Cepat, 1.15 = Lambat)">
+            <input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500" title="Faktor CT (1.0 = Normal, 0.9 = Cepat, 1.15 = Lambat)">
           </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.05" value="${m.density}" onchange="updateMaterialParam('${key}', 'density', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
+            <input type="number" step="0.05" value="${m.costFactorLoader}" onchange="updateMaterialParam('${key}', 'costFactorLoader', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-400 font-bold outline-none focus:border-amber-500" title="Faktor Pengali Biaya Loader (misal 1.15 = naik 15%)">
           </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.02" value="${m.sf}" onchange="updateMaterialParam('${key}', 'sf', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
+            <input type="number" step="0.05" value="${m.costFactorHauler}" onchange="updateMaterialParam('${key}', 'costFactorHauler', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-400 font-bold outline-none focus:border-amber-500" title="Faktor Pengali Biaya Hauler (misal 1.10 = naik 10%)">
+          </td>
+          <td class="p-2 text-center">
+            <input type="number" step="0.05" value="${m.costFactorSupport}" onchange="updateMaterialParam('${key}', 'costFactorSupport', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-400 font-bold outline-none focus:border-amber-500" title="Faktor Pengali Biaya Support (misal 1.20 = naik 20%)">
           </td>
         </tr>
       `).join("");
@@ -882,9 +884,10 @@
 
       const spec = obMaterialSpecs[matType];
       const ctLabel = spec.ctFactor === 1.0 ? "CT: Normal" : spec.ctFactor < 1.0 ? `CT: -${((1.0 - spec.ctFactor) * 100).toFixed(0)}% Cepat` : `CT: +${((spec.ctFactor - 1.0) * 100).toFixed(0)}% Berat`;
-      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | ${ctLabel}`;
-      document.getElementById("param-density").value = spec.density.toFixed(2);
-      document.getElementById("param-sf").value = spec.sf.toFixed(2);
+      const costLabel = spec.costFactorLoader === 1.0 ? "Cost: Normal" : spec.costFactorLoader > 1.0 ? `Cost: +${((spec.costFactorLoader - 1.0) * 100).toFixed(0)}%` : `Cost: ${((spec.costFactorLoader - 1.0) * 100).toFixed(0)}%`;
+      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | ${ctLabel} | ${costLabel}`;
+
+      // Parameter Densitas & SF dibiarkan MANUAL sesuai input pengguna
 
       runSimulation();
     }
@@ -997,9 +1000,6 @@
       if (type === "OB") {
         obMatContainer.classList.remove("hidden");
         setObMaterial("hardsoil");
-        document.getElementById("param-dist").value = "2.0";
-        document.getElementById("param-speed-l").value = "20";
-        document.getElementById("param-speed-e").value = "26";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
         document.getElementById("sim-hauler-qty").value = "5";
@@ -1007,9 +1007,6 @@
         document.getElementById("sim-hauler").value = "KOMATSU HD785-7 (60m³)";
       } else if (type === "CO") {
         obMatContainer.classList.add("hidden");
-        document.getElementById("param-dist").value = "3.0";
-        document.getElementById("param-speed-l").value = "22";
-        document.getElementById("param-speed-e").value = "28";
         document.getElementById("param-density").value = "1.30";
         document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "contractor";
@@ -1019,9 +1016,6 @@
         document.getElementById("sim-hauler").value = "CMT96 (Wide Body) (35m³)";
       } else if (type === "CoHauling") {
         obMatContainer.classList.add("hidden");
-        document.getElementById("param-dist").value = "50.0";
-        document.getElementById("param-speed-l").value = "30";
-        document.getElementById("param-speed-e").value = "40";
         document.getElementById("param-density").value = "1.30";
         document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "owner";
@@ -1047,15 +1041,6 @@
       const loader = db.loaders.find(u => u.name === loaderName) || db.loaders[0];
       const hauler = db.haulers.find(u => u.name === haulerName) || db.haulers[0];
 
-      if (loaderOwner === "owner") {
-        document.getElementById("sim-loader-rate").innerText = "$0.00/h (Owner)";
-        document.getElementById("sim-loader-rate").className = "w-32 bg-slate-950 border border-emerald-800/60 text-emerald-400 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center font-mono font-semibold";
-      } else {
-        document.getElementById("sim-loader-rate").innerText = `$${loader.cost.toFixed(2)}/h`;
-        document.getElementById("sim-loader-rate").className = "w-32 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono";
-      }
-      document.getElementById("sim-hauler-rate").innerText = `$${hauler.cost.toFixed(2)}/h`;
-
       const dist = parseFloat(document.getElementById("param-dist").value) || 0.1;
       const speedL = parseFloat(document.getElementById("param-speed-l").value) || 20.0;
       const speedE = parseFloat(document.getElementById("param-speed-e").value) || 26.0;
@@ -1063,16 +1048,36 @@
       const sf = parseFloat(document.getElementById("param-sf").value) || 0.85;
       const eff = (parseFloat(document.getElementById("param-eff").value) || 83) / 100.0;
 
-      // Material Multiplier Effects on Bucket Capacity & Cycle Time
+      // Material Multipliers for Bucket, CT, and Cost Factors
       let bff = 1.0;
       let ctMultiplier = 1.0;
+      let costMultLoader = 1.0;
+      let costMultHauler = 1.0;
+      let costMultSupport = 1.0;
+
       if (currentJobType === "OB") {
         const matSpec = obMaterialSpecs[currentObMaterial];
         if (matSpec) {
           bff = matSpec.bff;
           ctMultiplier = matSpec.ctFactor;
+          costMultLoader = matSpec.costFactorLoader || 1.0;
+          costMultHauler = matSpec.costFactorHauler || 1.0;
+          costMultSupport = matSpec.costFactorSupport || 1.0;
         }
       }
+
+      // Effective Rates ($/hour) adjusted by Material Type
+      const effectiveLoaderRate = loader.cost * costMultLoader;
+      const effectiveHaulerRate = hauler.cost * costMultHauler;
+
+      if (loaderOwner === "owner") {
+        document.getElementById("sim-loader-rate").innerText = "$0.00/h (Owner)";
+        document.getElementById("sim-loader-rate").className = "w-32 bg-slate-950 border border-emerald-800/60 text-emerald-400 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center font-mono font-semibold";
+      } else {
+        document.getElementById("sim-loader-rate").innerText = `$${effectiveLoaderRate.toFixed(2)}/h`;
+        document.getElementById("sim-loader-rate").className = "w-32 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono";
+      }
+      document.getElementById("sim-hauler-rate").innerText = `$${effectiveHaulerRate.toFixed(2)}/h`;
 
       let contractRate = 0;
       let unitLabel = "BCM";
@@ -1096,7 +1101,7 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
-      // Effective Loader Specs based on Material
+      // Effective Loader Specs
       const effectiveBucketM3 = loader.bucket * bff;
       const effectiveLoaderCtSec = loader.ctSec * ctMultiplier;
 
@@ -1171,17 +1176,18 @@
       const ritasePerUnit = displayCT > 0 ? ((60.0 / displayCT) * eff) : 0;
       document.getElementById("ct-ritase").innerText = ritasePerUnit.toFixed(2);
 
+      // Support Costs (with Material Support Cost Factor applied)
       let supportCostHr = 0;
       for (let i = 1; i <= supportSlotCount; i++) {
         const sName = document.getElementById(`sim-support-${i}`).value;
         const sQtyInput = document.getElementById(`sim-support-qty-${i}`).value;
         const sQty = sQtyInput === "" ? 0 : parseFloat(sQtyInput);
         const sObj = db.supports.find(s => s.name === sName);
-        if (sObj) supportCostHr += (sObj.cost * sQty);
+        if (sObj) supportCostHr += (sObj.cost * costMultSupport * sQty);
       }
 
-      const chargedLoaderCost = (loaderOwner === "owner") ? 0.0 : (loader.cost * loaderQty);
-      const totalFleetCostHr = chargedLoaderCost + (hauler.cost * haulerQty) + supportCostHr;
+      const chargedLoaderCost = (loaderOwner === "owner") ? 0.0 : (effectiveLoaderRate * loaderQty);
+      const totalFleetCostHr = chargedLoaderCost + (effectiveHaulerRate * haulerQty) + supportCostHr;
 
       let mainProdValue = 0;
       let secondaryProdText = "";
