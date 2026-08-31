@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Multi-Tier Access</title>
+  <title>Mining Fleet Manager - Advanced Fleet & Material Engine</title>
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,7 +33,7 @@
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor Induk Karyawan (NIK)</label>
           <div class="relative">
-            <input type="text" id="login-nik" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-amber-500 outline-none transition uppercase" placeholder="Masukkan NIK Anda...">
+            <input type="text" id="login-nik" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-amber-500 outline-none transition uppercase" placeholder="Masukkan NIK...">
             <div class="absolute right-3 top-3 text-slate-500">
               <i data-lucide="badge-check" class="w-4 h-4"></i>
             </div>
@@ -60,12 +60,11 @@
         </button>
       </form>
 
-      <!-- Demo Accounts -->
       <div class="mt-6 pt-4 border-t border-slate-800 space-y-1.5 text-[11px] text-slate-400">
         <div class="font-semibold text-slate-300">Level Hak Akses:</div>
         <div class="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-800">
-          <span>👑 <strong>Admin</strong>: NIK <code>9999</code> (PIN: <code>2000</code>)</span>
-          <span class="text-amber-400 font-mono">Full All Access</span>
+          <span>👑 <strong>Admin</strong>: NIK <code>9999</code> (PIN: <code>1234</code>)</span>
+          <span class="text-amber-400 font-mono">Full Access</span>
         </div>
         <div class="flex justify-between bg-slate-950/60 p-1.5 rounded border border-slate-800">
           <span>👔 <strong>Management</strong>: NIK <code>1001</code> (PIN: <code>1234</code>)</span>
@@ -124,6 +123,34 @@
             <button id="btn-job-cohauling" onclick="setJobType('CoHauling')" class="py-2.5 px-3 rounded-lg border text-center transition font-semibold text-xs md:text-sm bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600">
               <div>Coal Hauling</div>
               <div class="text-[10px] opacity-80 font-normal">Satuan: Ton.Km</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- NEW: Material Sub-Category for OB (Affects Bucket Fill Factor, CT, Density, SF) -->
+        <div id="container-ob-material" class="bg-slate-900 rounded-xl p-3 border border-amber-500/30">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="layers-3" class="w-3.5 h-3.5"></i> Karakteristik Material Overburden (OB)
+            </label>
+            <span id="badge-material-effect" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">BFF: 1.00 | CT: Normal</span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+            <button type="button" id="btn-mat-softsoil" onclick="setObMaterial('softsoil')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
+              <div class="font-bold text-slate-100">Soft Soil (Lunak)</div>
+              <div class="text-[10px] text-emerald-400 mt-0.5">BFF 1.05 | CT Cepat</div>
+            </button>
+            <button type="button" id="btn-mat-hardsoil" onclick="setObMaterial('hardsoil')" class="p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition">
+              <div class="font-bold">Hard Soil / Clay</div>
+              <div class="text-[10px] opacity-90 mt-0.5">BFF 0.95 | CT Standar</div>
+            </button>
+            <button type="button" id="btn-mat-blasting" onclick="setObMaterial('blasting')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
+              <div class="font-bold text-slate-100">Blasting / Rock</div>
+              <div class="text-[10px] text-amber-400 mt-0.5">BFF 0.85 | CT Berat</div>
+            </button>
+            <button type="button" id="btn-mat-mud" onclick="setObMaterial('mud')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
+              <div class="font-bold text-slate-100">Lumpur / Mud</div>
+              <div class="text-[10px] text-cyan-400 mt-0.5">BFF 0.80 | Densitas 1.6</div>
             </button>
           </div>
         </div>
@@ -292,7 +319,7 @@
       <!-- ==================== TAB 2: MASTER DATA ==================== -->
       <div id="tab-database" class="space-y-4 hidden">
         
-        <!-- Confidential Master Rates (Only Admin Can Unlock) -->
+        <!-- Confidential Master Rates (Admin Only) -->
         <div id="section-confidential-rates" class="bg-slate-900 border border-amber-500/40 rounded-xl p-4 shadow-lg relative overflow-hidden">
           <div class="flex justify-between items-center mb-3">
             <div class="flex items-center gap-2">
@@ -305,15 +332,13 @@
             </button>
           </div>
 
-          <!-- Locked Notice -->
           <div id="rate-locked-view" class="bg-slate-950/90 border border-slate-800 rounded-lg p-4 text-center space-y-2">
-            <div class="text-xs text-slate-400">Tarif kontrak bersifat rahasia. Management hanya diizinkan melihat/mengedit spesifikasi teknis alat di bawah.</div>
+            <div class="text-xs text-slate-400">Tarif kontrak bersifat rahasia. Management hanya diizinkan mengedit spesifikasi armada alat.</div>
             <button id="btn-prompt-unlock" onclick="promptUnlock()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg shadow transition">
               Masukkan PIN Admin untuk Melihat / Edit Tarif
             </button>
           </div>
 
-          <!-- Unlocked View (Admin Only) -->
           <div id="rate-unlocked-view" class="hidden space-y-3">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
@@ -340,27 +365,25 @@
           </div>
         </div>
 
-        <!-- Action Bar Master Data -->
-        <div class="flex justify-between items-center">
-          <p class="text-xs text-slate-400">Spesifikasi teknis & biaya sewa alat dapat diatur oleh Management & Admin.</p>
-          <button onclick="resetDbToDefault()" class="px-2.5 py-1 text-xs rounded border border-rose-500/40 text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-1">
-            <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset Default OOC
-          </button>
-        </div>
-
-        <!-- Master Loaders (Editable by Management & Admin) -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
-            <i data-lucide="wrench" class="w-4 h-4"></i> Master Loading Unit (Excavator)
-          </h3>
+        <!-- Master Loaders (Add, Edit, Delete) -->
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+              <i data-lucide="wrench" class="w-4 h-4"></i> Master Loading Unit (Excavator)
+            </h3>
+            <button onclick="addNewLoaderRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Excavator Baru
+            </button>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-slate-300">
               <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
                 <tr>
-                  <th class="p-2">Model</th>
+                  <th class="p-2">Model Unit</th>
                   <th class="p-2 w-28 text-center">Bucket (m³)</th>
                   <th class="p-2 w-28 text-center">CT (dtk)</th>
                   <th class="p-2 w-28 text-center">Cost ($/h)</th>
+                  <th class="p-2 w-12 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody id="table-loaders" class="divide-y divide-slate-800"></tbody>
@@ -368,19 +391,25 @@
           </div>
         </div>
 
-        <!-- Master Haulers (Editable by Management & Admin) -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
-            <i data-lucide="truck" class="w-4 h-4"></i> Master Hauling Unit (Dump Truck)
-          </h3>
+        <!-- Master Haulers (Add, Edit, Delete) -->
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+              <i data-lucide="truck" class="w-4 h-4"></i> Master Hauling Unit (Dump Truck)
+            </h3>
+            <button onclick="addNewHaulerRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Dump Truck Baru
+            </button>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-slate-300">
               <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
                 <tr>
-                  <th class="p-2">Model</th>
+                  <th class="p-2">Model Unit</th>
                   <th class="p-2 w-28 text-center">Vessel (m³)</th>
                   <th class="p-2 w-28 text-center">Dump (mnt)</th>
                   <th class="p-2 w-28 text-center">Cost ($/h)</th>
+                  <th class="p-2 w-12 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody id="table-haulers" class="divide-y divide-slate-800"></tbody>
@@ -388,17 +417,22 @@
           </div>
         </div>
 
-        <!-- Master Supports (Editable by Management & Admin) -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <h3 class="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
-            <i data-lucide="shield" class="w-4 h-4"></i> Master Support Unit
-          </h3>
+        <!-- Master Supports -->
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+              <i data-lucide="shield" class="w-4 h-4"></i> Master Support Unit
+            </h3>
+            <button onclick="resetDbToDefault()" class="px-2.5 py-1 text-xs rounded border border-rose-500/40 text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-1">
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset Default Pabrikan OOC
+            </button>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-slate-300">
               <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
                 <tr>
                   <th class="p-2">Model</th>
-                  <th class="p-2">Fungsi</th>
+                  <th class="p-2">Fungsi Lapangan</th>
                   <th class="p-2 w-32 text-center">Cost ($/h)</th>
                 </tr>
               </thead>
@@ -413,7 +447,7 @@
   </div>
 
   <script>
-    // 3-Tier Registered Employees Matrix
+    // 3-Tier Employee Database
     const registeredEmployees = [
       { nik: "9999", name: "Super Admin / Commercial Head", role: "admin", pin: "1234" },
       { nik: "1001", name: "Project Manager", role: "management", pin: "1234" },
@@ -462,6 +496,7 @@
 
     let db = JSON.parse(localStorage.getItem("fleet_custom_db")) || JSON.parse(JSON.stringify(defaultDb));
     let currentJobType = "OB";
+    let currentObMaterial = "hardsoil"; // softsoil, hardsoil, blasting, mud
     const supportSlotCount = 3;
 
     let adminPin = localStorage.getItem("fleet_admin_pin") || "1234";
@@ -472,6 +507,14 @@
       ob: 1.80,
       co: 3.50,
       cohauling: 0.12
+    };
+
+    // Material Physical Multipliers for OB
+    const obMaterialSpecs = {
+      softsoil: { bff: 1.05, ctFactor: 0.90, density: 1.80, sf: 0.82, label: "BFF: 1.05 (+5%) | CT: -10% Cepat" },
+      hardsoil: { bff: 0.95, ctFactor: 1.00, density: 2.10, sf: 0.80, label: "BFF: 0.95 | CT: Normal" },
+      blasting: { bff: 0.85, ctFactor: 1.15, density: 2.50, sf: 0.68, label: "BFF: 0.85 (-15%) | CT: +15% Berat" },
+      mud:      { bff: 0.80, ctFactor: 1.10, density: 1.65, sf: 0.85, label: "BFF: 0.80 (Cair/Lumpur) | Densitas 1.65" }
     };
 
     function togglePassVisibility() {
@@ -522,10 +565,10 @@
       } else if (user.role === 'management') {
         userBadge.innerHTML = `<i data-lucide="briefcase" class="w-3 h-3 text-blue-400"></i> <span class="text-blue-300 font-bold">${user.name} (Management - Master Fleet Only)</span>`;
         navDb.classList.remove("hidden");
-        confidentialRateSection.classList.add("hidden"); // Management TIDAK BISA melihat / otak-atik rate revenue
+        confidentialRateSection.classList.add("hidden");
       } else {
         userBadge.innerHTML = `<i data-lucide="user" class="w-3 h-3 text-slate-400"></i> <span class="text-slate-300 font-medium">${user.name} (Operasional)</span>`;
-        navDb.classList.add("hidden"); // Operasional TIDAK BISA buka tab Master sama sekali
+        navDb.classList.add("hidden");
       }
 
       initApp();
@@ -584,16 +627,79 @@
       haulerSelect.innerHTML = db.haulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
+    // --- Dynamic Unit Addition & Deletion Handlers ---
+    function addNewLoaderRow() {
+      if (currentUser && currentUser.role === 'operational') return;
+      const name = prompt("Masukkan Nama / Model Excavator Baru:", "CATERPILLAR CAT390D (5.5m³)");
+      if (!name || name.trim() === "") return;
+      const bucket = parseFloat(prompt("Kapasitas Bucket (m³):", "5.5")) || 5.0;
+      const ctSec = parseFloat(prompt("Cycle Time Standar (detik):", "25.0")) || 25.0;
+      const cost = parseFloat(prompt("Rate Sewa / Operating Cost ($/jam):", "180.00")) || 150.0;
+
+      db.loaders.push({ name: name.trim(), bucket, ctSec, cost });
+      saveCustomDb();
+      renderDatabaseTables();
+      rebuildDropdowns();
+      runSimulation();
+    }
+
+    function deleteLoaderRow(idx) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (confirm(`Hapus unit "${db.loaders[idx].name}" dari master data?`)) {
+        db.loaders.splice(idx, 1);
+        saveCustomDb();
+        renderDatabaseTables();
+        rebuildDropdowns();
+        runSimulation();
+      }
+    }
+
+    function addNewHaulerRow() {
+      if (currentUser && currentUser.role === 'operational') return;
+      const name = prompt("Masukkan Nama / Model Dump Truck Baru:", "SCANIA P460 (30m³)");
+      if (!name || name.trim() === "") return;
+      const vessel = parseFloat(prompt("Kapasitas Bak / Vessel (m³):", "30.0")) || 30.0;
+      const dumpMin = parseFloat(prompt("Waktu Dumping & Spotting (menit):", "1.2")) || 1.2;
+      const cost = parseFloat(prompt("Rate Sewa / Operating Cost ($/jam):", "55.00")) || 50.0;
+
+      db.haulers.push({ name: name.trim(), vessel, dumpMin, cost });
+      saveCustomDb();
+      renderDatabaseTables();
+      rebuildDropdowns();
+      runSimulation();
+    }
+
+    function deleteHaulerRow(idx) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (confirm(`Hapus unit "${db.haulers[idx].name}" dari master data?`)) {
+        db.haulers.splice(idx, 1);
+        saveCustomDb();
+        renderDatabaseTables();
+        rebuildDropdowns();
+        runSimulation();
+      }
+    }
+
     function updateLoaderParam(idx, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
-      db.loaders[idx][field] = parseFloat(value) || 0;
+      if (field === 'name') {
+        db.loaders[idx][field] = value.trim();
+      } else {
+        db.loaders[idx][field] = parseFloat(value) || 0;
+      }
       saveCustomDb();
+      rebuildDropdowns();
     }
 
     function updateHaulerParam(idx, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
-      db.haulers[idx][field] = parseFloat(value) || 0;
+      if (field === 'name') {
+        db.haulers[idx][field] = value.trim();
+      } else {
+        db.haulers[idx][field] = parseFloat(value) || 0;
+      }
       saveCustomDb();
+      rebuildDropdowns();
     }
 
     function updateSupportParam(idx, field, value) {
@@ -621,7 +727,9 @@
     function renderDatabaseTables() {
       document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
         <tr class="hover:bg-slate-800">
-          <td class="p-2 font-medium">${l.name}</td>
+          <td class="p-2 font-medium">
+            <input type="text" value="${l.name}" onchange="updateLoaderParam(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
+          </td>
           <td class="p-2 text-center">
             <input type="number" step="0.01" value="${l.bucket}" onchange="updateLoaderParam(${idx}, 'bucket', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500">
           </td>
@@ -631,20 +739,32 @@
           <td class="p-2 text-center">
             <input type="number" step="0.01" value="${l.cost}" onchange="updateLoaderParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
           </td>
+          <td class="p-2 text-center">
+            <button onclick="deleteLoaderRow(${idx})" title="Hapus unit ini" class="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
         </tr>
       `).join("");
 
       document.getElementById("table-haulers").innerHTML = db.haulers.map((h, idx) => `
         <tr class="hover:bg-slate-800">
-          <td class="p-2 font-medium">${h.name}</td>
+          <td class="p-2 font-medium">
+            <input type="text" value="${h.name}" onchange="updateHaulerParam(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
+          </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Ubah kapasitas bak/vessel disini">
+            <input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Kapasitas bak">
           </td>
           <td class="p-2 text-center">
             <input type="number" step="0.1" value="${h.dumpMin}" onchange="updateHaulerParam(${idx}, 'dumpMin', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
           </td>
           <td class="p-2 text-center">
             <input type="number" step="0.01" value="${h.cost}" onchange="updateHaulerParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
+          </td>
+          <td class="p-2 text-center">
+            <button onclick="deleteHaulerRow(${idx})" title="Hapus unit ini" class="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
           </td>
         </tr>
       `).join("");
@@ -658,8 +778,37 @@
           </td>
         </tr>
       `).join("");
+
+      lucide.createIcons();
     }
 
+    // --- Material Selection Handlers ---
+    function setObMaterial(matType) {
+      currentObMaterial = matType;
+      const buttons = {
+        softsoil: document.getElementById("btn-mat-softsoil"),
+        hardsoil: document.getElementById("btn-mat-hardsoil"),
+        blasting: document.getElementById("btn-mat-blasting"),
+        mud:      document.getElementById("btn-mat-mud")
+      };
+
+      for (const [k, btn] of Object.entries(buttons)) {
+        if (k === matType) {
+          btn.className = "p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition";
+        } else {
+          btn.className = "p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition";
+        }
+      }
+
+      const spec = obMaterialSpecs[matType];
+      document.getElementById("badge-material-effect").innerText = spec.label;
+      document.getElementById("param-density").value = spec.density.toFixed(2);
+      document.getElementById("param-sf").value = spec.sf.toFixed(2);
+
+      runSimulation();
+    }
+
+    // --- PIN & Admin Locking Handlers ---
     function toggleLockModal() {
       if (currentUser && currentUser.role !== 'admin') {
         alert("Akses Ditolak: Hanya Akun Admin yang berwenang membuka / mengedit Tarif Revenue.");
@@ -762,22 +911,25 @@
         }
       }
 
+      const obMatContainer = document.getElementById("container-ob-material");
+
       if (type === "OB") {
+        obMatContainer.classList.remove("hidden");
+        setObMaterial("hardsoil");
         document.getElementById("param-dist").value = "2.0";
         document.getElementById("param-speed-l").value = "20";
         document.getElementById("param-speed-e").value = "26";
-        document.getElementById("param-density").value = "2.1";
-        document.getElementById("param-sf").value = "0.80";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
         document.getElementById("sim-hauler-qty").value = "5";
         document.getElementById("sim-loader").value = "KOMATSU PC1250SP-8R (6.7m³)";
         document.getElementById("sim-hauler").value = "KOMATSU HD785-7 (60m³)";
       } else if (type === "CO") {
+        obMatContainer.classList.add("hidden");
         document.getElementById("param-dist").value = "3.0";
         document.getElementById("param-speed-l").value = "22";
         document.getElementById("param-speed-e").value = "28";
-        document.getElementById("param-density").value = "1.3";
+        document.getElementById("param-density").value = "1.30";
         document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
@@ -785,10 +937,11 @@
         document.getElementById("sim-loader").value = "KOMATSU PC400LC-7 (2.2m³)";
         document.getElementById("sim-hauler").value = "CMT96 (Wide Body) (35m³)";
       } else if (type === "CoHauling") {
+        obMatContainer.classList.add("hidden");
         document.getElementById("param-dist").value = "50.0";
         document.getElementById("param-speed-l").value = "30";
         document.getElementById("param-speed-e").value = "40";
-        document.getElementById("param-density").value = "1.3";
+        document.getElementById("param-density").value = "1.30";
         document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "owner";
         document.getElementById("sim-loader-qty").value = "1";
@@ -829,6 +982,17 @@
       const sf = parseFloat(document.getElementById("param-sf").value) || 0.85;
       const eff = (parseFloat(document.getElementById("param-eff").value) || 83) / 100.0;
 
+      // Material Multiplier Effects on Bucket Capacity & Cycle Time
+      let bff = 1.0;
+      let ctMultiplier = 1.0;
+      if (currentJobType === "OB") {
+        const matSpec = obMaterialSpecs[currentObMaterial];
+        if (matSpec) {
+          bff = matSpec.bff;
+          ctMultiplier = matSpec.ctFactor;
+        }
+      }
+
       let contractRate = 0;
       let unitLabel = "BCM";
       if (currentJobType === "OB") {
@@ -851,8 +1015,12 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
-      const passes = hauler.vessel / loader.bucket;
-      const calculatedLoadTimeMin = passes * (loader.ctSec / 60.0);
+      // Effective Loader Specs based on Material
+      const effectiveBucketM3 = loader.bucket * bff;
+      const effectiveLoaderCtSec = loader.ctSec * ctMultiplier;
+
+      const passes = hauler.vessel / effectiveBucketM3;
+      const calculatedLoadTimeMin = passes * (effectiveLoaderCtSec / 60.0);
       const travelLoadedMin = (dist / speedL) * 60.0;
       const travelEmptyMin = (dist / speedE) * 60.0;
       const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE));
@@ -880,7 +1048,7 @@
         const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
         const rawHaulerTonHr = tripsPerHour * tonPerTrip;
 
-        loaderMaxCapacityTonHr = (3600.0 / loader.ctSec) * (loader.bucket * sf * density) * eff * activeLoaderQtyForProd;
+        loaderMaxCapacityTonHr = (3600.0 / effectiveLoaderCtSec) * (effectiveBucketM3 * sf * density) * eff * activeLoaderQtyForProd;
 
         prodTonHr = Math.min(rawHaulerTonHr, loaderMaxCapacityTonHr);
         prodBcmHr = prodTonHr / density;
