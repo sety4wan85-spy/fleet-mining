@@ -64,19 +64,41 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL LUPA PIN ==================== -->
+  <!-- ==================== MODAL LUPA PIN (EMERGENCY MASTER RESET) ==================== -->
   <div id="modal-forgot-pin" class="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 text-center">
-      <div class="inline-flex p-3 bg-amber-500/10 text-amber-400 rounded-full">
-        <i data-lucide="help-circle" class="w-6 h-6"></i>
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i> Pemulihan Akses PIN Mandiri
+        </h3>
+        <button onclick="closeForgotPinModal()" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
       </div>
-      <h3 class="text-sm font-bold text-white uppercase tracking-wider">Pemulihan Akses Akun</h3>
+
       <p class="text-xs text-slate-300 leading-relaxed">
-        Untuk alasan keamanan data proyek tambang, silakan hubungi <strong>Super Admin (NIK 9999)</strong> untuk mereset PIN akun Anda ke setelan awal.
+        Masukkan NIK dan <strong>Master Pass Pemulihan</strong> dari Admin untuk mereset PIN akun Anda kembali ke setelan default.
       </p>
-      <button type="button" onclick="closeForgotPinModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition">
-        Kembali ke Login
-      </button>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold">NIK Anda (7 Digit)</label>
+          <input type="text" id="reset-nik" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono outline-none focus:border-amber-500" placeholder="Contoh: 1002001">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold">Master Pass Pemulihan (Emergency Pass)</label>
+          <input type="password" id="reset-emergency-pass" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 outline-none focus:border-amber-500" placeholder="Ketik master pass...">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeForgotPinModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+          Batal
+        </button>
+        <button type="button" onclick="submitEmergencyReset()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow transition">
+          Reset PIN Saya
+        </button>
+      </div>
     </div>
   </div>
 
@@ -629,11 +651,51 @@
     }
 
     function openForgotPinModal() {
+      document.getElementById("reset-nik").value = "";
+      document.getElementById("reset-emergency-pass").value = "";
       document.getElementById("modal-forgot-pin").classList.remove("hidden");
     }
 
     function closeForgotPinModal() {
       document.getElementById("modal-forgot-pin").classList.add("hidden");
+    }
+
+    // ==================== LOGIKA EMERGENCY MASTER RESET MANDIRI ====================
+    function submitEmergencyReset() {
+      const inputNik = document.getElementById("reset-nik").value.trim();
+      const emergencyPass = document.getElementById("reset-emergency-pass").value.trim();
+
+      if (!inputNik) {
+        alert("Harap masukkan NIK Anda!");
+        return;
+      }
+
+      const nikNum = parseInt(inputNik, 10);
+      if (isNaN(nikNum) || nikNum < 1000000 || nikNum > 1999999) {
+        alert("NIK harus 7 digit antara 1000000 s/d 1999999!");
+        return;
+      }
+
+      // Validasi Emergency Master Pass
+      if (emergencyPass === "0000@@") {
+        // Reset ke Operasional (Default: 0000)
+        customUserAccounts[inputNik] = { pin: "0000", role: "operational", name: `Dispatcher / GL (${inputNik})` };
+        localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+        alert(`BERHASIL! NIK ${inputNik} telah di-reset ke akun OPERASIONAL dengan default PIN: 0000\nSilakan masuk kembali.`);
+        closeForgotPinModal();
+        document.getElementById("login-nik").value = inputNik;
+        document.getElementById("login-password").value = "0000";
+      } else if (emergencyPass === "1234@@") {
+        // Reset ke Manajemen (Default: 1234)
+        customUserAccounts[inputNik] = { pin: "1234", role: "management", name: `Management (${inputNik})` };
+        localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+        alert(`BERHASIL! NIK ${inputNik} telah di-reset ke akun MANAJEMEN dengan default PIN: 1234\nSilakan masuk kembali.`);
+        closeForgotPinModal();
+        document.getElementById("login-nik").value = inputNik;
+        document.getElementById("login-password").value = "1234";
+      } else {
+        alert("Master Pass Pemulihan Salah! Hubungi Admin jika Anda tidak memiliki otorisasi darurat.");
+      }
     }
 
     function openChangePinModal() {
@@ -710,7 +772,7 @@
       }
     }
 
-    // ==================== ALUR LOGIN DENGAN VERIFIKASI ROLE ====================
+    // ==================== ALUR LOGIN ====================
     function handleLogin(e) {
       e.preventDefault();
       const inputNik = document.getElementById("login-nik").value.trim();
@@ -731,7 +793,7 @@
           return;
         }
       } 
-      // 2. Cek Range NIK 1000000 s/d 1999999 (Manajemen & Operasional)
+      // 2. Cek Range NIK 1000000 s/d 1999999
       else {
         const nikNum = parseInt(inputNik, 10);
         if (!isNaN(nikNum) && nikNum >= 1000000 && nikNum <= 1999999) {
@@ -746,7 +808,7 @@
               return;
             }
           } else {
-            // Pengguna baru pertama kali login: tentukan role dari PIN default
+            // Pertama kali aktivasi akun baru
             if (inputPass === "1234") {
               user = { nik: inputNik, name: `Management (${inputNik})`, role: "management", pin: "1234" };
               customUserAccounts[inputNik] = user;
@@ -1283,60 +1345,6 @@
         </tr>
       `).join("");
 
-      lucide.createIcons();
-    }
-
-    function setObMaterial(matType) {
-      currentObMaterial = matType;
-      const buttons = {
-        softsoil: document.getElementById("btn-mat-softsoil"),
-        hardsoil: document.getElementById("btn-mat-hardsoil"),
-        blasting: document.getElementById("btn-mat-blasting"),
-        mud:      document.getElementById("btn-mat-mud")
-      };
-
-      for (const [k, btn] of Object.entries(buttons)) {
-        if (k === matType) {
-          btn.className = "p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition";
-        } else {
-          btn.className = "p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition";
-        }
-      }
-
-      const spec = obMaterialSpecs[matType];
-      const ctLabel = spec.ctFactor === 1.0 ? "CT: Normal" : spec.ctFactor < 1.0 ? `CT: -${((1.0 - spec.ctFactor) * 100).toFixed(0)}%` : `CT: +${((spec.ctFactor - 1.0) * 100).toFixed(0)}%`;
-      const blastLabel = (matType === 'blasting' && spec.blastingCostBcm > 0) ? ` | Blast: $${spec.blastingCostBcm.toFixed(2)}/BCM` : "";
-      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | ${ctLabel}${blastLabel}`;
-
-      runSimulation();
-    }
-
-    function saveRates() {
-      if (currentUser && currentUser.role !== 'admin') return;
-      savedRates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
-      savedRates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
-      savedRates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
-      savedRates.overheadHr = parseFloat(document.getElementById("master-fleet-overhead").value) || 0;
-      localStorage.setItem("fleet_saved_rates", JSON.stringify(savedRates));
-      runSimulation();
-    }
-
-    function switchTab(tab) {
-      if (tab === 'sim') {
-        document.getElementById('tab-simulation').classList.remove('hidden');
-        document.getElementById('tab-database').classList.add('hidden');
-        document.getElementById('nav-sim').className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow";
-        document.getElementById('nav-db').className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white";
-      } else {
-        if (currentUser && currentUser.role === 'operational') {
-          alert("Akses Tab Master Data hanya untuk Management dan Admin.");
-          return;
-        }
-        document.getElementById('tab-simulation').classList.add('hidden');
-        document.getElementById('tab-database').classList.remove('hidden');
-        document.getElementById('nav-db').className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow";
-        document.getElementById('nav-sim').className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white";
-      }
       lucide.createIcons();
     }
 
