@@ -539,38 +539,44 @@
 
     const defaultDb = {
       loaders: [
-        { name: "KOMATSU PC2000-8 (12.0m³)", bucket: 12.00, ctSec: 26.0, cost: 390.00 },
-        { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
-        { name: "HITACHI ZX870H-5G (4.5m³)", bucket: 4.50, ctSec: 25.0, cost: 147.62 },
+        { name: "CATERPILLAR CAT390D (5.5m³)", bucket: 5.50, ctSec: 25.0, cost: 180.00 },
         { name: "DOOSAN S500LC-V (2.7m³)", bucket: 2.70, ctSec: 24.0, cost: 77.19 },
+        { name: "HITACHI ZX200-3G (0.91m³)", bucket: 0.91, ctSec: 20.0, cost: 37.78 },
+        { name: "HITACHI ZX330 (1.62m³)", bucket: 1.62, ctSec: 22.0, cost: 63.48 },
         { name: "HITACHI ZX470H-5G (2.5m³)", bucket: 2.50, ctSec: 23.0, cost: 81.24 },
+        { name: "HITACHI ZX870H-5G (4.5m³)", bucket: 4.50, ctSec: 25.0, cost: 147.62 },
+        { name: "KOMATSU PC200-8 (0.93m³)", bucket: 0.93, ctSec: 20.0, cost: 37.66 },
+        { name: "KOMATSU PC300SE-8 (1.6m³)", bucket: 1.60, ctSec: 22.0, cost: 65.00 },
         { name: "KOMATSU PC400LC-7 (2.2m³)", bucket: 2.20, ctSec: 23.0, cost: 83.67 },
         { name: "KOMATSU PC400SE-8 (2.2m³)", bucket: 2.20, ctSec: 23.0, cost: 83.95 },
-        { name: "HITACHI ZX330 (1.62m³)", bucket: 1.62, ctSec: 22.0, cost: 63.48 },
-        { name: "KOMATSU PC300SE-8 (1.6m³)", bucket: 1.60, ctSec: 22.0, cost: 65.00 },
-        { name: "KOMATSU PC200-8 (0.93m³)", bucket: 0.93, ctSec: 20.0, cost: 37.66 }
+        { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
+        { name: "KOMATSU PC2000-8 (12.0m³)", bucket: 12.00, ctSec: 26.0, cost: 390.00 }
       ],
       haulers: [
-        { name: "CMT106 (Wide Body) (40m³)", vessel: 40.0, dumpMin: 1.4, cost: 75.00 },
-        { name: "RTH100 (Rigid Truck) (40m³)", vessel: 40.0, dumpMin: 1.3, cost: 72.00 },
-        { name: "KOMATSU HD785-7 (60m³)", vessel: 60.0, dumpMin: 1.5, cost: 200.42 },
-        { name: "CMT96 (Wide Body) (35m³)", vessel: 35.0, dumpMin: 1.3, cost: 62.84 },
-        { name: "CATERPILLAR CAT740B (24m³)", vessel: 24.0, dumpMin: 1.3, cost: 96.82 },
-        { name: "MERCEDES BENZ ACTROSS 4843K (24m³)", vessel: 24.0, dumpMin: 1.2, cost: 36.13 },
-        { name: "MERCEDES BENZ ACTROSS 4043K (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 42.67 },
         { name: "BEIBEN 3842 (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 32.87 },
+        { name: "CATERPILLAR CAT740B (24m³)", vessel: 24.0, dumpMin: 1.3, cost: 96.82 },
+        { name: "CMT96 (Wide Body) (35m³)", vessel: 35.0, dumpMin: 1.3, cost: 62.84 },
+        { name: "CMT106 (Wide Body) (40m³)", vessel: 40.0, dumpMin: 1.4, cost: 75.00 },
         { name: "DONGFENG 375FT (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 22.66 },
-        { name: "HINO ZY1E/700 (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 41.74 }
+        { name: "HINO FM260TI (14m³)", vessel: 14.0, dumpMin: 1.1, cost: 29.79 },
+        { name: "HINO FM320TI (15m³)", vessel: 15.0, dumpMin: 1.1, cost: 29.02 },
+        { name: "HINO ZY1E/700 (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 41.74 },
+        { name: "KOMATSU HD785-7 (60m³)", vessel: 60.0, dumpMin: 1.5, cost: 200.42 },
+        { name: "MERCEDES BENZ ACTROSS 4043K (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 42.67 },
+        { name: "MERCEDES BENZ ACTROSS 4843K (24m³)", vessel: 24.0, dumpMin: 1.2, cost: 36.13 },
+        { name: "RTH100 (Rigid Truck) (40m³)", vessel: 40.0, dumpMin: 1.3, cost: 72.00 },
+        { name: "SCANIA P460 (30m³)", vessel: 30.0, dumpMin: 1.2, cost: 55.00 }
       ],
       supports: [
         { name: "None (Tidak Pakai)", role: "-", cost: 0.0 },
-        { name: "KOMATSU D375A-6R", role: "Ripping & Spreading", cost: 210.05 },
-        { name: "KOMATSU D155A-6R", role: "Ripping & Spreading", cost: 118.30 },
-        { name: "KOMATSU GD705A-4", role: "Road Maintenance", cost: 71.73 },
-        { name: "KOMATSU D85E-SS-2", role: "Pit Maintenance", cost: 70.84 },
+        { name: "INGERSOLL RAND SD100D", role: "Road Maintenance", cost: 22.02 },
         { name: "KOMATSU D65P", role: "Clean Up Loading Point", cost: 61.20 },
+        { name: "KOMATSU D85E-SS-2", role: "Pit Maintenance", cost: 70.84 },
+        { name: "KOMATSU D155A-6R", role: "Ripping & Spreading", cost: 118.30 },
+        { name: "KOMATSU D375A-6R", role: "Ripping & Spreading", cost: 210.05 },
+        { name: "KOMATSU GD705A-4", role: "Road Maintenance", cost: 71.73 },
         { name: "Water Truck 40,000L", role: "Dust Suppression", cost: 45.00 },
-        { name: "INGERSOLL RAND SD100D", role: "Road Maintenance", cost: 22.02 }
+        { name: "ZAKAI SV515E", role: "Road Maintenance", cost: 21.67 }
       ]
     };
 
@@ -673,7 +679,15 @@
       for (let i = 1; i <= supportSlotCount; i++) {
         let defaultSupportName = i === 1 ? "KOMATSU D375A-6R" : "None (Tidak Pakai)";
         let defaultQty = i === 1 ? 1 : 0;
-        let optionsHtml = db.supports.map(s => `<option value="${s.name}" ${s.name === defaultSupportName ? 'selected' : ''}>${s.name} ($${s.cost.toFixed(2)}/h)</option>`).join("");
+        
+        // Urutkan dropdown support A-Z dengan "None" selalu di atas
+        const sortedSupports = [...db.supports].sort((a, b) => {
+          if (a.name.includes("None")) return -1;
+          if (b.name.includes("None")) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        let optionsHtml = sortedSupports.map(s => `<option value="${s.name}" ${s.name === defaultSupportName ? 'selected' : ''}>${s.name} ($${s.cost.toFixed(2)}/h)</option>`).join("");
         
         supportContainer.innerHTML += `
           <div class="flex gap-2">
@@ -693,21 +707,27 @@
       setJobType("OB");
     }
 
+    // --- REBUILD DROPDOWNS DENGAN SORTING A-Z ---
     function rebuildDropdowns() {
       const currentLoader = document.getElementById("sim-loader").value;
       const currentHauler = document.getElementById("sim-hauler").value;
 
+      // Urutkan Loader A-Z
+      const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
       const loaderSelect = document.getElementById("sim-loader");
-      loaderSelect.innerHTML = db.loaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
+      loaderSelect.innerHTML = sortedLoaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
 
+      // Urutkan Hauler A-Z
+      const sortedHaulers = [...db.haulers].sort((a, b) => a.name.localeCompare(b.name));
       const haulerSelect = document.getElementById("sim-hauler");
-      haulerSelect.innerHTML = db.haulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
+      haulerSelect.innerHTML = sortedHaulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
     // --- 1. LOADER CSV HANDLERS ---
     function downloadLoaderCsvTemplate() {
       const headers = "Model Unit,Bucket,CT,Cost\n";
-      const sampleRows = db.loaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("\n");
+      const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
+      const sampleRows = sortedLoaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvContent);
@@ -759,7 +779,8 @@
     // --- 2. HAULER CSV HANDLERS ---
     function downloadHaulerCsvTemplate() {
       const headers = "Model Unit,Vessel,Dump,Cost\n";
-      const sampleRows = db.haulers.map(h => `"${h.name}",${h.vessel},${h.dumpMin},${h.cost}`).join("\n");
+      const sortedHaulers = [...db.haulers].sort((a, b) => a.name.localeCompare(b.name));
+      const sampleRows = sortedHaulers.map(h => `"${h.name}",${h.vessel},${h.dumpMin},${h.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvContent);
@@ -811,7 +832,12 @@
     // --- 3. SUPPORT CSV HANDLERS ---
     function downloadSupportCsvTemplate() {
       const headers = "Model Unit,Fungsi Lapangan,Cost\n";
-      const sampleRows = db.supports.map(s => `"${s.name}","${s.role}",${s.cost}`).join("\n");
+      const sortedSupports = [...db.supports].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      const sampleRows = sortedSupports.map(s => `"${s.name}","${s.role}",${s.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", csvContent);
@@ -1015,6 +1041,7 @@
       }
     }
 
+    // --- RENDER MASTER TABLES DENGAN SORTING A-Z ---
     function renderDatabaseTables() {
       // 1. Table Material OB
       document.getElementById("table-materials-ob").innerHTML = Object.entries(obMaterialSpecs).map(([key, m]) => `
@@ -1042,6 +1069,15 @@
           </td>
         </tr>
       `).join("");
+
+      // Urutkan Loader, Hauler, dan Support A-Z
+      db.loaders.sort((a, b) => a.name.localeCompare(b.name));
+      db.haulers.sort((a, b) => a.name.localeCompare(b.name));
+      db.supports.sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
       // 2. Table Loaders
       document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
