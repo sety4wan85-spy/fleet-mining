@@ -1525,15 +1525,33 @@
         mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
       }
 
-      document.getElementById("res-prod-primary").innerText = mainProdValue.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-      document.getElementById("res-prod-secondary").innerText = secondaryProdText;
-      document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
-      document.getElementById("res-total-cost").innerText = `$${totalFleetCostHr.toFixed(2)}/Jam Total`;
+      // Cek apakah user berwenang melihat data finansial (Admin / Management)
+      const isFinancialAuthorized = currentUser && (currentUser.role === 'admin' || currentUser.role === 'management');
 
-      const profitEl = document.getElementById("res-profit-hr");
-      profitEl.innerText = `$${netProfitHr.toFixed(2)}`;
-      profitEl.className = netProfitHr >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
-      document.getElementById("res-profit-unit").innerText = `$${netProfitPerUnit.toFixed(3)}/${unitLabel} Margin`;
+      if (isFinancialAuthorized) {
+        document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
+        document.getElementById("res-total-cost").innerText = `$${totalFleetCostHr.toFixed(2)}/Jam Total`;
+
+        const profitEl = document.getElementById("res-profit-hr");
+        profitEl.innerText = `$${netProfitHr.toFixed(2)}`;
+        profitEl.className = netProfitHr >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
+        document.getElementById("res-profit-unit").innerText = `$${netProfitPerUnit.toFixed(3)}/${unitLabel} Margin`;
+        
+        document.getElementById("cost-breakdown-banner").classList.remove("hidden");
+      } else {
+        // Tampilan sensor untuk level Operasional
+        document.getElementById("res-unit-cost").innerText = `🔒 Terkunci`;
+        document.getElementById("res-total-cost").innerText = `Khusus Manajemen`;
+
+        const profitEl = document.getElementById("res-profit-hr");
+        profitEl.innerText = `🔒 Terkunci`;
+        profitEl.className = "text-xl font-bold mt-1 text-slate-500";
+        document.getElementById("res-profit-unit").innerText = `Akses Terbatas`;
+
+        document.getElementById("cost-breakdown-banner").classList.add("hidden");
+        document.getElementById("sim-loader-rate").innerText = `Rate: 🔒`;
+        document.getElementById("sim-hauler-rate").innerText = `Rate: 🔒`;
+      }
 
       document.getElementById("res-bep-dist").innerText = bepDistance.toFixed(2);
       document.getElementById("res-bep-prod").innerText = `${bepProd.toFixed(1)} ${unitLabel}`;
