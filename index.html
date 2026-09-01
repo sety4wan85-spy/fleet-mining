@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Complete CSV & Fleet Master</title>
+  <title>Mining Fleet Manager - Enterprise Matching Engine</title>
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -156,32 +156,36 @@
 
         <!-- Executive KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <!-- Kartu 1: Match Factor -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800 relative overflow-hidden">
             <span class="text-xs text-slate-400">Match Factor (MF)</span>
             <div id="res-mf" class="text-xl font-bold mt-1 text-white">0.00</div>
             <span id="res-mf-badge" class="text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">-</span>
           </div>
 
+          <!-- Kartu 2: Produksi Utama -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-prod-primary" class="text-xs text-slate-400">Produksi (BCM/Jam)</span>
             <div id="res-prod-primary" class="text-xl font-bold mt-1 text-amber-400">0.0</div>
             <span id="res-prod-secondary" class="text-[11px] text-slate-400 mt-1 block">0.0 Ton/Jam</span>
           </div>
 
+          <!-- Kartu 3: Unit Cost (Admin) / Pdty per Hauler (Operasional) -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-unit-cost" class="text-xs text-slate-400">Unit Cost ($/BCM)</span>
             <div id="res-unit-cost" class="text-xl font-bold mt-1 text-rose-400">$0.000</div>
             <span id="res-total-cost" class="text-[11px] text-slate-400 mt-1 block font-mono">$0.00/Jam Total</span>
           </div>
 
+          <!-- Kartu 4: Net Profit (Admin) / Deviasi Produksi BCM (Operasional) -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
-            <span id="label-unit-cost" class="text-xs text-slate-400">Net Profit ($/Jam)</span>
+            <span id="label-profit-hr" class="text-xs text-slate-400">Net Profit ($/Jam)</span>
             <div id="res-profit-hr" class="text-xl font-bold mt-1 text-emerald-400">$0.00</div>
             <span id="res-profit-unit" class="text-[11px] text-slate-400 mt-1 block">$0.000/BCM Margin</span>
           </div>
         </div>
 
-        <!-- Detail Cost Breakdown -->
+        <!-- Detail Cost Breakdown (Hanya muncul jika berwenang) -->
         <div id="cost-breakdown-banner" class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs">
           <div class="flex items-center gap-4">
             <div class="text-slate-400">Komposisi Biaya per Jam:</div>
@@ -535,6 +539,7 @@
 
     const defaultDb = {
       loaders: [
+        { name: "KOMATSU PC2000-8 (12.0m³)", bucket: 12.00, ctSec: 26.0, cost: 390.00 },
         { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
         { name: "HITACHI ZX870H-5G (4.5m³)", bucket: 4.50, ctSec: 25.0, cost: 147.62 },
         { name: "DOOSAN S500LC-V (2.7m³)", bucket: 2.70, ctSec: 24.0, cost: 77.19 },
@@ -543,10 +548,11 @@
         { name: "KOMATSU PC400SE-8 (2.2m³)", bucket: 2.20, ctSec: 23.0, cost: 83.95 },
         { name: "HITACHI ZX330 (1.62m³)", bucket: 1.62, ctSec: 22.0, cost: 63.48 },
         { name: "KOMATSU PC300SE-8 (1.6m³)", bucket: 1.60, ctSec: 22.0, cost: 65.00 },
-        { name: "KOMATSU PC200-8 (0.93m³)", bucket: 0.93, ctSec: 20.0, cost: 37.66 },
-        { name: "HITACHI ZX200-3G (0.91m³)", bucket: 0.91, ctSec: 20.0, cost: 37.78 }
+        { name: "KOMATSU PC200-8 (0.93m³)", bucket: 0.93, ctSec: 20.0, cost: 37.66 }
       ],
       haulers: [
+        { name: "CMT106 (Wide Body) (40m³)", vessel: 40.0, dumpMin: 1.4, cost: 75.00 },
+        { name: "RTH100 (Rigid Truck) (40m³)", vessel: 40.0, dumpMin: 1.3, cost: 72.00 },
         { name: "KOMATSU HD785-7 (60m³)", vessel: 60.0, dumpMin: 1.5, cost: 200.42 },
         { name: "CMT96 (Wide Body) (35m³)", vessel: 35.0, dumpMin: 1.3, cost: 62.84 },
         { name: "CATERPILLAR CAT740B (24m³)", vessel: 24.0, dumpMin: 1.3, cost: 96.82 },
@@ -554,9 +560,7 @@
         { name: "MERCEDES BENZ ACTROSS 4043K (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 42.67 },
         { name: "BEIBEN 3842 (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 32.87 },
         { name: "DONGFENG 375FT (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 22.66 },
-        { name: "HINO ZY1E/700 (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 41.74 },
-        { name: "HINO FM320TI (15m³)", vessel: 15.0, dumpMin: 1.1, cost: 29.02 },
-        { name: "HINO FM260TI (14m³)", vessel: 14.0, dumpMin: 1.1, cost: 29.79 }
+        { name: "HINO ZY1E/700 (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 41.74 }
       ],
       supports: [
         { name: "None (Tidak Pakai)", role: "-", cost: 0.0 },
@@ -566,8 +570,7 @@
         { name: "KOMATSU D85E-SS-2", role: "Pit Maintenance", cost: 70.84 },
         { name: "KOMATSU D65P", role: "Clean Up Loading Point", cost: 61.20 },
         { name: "Water Truck 40,000L", role: "Dust Suppression", cost: 45.00 },
-        { name: "INGERSOLL RAND SD100D", role: "Road Maintenance", cost: 22.02 },
-        { name: "ZAKAI SV515E", role: "Road Maintenance", cost: 21.67 }
+        { name: "INGERSOLL RAND SD100D", role: "Road Maintenance", cost: 22.02 }
       ]
     };
 
@@ -1249,9 +1252,9 @@
         document.getElementById("param-speed-e").value = "26";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
-        document.getElementById("sim-hauler-qty").value = "5";
-        document.getElementById("sim-loader").value = "KOMATSU PC1250SP-8R (6.7m³)";
-        document.getElementById("sim-hauler").value = "KOMATSU HD785-7 (60m³)";
+        document.getElementById("sim-hauler-qty").value = "9";
+        document.getElementById("sim-loader").value = "KOMATSU PC2000-8 (12.0m³)";
+        document.getElementById("sim-hauler").value = "CMT106 (Wide Body) (40m³)";
       } else if (type === "CO") {
         obMatContainer.classList.add("hidden");
         document.getElementById("param-dist").value = "3.0";
@@ -1324,14 +1327,21 @@
       const effectiveLoaderCost = loader.cost * loaderCostMultiplier;
       const effectiveHaulerCost = hauler.cost * haulerCostMultiplier;
 
-      if (loaderOwner === "owner") {
-        document.getElementById("sim-loader-rate").innerText = "$0.00/h (Owner)";
-        document.getElementById("sim-loader-rate").className = "w-36 bg-slate-950 border border-emerald-800/60 text-emerald-400 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center font-mono font-semibold";
+      const isFinancialAuthorized = currentUser && (currentUser.role === 'admin' || currentUser.role === 'management');
+
+      if (isFinancialAuthorized) {
+        if (loaderOwner === "owner") {
+          document.getElementById("sim-loader-rate").innerText = "$0.00/h (Owner)";
+          document.getElementById("sim-loader-rate").className = "w-36 bg-slate-950 border border-emerald-800/60 text-emerald-400 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center font-mono font-semibold";
+        } else {
+          document.getElementById("sim-loader-rate").innerText = `$${effectiveLoaderCost.toFixed(2)}/h`;
+          document.getElementById("sim-loader-rate").className = "w-36 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono";
+        }
+        document.getElementById("sim-hauler-rate").innerText = `$${effectiveHaulerCost.toFixed(2)}/h`;
       } else {
-        document.getElementById("sim-loader-rate").innerText = `$${effectiveLoaderCost.toFixed(2)}/h`;
-        document.getElementById("sim-loader-rate").className = "w-36 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono";
+        document.getElementById("sim-loader-rate").innerText = `Rate: 🔒`;
+        document.getElementById("sim-hauler-rate").innerText = `Rate: 🔒`;
       }
-      document.getElementById("sim-hauler-rate").innerText = `$${effectiveHaulerCost.toFixed(2)}/h`;
 
       let contractRate = 0;
       let unitLabel = "BCM";
@@ -1339,19 +1349,16 @@
         unitLabel = "BCM";
         contractRate = savedRates.ob;
         document.getElementById("label-prod-primary").innerText = "Produksi (BCM/Jam)";
-        document.getElementById("label-unit-cost").innerText = "Unit Cost ($/BCM)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (BCM/Jam)";
       } else if (currentJobType === "CO") {
         unitLabel = "Ton";
         contractRate = savedRates.co;
         document.getElementById("label-prod-primary").innerText = "Produksi (Ton/Jam)";
-        document.getElementById("label-unit-cost").innerText = "Unit Cost ($/Ton)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton/Jam)";
       } else if (currentJobType === "CoHauling") {
         unitLabel = "Ton.Km";
         contractRate = savedRates.cohauling;
         document.getElementById("label-prod-primary").innerText = "Produksi (Ton.Km/Jam)";
-        document.getElementById("label-unit-cost").innerText = "Unit Cost ($/Ton.Km)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
@@ -1447,20 +1454,6 @@
 
       const totalFleetCostHr = equipmentCostHr + supportCostHr + fleetOverheadHr + totalBlastingCostHr;
 
-      // Update Breakdown Banner
-      document.getElementById("cb-equipment").innerText = `$${equipmentCostHr.toFixed(2)}`;
-      document.getElementById("cb-support").innerText = `$${supportCostHr.toFixed(2)}`;
-      document.getElementById("cb-overhead").innerText = `$${fleetOverheadHr.toFixed(2)}`;
-      
-      const blastingWrapper = document.getElementById("cb-blasting-wrapper");
-      if (totalBlastingCostHr > 0) {
-        blastingWrapper.classList.remove("hidden");
-        document.getElementById("cb-blasting").innerText = `$${totalBlastingCostHr.toFixed(2)} ($${blastingCostPerBcm.toFixed(2)}/BCM)`;
-      } else {
-        blastingWrapper.classList.add("hidden");
-      }
-      document.getElementById("cb-total-summary").innerText = `Total: $${totalFleetCostHr.toFixed(2)}/Jam`;
-
       let mainProdValue = 0;
       let secondaryProdText = "";
       if (currentJobType === "OB") {
@@ -1525,32 +1518,57 @@
         mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
       }
 
-      // Cek apakah user berwenang melihat data finansial (Admin / Management)
-      const isFinancialAuthorized = currentUser && (currentUser.role === 'admin' || currentUser.role === 'management');
+      document.getElementById("res-prod-primary").innerText = mainProdValue.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      document.getElementById("res-prod-secondary").innerText = secondaryProdText;
 
+      // ==================== SWITCH KPI FINANSIAL VS OPERASIONAL ====================
       if (isFinancialAuthorized) {
+        // Tampilan Finansial untuk Admin / Management
+        document.getElementById("label-unit-cost").innerText = `Unit Cost ($/${unitLabel})`;
         document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
+        document.getElementById("res-unit-cost").className = "text-xl font-bold mt-1 text-rose-400";
         document.getElementById("res-total-cost").innerText = `$${totalFleetCostHr.toFixed(2)}/Jam Total`;
 
+        document.getElementById("label-profit-hr").innerText = `Net Profit ($/Jam)`;
         const profitEl = document.getElementById("res-profit-hr");
         profitEl.innerText = `$${netProfitHr.toFixed(2)}`;
         profitEl.className = netProfitHr >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
         document.getElementById("res-profit-unit").innerText = `$${netProfitPerUnit.toFixed(3)}/${unitLabel} Margin`;
         
         document.getElementById("cost-breakdown-banner").classList.remove("hidden");
+        document.getElementById("cb-equipment").innerText = `$${equipmentCostHr.toFixed(2)}`;
+        document.getElementById("cb-support").innerText = `$${supportCostHr.toFixed(2)}`;
+        document.getElementById("cb-overhead").innerText = `$${fleetOverheadHr.toFixed(2)}`;
+        
+        const blastingWrapper = document.getElementById("cb-blasting-wrapper");
+        if (totalBlastingCostHr > 0) {
+          blastingWrapper.classList.remove("hidden");
+          document.getElementById("cb-blasting").innerText = `$${totalBlastingCostHr.toFixed(2)} ($${blastingCostPerBcm.toFixed(2)}/BCM)`;
+        } else {
+          blastingWrapper.classList.add("hidden");
+        }
+        document.getElementById("cb-total-summary").innerText = `Total: $${totalFleetCostHr.toFixed(2)}/Jam`;
       } else {
-        // Tampilan sensor untuk level Operasional
-        document.getElementById("res-unit-cost").innerText = `🔒 Terkunci`;
-        document.getElementById("res-total-cost").innerText = `Khusus Manajemen`;
+        // Tampilan Teknis Lapangan untuk Dispatcher / Foreman (Operasional)
+        const pdtyPerTruck = haulerQty > 0 ? (mainProdValue / haulerQty) : 0;
+        const prodDeviation = mainProdValue - bepProd;
 
+        // Kartu 3: Produktivitas per Unit Hauler
+        document.getElementById("label-unit-cost").innerText = `Pdty per Hauler (${unitLabel}/Jam)`;
+        document.getElementById("res-unit-cost").innerText = pdtyPerTruck.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        document.getElementById("res-unit-cost").className = "text-xl font-bold mt-1 text-amber-400";
+        document.getElementById("res-total-cost").innerText = `${ritasePerUnit.toFixed(1)} Rit/Jam per Truk`;
+
+        // Kartu 4: Deviasi Produksi vs Target Impas Biaya
+        document.getElementById("label-profit-hr").innerText = `Deviasi Prod (${unitLabel}/Jam)`;
         const profitEl = document.getElementById("res-profit-hr");
-        profitEl.innerText = `🔒 Terkunci`;
-        profitEl.className = "text-xl font-bold mt-1 text-slate-500";
-        document.getElementById("res-profit-unit").innerText = `Akses Terbatas`;
+        const sign = prodDeviation >= 0 ? "+" : "";
+        profitEl.innerText = `${sign}${prodDeviation.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unitLabel}`;
+        profitEl.className = prodDeviation >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
+        
+        document.getElementById("res-profit-unit").innerText = `Target BEP: ${bepProd.toFixed(1)} ${unitLabel}/Jam`;
 
         document.getElementById("cost-breakdown-banner").classList.add("hidden");
-        document.getElementById("sim-loader-rate").innerText = `Rate: 🔒`;
-        document.getElementById("sim-hauler-rate").innerText = `Rate: 🔒`;
       }
 
       document.getElementById("res-bep-dist").innerText = bepDistance.toFixed(2);
