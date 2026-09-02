@@ -79,7 +79,7 @@
           <label class="label-title" style="color: #fbbf24;">LOKASI KERJA (SITE PROYEK)</label>
           <select id="login-site" required class="form-control" style="font-weight: 700; color: #fbbf24;">
             <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
-            <option value="BSS-SITE TDM">BSS-SITE TDM</option>
+            <option value="BSS-SITE TDM">BSS-SITE TDM (Khusus Coal Hauling)</option>
             <option value="BSS-SITE MHU">BSS-SITE MHU</option>
             <option value="BSS-SITE CDI">BSS-SITE CDI</option>
             <option value="BSS-SITE MBL">BSS-SITE MBL</option>
@@ -191,14 +191,14 @@
             <label class="label-title" style="margin-bottom: 0;">PILIHAN SITE PROYEK</label>
             <select id="main-site-switch" onchange="changeActiveSite(this.value)" class="form-control" style="width: auto; padding: 0.25rem 0.6rem; font-weight: 700; color: #fbbf24; font-size: 0.75rem;">
               <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
-              <option value="BSS-SITE TDM">BSS-SITE TDM</option>
+              <option value="BSS-SITE TDM">BSS-SITE TDM (Khusus Coal Hauling)</option>
               <option value="BSS-SITE MHU">BSS-SITE MHU</option>
               <option value="BSS-SITE CDI">BSS-SITE CDI</option>
               <option value="BSS-SITE MBL">BSS-SITE MBL</option>
               <option value="BSS-SITE IP">BSS-SITE IP</option>
             </select>
           </div>
-          <div class="grid-3">
+          <div id="job-type-selector-grid" class="grid-3">
             <button id="btn-job-ob" onclick="setJobType('OB')" class="btn btn-primary" style="padding: 0.5rem; flex-direction: column;">
               <span style="font-size: 0.75rem;">Overburden (OB)</span>
               <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: BCM</span>
@@ -563,7 +563,6 @@
         const roleStr = encodeURIComponent(user.role);
         const devStr = encodeURIComponent(navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
 
-        // Mengirim via Image Ping dengan parameter SITE baru
         const pingUrl = `${SHEET_WEBHOOK_URL}?nik=${nikStr}&site=${siteStr}&role=${roleStr}&device=${devStr}&timestamp=${timeStr}`;
         const beacon = new Image();
         beacon.src = pingUrl;
@@ -582,7 +581,7 @@
       },
       "BSS-SITE TDM": {
         rates: { ob: 1.85, co: 3.60, cohauling: 0.12, overheadHr: 55.00 },
-        pit: { dist: 2.5, speedL: 22, speedE: 28, hours: 10, density: 2.15, sf: 0.80, eff: 82 }
+        pit: { dist: 35.0, speedL: 28, speedE: 38, hours: 10, density: 1.30, sf: 0.85, eff: 83 }
       },
       "BSS-SITE MHU": {
         rates: { ob: 1.75, co: 3.40, cohauling: 0.11, overheadHr: 45.00 },
@@ -673,7 +672,6 @@
       runSimulation();
     }
 
-    // Auto Qty 0 untuk Semua Unit
     function handleLoaderChange() {
       const selectEl = document.getElementById("sim-loader");
       const qtyEl = document.getElementById("sim-loader-qty");
@@ -733,20 +731,40 @@
       document.getElementById("active-site-tag").innerText = newSite.replace("BSS-SITE ", "");
       document.getElementById("rate-site-name-tag").innerText = newSite;
 
+      applySiteRestrictions(newSite);
       loadSiteSettings(newSite);
       runSimulation();
+    }
+
+    // ATURAN KHUSUS: SITE TDM HANYA COAL HAULING
+    function applySiteRestrictions(siteName) {
+      const btnOb = document.getElementById("btn-job-ob");
+      const btnCo = document.getElementById("btn-job-co");
+      const selectorGrid = document.getElementById("job-type-selector-grid");
+
+      if (siteName === "BSS-SITE TDM") {
+        btnOb.classList.add("hidden");
+        btnCo.classList.add("hidden");
+        selectorGrid.style.gridTemplateColumns = "1fr"; // Lebarkan tombol CoHauling
+        setJobType("CoHauling");
+      } else {
+        btnOb.classList.remove("hidden");
+        btnCo.classList.remove("hidden");
+        selectorGrid.style.gridTemplateColumns = "repeat(3, 1fr)";
+        if (currentJobType === "CoHauling" && siteName !== "BSS-SITE TDM") {
+          setJobType("OB");
+        }
+      }
     }
 
     function loadSiteSettings(siteName) {
       const cfg = siteConfigs[siteName] || defaultSiteConfigs["BSS-SITE MSJ"];
       
-      // Muat Tarif Kontrak
       document.getElementById("master-rate-ob").value = cfg.rates.ob;
       document.getElementById("master-rate-co").value = cfg.rates.co;
       document.getElementById("master-rate-cohauling").value = cfg.rates.cohauling;
       document.getElementById("master-fleet-overhead").value = cfg.rates.overheadHr;
 
-      // Muat Parameter Pit
       document.getElementById("param-dist").value = cfg.pit.dist;
       document.getElementById("param-speed-l").value = cfg.pit.speedL;
       document.getElementById("param-speed-e").value = cfg.pit.speedE;
@@ -761,13 +779,11 @@
         siteConfigs[currentSite] = JSON.parse(JSON.stringify(defaultSiteConfigs["BSS-SITE MSJ"]));
       }
 
-      // Simpan tarif
       siteConfigs[currentSite].rates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
       siteConfigs[currentSite].rates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
       siteConfigs[currentSite].rates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
       siteConfigs[currentSite].rates.overheadHr = parseFloat(document.getElementById("master-fleet-overhead").value) || 0;
 
-      // Simpan parameter lapangan
       siteConfigs[currentSite].pit.dist = parseFloat(document.getElementById("param-dist").value) || 0.1;
       siteConfigs[currentSite].pit.speedL = parseFloat(document.getElementById("param-speed-l").value) || 20;
       siteConfigs[currentSite].pit.speedE = parseFloat(document.getElementById("param-speed-e").value) || 26;
@@ -940,8 +956,6 @@
 
     function unlockApp(user) {
       currentUser = user;
-
-      // Kirim log akses ke Google Spreadsheet dengan nama Site
       sendAccessLog(user);
 
       document.getElementById("login-overlay").classList.add("hidden");
@@ -1017,7 +1031,11 @@
 
       renderDatabaseTables();
       updateMaterialButtonLabels();
-      setJobType("OB");
+      if (currentSite === "BSS-SITE TDM") {
+        setJobType("CoHauling");
+      } else {
+        setJobType("OB");
+      }
     }
 
     function rebuildDropdowns() {
@@ -1039,7 +1057,6 @@
       document.getElementById("sim-hauler").innerHTML = sortedHaulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
-    // --- CSV SUITE ---
     function downloadLoaderCsvTemplate() {
       const headers = "Model Unit,Bucket,CT,Cost\n";
       const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
@@ -1439,7 +1456,7 @@
       };
 
       for (const [k, btn] of Object.entries(buttons)) {
-        btn.className = (k === type) ? "btn btn-primary" : "btn btn-dark";
+        if (btn) btn.className = (k === type) ? "btn btn-primary" : "btn btn-dark";
       }
 
       const obMatContainer = document.getElementById("container-ob-material");
@@ -1708,7 +1725,6 @@
       document.getElementById("res-prod-primary").innerText = mainProdValue.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       document.getElementById("res-prod-secondary").innerText = secondaryProdText;
 
-      // MODE FINANSIAL VS OPERASIONAL
       if (isFinancialAuthorized) {
         document.getElementById("label-unit-cost").innerText = `Unit Cost ($/${unitLabel})`;
         document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
