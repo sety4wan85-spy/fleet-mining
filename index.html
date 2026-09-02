@@ -527,7 +527,7 @@
       if (!SHEET_WEBHOOK_URL) return;
 
       try {
-        const timeStr = encodeURIComponent(new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }));
+        const timeStr = encodeURIComponent(new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }));
         const nikStr = encodeURIComponent(user.nik);
         const roleStr = encodeURIComponent(user.role);
         const devStr = encodeURIComponent(navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
