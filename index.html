@@ -3,394 +3,376 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Enterprise Matching Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <title>Mining Fleet Manager - Offline Matching Engine</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    /* RESET & DASAR */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #020617; color: #f8fafc; line-height: 1.5; padding-bottom: 3rem; }
+    input, select, button { font-family: inherit; font-size: inherit; color: inherit; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .hidden { display: none !important; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+    /* LAYOUT & UTILITY */
+    .container { max-width: 56rem; margin: 0 auto; padding: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    @media (min-width: 768px) {
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* CARD & KOMPONEN */
+    .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; }
+    .card-sub { background-color: rgba(2, 6, 23, 0.7); border: 1px solid #1e293b; border-radius: 0.5rem; padding: 0.75rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 600; border-radius: 0.5rem; cursor: pointer; border: 1px solid transparent; transition: 0.15s ease; text-align: center; }
+    .btn-primary { background: linear-gradient(to right, #f59e0b, #d97706); color: #020617; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-dark { background-color: #1e293b; border-color: #334155; color: #cbd5e1; }
+    .btn-dark:hover { color: #ffffff; }
+    .btn-danger { background-color: #450a0a; border-color: #991b1b; color: #f87171; }
+
+    /* FORM INPUT */
+    .form-control { width: 100%; background-color: #020617; border: 1px solid #334155; border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: #f8fafc; outline: none; }
+    .form-control:focus { border-color: #f59e0b; }
+    .label-title { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; font-weight: 600; }
+
+    /* WARNA STATUS */
+    .text-amber { color: #fbbf24; }
+    .text-emerald { color: #34d399; }
+    .text-rose { color: #f87171; }
+    .text-blue { color: #60a5fa; }
+    .text-muted { color: #64748b; font-size: 0.75rem; }
+    .badge { display: inline-block; font-size: 0.625rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 0.25rem; }
+
+    /* TABEL MASTER DATA */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left; }
+    th { background-color: #020617; color: #94a3b8; padding: 0.5rem; text-transform: uppercase; font-size: 0.65rem; }
+    td { padding: 0.5rem; border-top: 1px solid #1e293b; }
+    tr:hover { background-color: rgba(30, 41, 59, 0.5); }
+
+    /* HEADER STICKY */
+    header { background-color: #0f172a; border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 40; padding: 0.75rem 1rem; }
+    .header-content { max-width: 56rem; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background-color: rgba(2, 6, 23, 0.85); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-box { width: 100%; max-width: 28rem; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 1rem; padding: 1.5rem; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body>
 
-  <!-- ==================== LOGIN SCREEN OVERLAY ==================== -->
-  <div id="login-overlay" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl relative">
-      <div class="text-center space-y-2 mb-6">
-        <div class="inline-flex p-3 bg-slate-800 rounded-2xl border border-slate-700 shadow-inner mb-1">
-          <i data-lucide="truck" class="w-8 h-8 text-amber-500"></i>
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="login-overlay" class="modal-overlay">
+    <div class="modal-box" style="max-width: 24rem;">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="display: inline-flex; padding: 0.75rem; background-color: #1e293b; border-radius: 1rem; margin-bottom: 0.5rem;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m9 0h4l3-5h-7V5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
         </div>
-        <h2 class="text-xl font-bold text-white tracking-wide">Mining Fleet Manager</h2>
-        <p class="text-xs text-slate-400">Silakan masukkan NIK dan PIN Anda</p>
+        <h2 style="font-size: 1.25rem; font-weight: 700;">Mining Fleet Manager</h2>
+        <p style="font-size: 0.75rem; color: #94a3b8;">Masuk menggunakan NIK & PIN</p>
       </div>
 
-      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+      <form id="login-form" onsubmit="handleLogin(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor Induk Karyawan (NIK)</label>
-          <div class="relative">
-            <input type="text" id="login-nik" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-amber-500 outline-none transition font-mono" placeholder="Masukkan 7 Digit NIK...">
-            <div class="absolute right-3 top-3 text-slate-500">
-              <i data-lucide="badge-check" class="w-4 h-4"></i>
-            </div>
-          </div>
+          <label class="label-title">Nomor Induk Karyawan (NIK)</label>
+          <input type="text" id="login-nik" required class="form-control font-mono" placeholder="7 Digit NIK...">
         </div>
-
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">PIN / Password</label>
-          <div class="relative">
-            <input type="password" id="login-password" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-amber-500 outline-none transition" placeholder="Masukkan PIN...">
-            <button type="button" onclick="togglePassVisibility('login-password', 'eye-icon')" class="absolute right-3 top-3 text-slate-400 hover:text-slate-200">
-              <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
-            </button>
-          </div>
+          <label class="label-title">PIN / Password</label>
+          <input type="password" id="login-password" required class="form-control" placeholder="Masukkan PIN...">
         </div>
-
-        <div id="login-error" class="hidden text-rose-400 text-xs p-2.5 bg-rose-950/40 border border-rose-800/60 rounded-lg flex items-center gap-2">
-          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-          <span id="login-error-text">NIK tidak valid atau PIN salah!</span>
+        <div id="login-error" class="hidden" style="padding: 0.5rem; background-color: rgba(69, 10, 10, 0.4); border: 1px solid #991b1b; border-radius: 0.5rem; color: #f87171; font-size: 0.75rem;">
+          <span id="login-error-text">NIK atau PIN salah!</span>
         </div>
-
-        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-amber-500/20 transition transform active:scale-98">
-          Masuk ke Sistem
-        </button>
-
-        <div class="text-center pt-2">
-          <button type="button" onclick="openForgotPinModal()" class="text-xs text-slate-400 hover:text-amber-400 transition">
-            Lupa PIN / Password?
-          </button>
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem; margin-top: 0.5rem; font-size: 0.875rem;">Masuk ke Sistem</button>
+        <div style="text-align: center; margin-top: 0.25rem;">
+          <button type="button" onclick="openForgotPinModal()" style="background: none; border: none; font-size: 0.75rem; color: #94a3b8; cursor: pointer;">Lupa PIN / Password?</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ==================== MODAL LUPA PIN (EMERGENCY MASTER RESET) ==================== -->
-  <div id="modal-forgot-pin" class="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i> Pemulihan Akses PIN Mandiri
-        </h3>
-        <button onclick="closeForgotPinModal()" class="text-slate-400 hover:text-slate-200">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+  <!-- ==================== MODAL LUPA PIN (EMERGENCY) ==================== -->
+  <div id="modal-forgot-pin" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 0.875rem; font-weight: 700; color: #f59e0b;">Pemulihan PIN Mandiri</h3>
+        <button onclick="closeForgotPinModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.25rem;">&times;</button>
       </div>
-
-      <p class="text-xs text-slate-300 leading-relaxed">
-        Masukkan NIK dan <strong>Master Pass Pemulihan</strong> dari Admin untuk mereset PIN akun Anda kembali ke setelan default.
-      </p>
-
-      <div class="space-y-3 text-xs">
+      <p style="font-size: 0.75rem; color: #cbd5e1; margin-bottom: 1rem;">Masukkan NIK dan <strong>Master Pass</strong> yang diberikan oleh Admin untuk mereset PIN Anda.</p>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
         <div>
-          <label class="block text-slate-400 mb-1 font-semibold">NIK Anda (7 Digit)</label>
-          <input type="text" id="reset-nik" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono outline-none focus:border-amber-500" placeholder="Contoh: 1002001">
+          <label class="label-title">NIK Anda (7 Digit)</label>
+          <input type="text" id="reset-nik" class="form-control font-mono" placeholder="Contoh: 1002001">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Master Pass Pemulihan (Emergency Pass)</label>
-          <input type="password" id="reset-emergency-pass" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 outline-none focus:border-amber-500" placeholder="Ketik master pass...">
+          <label class="label-title">Master Pass Pemulihan</label>
+          <input type="password" id="reset-emergency-pass" class="form-control" placeholder="Ketik Master Pass...">
         </div>
       </div>
-
-      <div class="flex gap-2 pt-2">
-        <button type="button" onclick="closeForgotPinModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
-          Batal
-        </button>
-        <button type="button" onclick="submitEmergencyReset()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow transition">
-          Reset PIN Saya
-        </button>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" onclick="closeForgotPinModal()" class="btn btn-dark" style="flex: 1; padding: 0.5rem;">Batal</button>
+        <button type="button" onclick="submitEmergencyReset()" class="btn btn-primary" style="flex: 1; padding: 0.5rem;">Reset PIN Saya</button>
       </div>
     </div>
   </div>
 
   <!-- ==================== MODAL GANTI PIN USER ==================== -->
-  <div id="modal-change-pin" class="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="key" class="w-4 h-4 text-amber-400"></i> Ganti PIN Saya
-        </h3>
-        <button onclick="closeChangePinModal()" class="text-slate-400 hover:text-slate-200">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+  <div id="modal-change-pin" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 0.875rem; font-weight: 700; color: #f59e0b;">Ganti PIN Saya</h3>
+        <button onclick="closeChangePinModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.25rem;">&times;</button>
       </div>
-
-      <div class="space-y-3 text-xs">
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
         <div>
-          <label class="block text-slate-400 mb-1">PIN Lama</label>
-          <input type="password" id="pin-old" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 outline-none focus:border-amber-500">
+          <label class="label-title">PIN Lama</label>
+          <input type="password" id="pin-old" class="form-control">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">PIN Baru (min. 4 karakter)</label>
-          <input type="password" id="pin-new" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 outline-none focus:border-amber-500">
+          <label class="label-title">PIN Baru (min. 4 digit)</label>
+          <input type="password" id="pin-new" class="form-control">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Konfirmasi PIN Baru</label>
-          <input type="password" id="pin-confirm" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 outline-none focus:border-amber-500">
+          <label class="label-title">Konfirmasi PIN Baru</label>
+          <input type="password" id="pin-confirm" class="form-control">
         </div>
       </div>
-
-      <button type="button" onclick="submitChangePin()" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow transition">
-        Simpan PIN Baru
-      </button>
+      <button type="button" onclick="submitChangePin()" class="btn btn-primary" style="width: 100%; padding: 0.5rem;">Simpan PIN Baru</button>
     </div>
   </div>
 
-  <!-- ==================== MAIN DASHBOARD ==================== -->
-  <div id="app-dashboard" class="hidden pb-12">
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-4 py-3 shadow-md">
-      <div class="max-w-4xl mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-2">
-          <i data-lucide="truck" class="text-amber-500 w-6 h-6"></i>
+  <!-- ==================== APLIKASI UTAMA ==================== -->
+  <div id="app-dashboard" class="hidden">
+    <header>
+      <div class="header-content">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m9 0h4l3-5h-7V5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
           <div>
-            <h1 class="text-sm md:text-base font-bold tracking-wide text-white leading-tight">Mining Fleet Manager</h1>
-            <div id="user-badge" class="text-[10px] font-semibold flex items-center gap-1"></div>
+            <div style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Mining Fleet Manager</div>
+            <div id="user-badge" style="font-size: 0.65rem;"></div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
-            <button id="nav-sim" onclick="switchTab('sim')" class="px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow">Simulasi</button>
-            <button id="nav-db" onclick="switchTab('db')" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white">Master Data</button>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="display: flex; background-color: #020617; padding: 0.2rem; border-radius: 0.5rem; border: 1px solid #1e293b;">
+            <button id="nav-sim" onclick="switchTab('sim')" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Simulasi</button>
+            <button id="nav-db" onclick="switchTab('db')" class="btn" style="background: none; padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #94a3b8;">Master Data</button>
           </div>
-          <button onclick="openChangePinModal()" title="Ubah PIN" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg transition text-xs">
-            <i data-lucide="key" class="w-4 h-4"></i>
-          </button>
-          <button onclick="handleLogout()" title="Keluar / Logout" class="p-2 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 rounded-lg transition flex items-center gap-1 text-xs">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Logout</span>
-          </button>
+          <button onclick="openChangePinModal()" title="Ubah PIN" class="btn btn-dark" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">PIN</button>
+          <button onclick="handleLogout()" class="btn btn-danger" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">Logout</button>
         </div>
       </div>
     </header>
 
-    <main class="max-w-4xl mx-auto p-4 space-y-4">
-
-      <!-- ==================== TAB 1: SIMULATOR ==================== -->
-      <div id="tab-simulation" class="space-y-4">
+    <main class="container">
+      
+      <!-- ==================== TAB 1: SIMULASI ==================== -->
+      <div id="tab-simulation">
         
         <!-- Job Type Selector -->
-        <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
-          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Tipe Pekerjaan (Job Type)</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button id="btn-job-ob" onclick="setJobType('OB')" class="py-2.5 px-3 rounded-lg border text-center transition font-semibold text-xs md:text-sm bg-amber-500 border-amber-500 text-slate-950 shadow-md">
-              <div>Overburden (OB)</div>
-              <div class="text-[10px] opacity-80 font-normal">Satuan: BCM</div>
+        <div class="card">
+          <label class="label-title">TIPE PEKERJAAN (JOB TYPE)</label>
+          <div class="grid-3">
+            <button id="btn-job-ob" onclick="setJobType('OB')" class="btn btn-primary" style="padding: 0.5rem; flex-direction: column;">
+              <span style="font-size: 0.75rem;">Overburden (OB)</span>
+              <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: BCM</span>
             </button>
-            <button id="btn-job-co" onclick="setJobType('CO')" class="py-2.5 px-3 rounded-lg border text-center transition font-semibold text-xs md:text-sm bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600">
-              <div>Coal / Batubara (CO)</div>
-              <div class="text-[10px] opacity-80 font-normal">Satuan: Ton</div>
+            <button id="btn-job-co" onclick="setJobType('CO')" class="btn btn-dark" style="padding: 0.5rem; flex-direction: column;">
+              <span style="font-size: 0.75rem;">Coal / Batubara</span>
+              <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: Ton</span>
             </button>
-            <button id="btn-job-cohauling" onclick="setJobType('CoHauling')" class="py-2.5 px-3 rounded-lg border text-center transition font-semibold text-xs md:text-sm bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600">
-              <div>Coal Hauling</div>
-              <div class="text-[10px] opacity-80 font-normal">Satuan: Ton.Km</div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Material Sub-Category for OB -->
-        <div id="container-ob-material" class="bg-slate-900 rounded-xl p-3 border border-amber-500/30">
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="layers-3" class="w-3.5 h-3.5"></i> Karakteristik Material Overburden (OB)
-            </label>
-            <span id="badge-material-effect" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">BFF: 0.95 | CT: Normal</span>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-            <button type="button" id="btn-mat-softsoil" onclick="setObMaterial('softsoil')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
-              <div class="font-bold text-slate-100" id="label-mat-name-softsoil">Soft Soil (Lunak)</div>
-              <div class="text-[10px] text-emerald-400 mt-0.5" id="label-mat-sub-softsoil">BFF 1.05 | Biaya -5%</div>
-            </button>
-            <button type="button" id="btn-mat-hardsoil" onclick="setObMaterial('hardsoil')" class="p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition">
-              <div class="font-bold" id="label-mat-name-hardsoil">Hard Soil / Clay</div>
-              <div class="text-[10px] opacity-90 mt-0.5" id="label-mat-sub-hardsoil">BFF 0.95 | Standar</div>
-            </button>
-            <button type="button" id="btn-mat-blasting" onclick="setObMaterial('blasting')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
-              <div class="font-bold text-slate-100" id="label-mat-name-blasting">Blasting / Rock</div>
-              <div class="text-[10px] text-amber-400 mt-0.5" id="label-mat-sub-blasting">BFF 0.85 | +Blast Cost</div>
-            </button>
-            <button type="button" id="btn-mat-mud" onclick="setObMaterial('mud')" class="p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition">
-              <div class="font-bold text-slate-100" id="label-mat-name-mud">Lumpur / Mud</div>
-              <div class="text-[10px] text-cyan-400 mt-0.5" id="label-mat-sub-mud">BFF 0.80 | Biaya +10%</div>
+            <button id="btn-job-cohauling" onclick="setJobType('CoHauling')" class="btn btn-dark" style="padding: 0.5rem; flex-direction: column;">
+              <span style="font-size: 0.75rem;">Coal Hauling</span>
+              <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: Ton.Km</span>
             </button>
           </div>
         </div>
 
-        <!-- Executive KPI Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="bg-slate-900 rounded-xl p-3 border border-slate-800 relative overflow-hidden">
-            <span class="text-xs text-slate-400">Match Factor (MF)</span>
-            <div id="res-mf" class="text-xl font-bold mt-1 text-white">0.00</div>
-            <span id="res-mf-badge" class="text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">-</span>
+        <!-- Karakteristik OB Material -->
+        <div id="container-ob-material" class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">KARAKTERISTIK MATERIAL OB</label>
+            <span id="badge-material-effect" class="badge" style="background-color: #020617; border: 1px solid #1e293b; color: #94a3b8;">BFF: 0.95</span>
           </div>
-
-          <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
-            <span id="label-prod-primary" class="text-xs text-slate-400">Produksi (BCM/Jam)</span>
-            <div id="res-prod-primary" class="text-xl font-bold mt-1 text-amber-400">0.0</div>
-            <span id="res-prod-secondary" class="text-[11px] text-slate-400 mt-1 block">0.0 Ton/Jam</span>
-          </div>
-
-          <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
-            <span id="label-unit-cost" class="text-xs text-slate-400">Unit Cost ($/BCM)</span>
-            <div id="res-unit-cost" class="text-xl font-bold mt-1 text-rose-400">$0.000</div>
-            <span id="res-total-cost" class="text-[11px] text-slate-400 mt-1 block font-mono">$0.00/Jam Total</span>
-          </div>
-
-          <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
-            <span id="label-profit-hr" class="text-xs text-slate-400">Net Profit ($/Jam)</span>
-            <div id="res-profit-hr" class="text-xl font-bold mt-1 text-emerald-400">$0.00</div>
-            <span id="res-profit-unit" class="text-[11px] text-slate-400 mt-1 block">$0.000/BCM Margin</span>
-          </div>
-        </div>
-
-        <!-- Detail Cost Breakdown -->
-        <div id="cost-breakdown-banner" class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs">
-          <div class="flex items-center gap-4">
-            <div class="text-slate-400">Komposisi Biaya per Jam:</div>
-            <div class="text-slate-300">Alat: <strong id="cb-equipment" class="text-slate-100 font-mono">$0.00</strong></div>
-            <div class="text-slate-300">Support: <strong id="cb-support" class="text-slate-100 font-mono">$0.00</strong></div>
-            <div class="text-slate-300">Overhead: <strong id="cb-overhead" class="text-amber-400 font-mono">$0.00</strong></div>
-            <div id="cb-blasting-wrapper" class="text-slate-300 hidden">Blasting: <strong id="cb-blasting" class="text-rose-400 font-mono">$0.00</strong></div>
-          </div>
-          <div class="text-slate-400 font-mono text-[11px]" id="cb-total-summary">Total: $0.00/h</div>
-        </div>
-
-        <!-- Detail Cycle Time Breakdown -->
-        <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 space-y-2">
-          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
-            <div class="flex items-center gap-2">
-              <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
-              <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">Breakdown Cycle Time Hauler</span>
-            </div>
-            <div class="text-xs text-slate-300">
-              Total CT: <strong id="ct-total" class="text-amber-400 font-mono text-sm">0.00</strong> menit (<span id="ct-ritase" class="text-slate-200 font-mono">0.00</span> rit/jam/unit)
-            </div>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-1 text-xs">
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span class="text-slate-400 block text-[11px]">1. Loading Time</span>
-              <div id="ct-load" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
-            </div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span class="text-slate-400 block text-[11px]">2. Hauling (Loaded)</span>
-              <div id="ct-travel-l" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
-            </div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span class="text-slate-400 block text-[11px]">3. Dumping / Spot</span>
-              <div id="ct-dump" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
-            </div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span class="text-slate-400 block text-[11px]">4. Return (Empty)</span>
-              <div id="ct-travel-e" class="font-bold text-slate-100 font-mono mt-0.5">0.00 menit</div>
-            </div>
+          <div class="grid-4" style="gap: 0.5rem;">
+            <button type="button" id="btn-mat-softsoil" onclick="setObMaterial('softsoil')" class="btn btn-dark" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-softsoil">Soft Soil</span>
+              <span style="font-size: 0.625rem; color: #34d399;" id="label-mat-sub-softsoil">BFF 1.05</span>
+            </button>
+            <button type="button" id="btn-mat-hardsoil" onclick="setObMaterial('hardsoil')" class="btn btn-primary" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-hardsoil">Hard Soil</span>
+              <span style="font-size: 0.625rem; opacity: 0.85;" id="label-mat-sub-hardsoil">BFF 0.95</span>
+            </button>
+            <button type="button" id="btn-mat-blasting" onclick="setObMaterial('blasting')" class="btn btn-dark" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-blasting">Blasting/Rock</span>
+              <span style="font-size: 0.625rem; color: #fbbf24;" id="label-mat-sub-blasting">BFF 0.85</span>
+            </button>
+            <button type="button" id="btn-mat-mud" onclick="setObMaterial('mud')" class="btn btn-dark" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-mud">Lumpur / Mud</span>
+              <span style="font-size: 0.625rem; color: #60a5fa;" id="label-mat-sub-mud">BFF 0.80</span>
+            </button>
           </div>
         </div>
 
-        <!-- Break-Even Distance Card -->
-        <div class="bg-gradient-to-r from-slate-900 to-slate-850 rounded-xl p-3.5 border border-slate-800 flex justify-between items-center">
+        <!-- KPI Summary Cards -->
+        <div class="grid-4" style="margin-bottom: 1rem;">
+          <div class="card" style="margin-bottom: 0;">
+            <span class="label-title">Match Factor (MF)</span>
+            <div id="res-mf" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">0.00</div>
+            <span id="res-mf-badge" class="badge" style="background-color: #1e293b; color: #cbd5e1;">-</span>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <span id="label-prod-primary" class="label-title">Produksi (BCM/Jam)</span>
+            <div id="res-prod-primary" class="text-amber" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">0.0</div>
+            <span id="res-prod-secondary" class="text-muted">0.0 Ton/Jam</span>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <span id="label-unit-cost" class="label-title">Unit Cost ($/BCM)</span>
+            <div id="res-unit-cost" class="text-rose" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">$0.000</div>
+            <span id="res-total-cost" class="text-muted font-mono">$0.00/Jam Total</span>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <span id="label-profit-hr" class="label-title">Net Profit ($/Jam)</span>
+            <div id="res-profit-hr" class="text-emerald" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">$0.00</div>
+            <span id="res-profit-unit" class="text-muted font-mono">$0.000 Margin</span>
+          </div>
+        </div>
+
+        <!-- Breakdown Biaya (Khusus Manajemen/Admin) -->
+        <div id="cost-breakdown-banner" class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.75rem; padding: 0.6rem 1rem;">
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <span style="color: #94a3b8;">Biaya/Jam:</span>
+            <span>Alat: <strong id="cb-equipment" class="font-mono text-amber">$0.00</strong></span>
+            <span>Support: <strong id="cb-support" class="font-mono text-amber">$0.00</strong></span>
+            <span>Overhead: <strong id="cb-overhead" class="font-mono text-amber">$0.00</strong></span>
+            <span id="cb-blasting-wrapper" class="hidden">Blasting: <strong id="cb-blasting" class="font-mono text-rose">$0.00</strong></span>
+          </div>
+          <div id="cb-total-summary" class="font-mono text-muted">Total: $0.00/h</div>
+        </div>
+
+        <!-- Breakdown Cycle Time -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="label-title" style="color: #fbbf24; margin-bottom: 0;">BREAKDOWN CYCLE TIME HAULER</span>
+            <span style="font-size: 0.75rem;">Total CT: <strong id="ct-total" class="text-amber font-mono">0.00</strong> mnt (<span id="ct-ritase" class="font-mono">0.00</span> rit/jam)</span>
+          </div>
+          <div class="grid-4" style="gap: 0.5rem;">
+            <div class="card-sub">
+              <span class="text-muted">1. Loading Time</span>
+              <div id="ct-load" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+            <div class="card-sub">
+              <span class="text-muted">2. Hauling (Loaded)</span>
+              <div id="ct-travel-l" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+            <div class="card-sub">
+              <span class="text-muted">3. Dumping / Spot</span>
+              <div id="ct-dump" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+            <div class="card-sub">
+              <span class="text-muted">4. Return (Empty)</span>
+              <div id="ct-travel-e" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Break Even Distance -->
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to right, #0f172a, #1e293b);">
           <div>
-            <span class="text-xs text-slate-400 block">Batas Jarak Impas (Break-Even Distance)</span>
-            <div class="text-lg font-bold text-amber-400 mt-0.5">
-              <span id="res-bep-dist">0.00</span> km <span class="text-xs text-slate-400 font-normal">satu arah</span>
-            </div>
+            <span class="label-title">Batas Jarak Impas (Break-Even Distance)</span>
+            <div style="font-size: 1.15rem; font-weight: 700; color: #fbbf24;"><span id="res-bep-dist">0.00</span> km <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">satu arah</span></div>
           </div>
-          <div class="text-right">
-            <span id="label-bep-prod" class="text-xs text-slate-400 block">BEP Prod (BCM/Jam)</span>
-            <div id="res-bep-prod" class="text-sm font-semibold text-slate-200 mt-0.5">0.0 BCM</div>
+          <div style="text-align: right;">
+            <span id="label-bep-prod" class="label-title">BEP Prod (BCM/Jam)</span>
+            <div id="res-bep-prod" style="font-weight: 700; font-size: 0.875rem;">0.0 BCM</div>
           </div>
         </div>
 
-        <!-- ==================== KONFIGURASI UNIT (RESPONSIF MOBILE RAMAH HP) ==================== -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-4">
-          <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="layers" class="w-4 h-4"></i> Konfigurasi Unit Armada
-          </h2>
+        <!-- Konfigurasi Armada (Tata Letak Ramah HP) -->
+        <div class="card">
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.75rem;">KONFIGURASI UNIT ARMADA</label>
 
-          <!-- 1. Loader Card -->
-          <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-2">
-            <div class="flex flex-wrap justify-between items-center gap-1">
-              <label class="text-xs font-semibold text-slate-300">Loading Unit (Excavator)</label>
-              <select id="sim-loader-owner" onchange="runSimulation()" class="bg-slate-900 border border-slate-700 text-amber-400 text-[11px] rounded-lg px-2 py-1 outline-none font-medium">
-                <option value="contractor">Unit Kontraktor (Cost Masuk)</option>
+          <!-- Loader -->
+          <div class="card-sub" style="margin-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.75rem; font-weight: 700;">Loading Unit (Excavator)</span>
+              <select id="sim-loader-owner" onchange="runSimulation()" class="form-control" style="width: auto; padding: 0.2rem 0.4rem; font-size: 0.65rem; color: #fbbf24;">
+                <option value="contractor">Unit Milik Sendiri (Cost Masuk)</option>
                 <option value="owner">Disediakan Owner ($0.00)</option>
               </select>
             </div>
-            
-            <select id="sim-loader" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-100 outline-none focus:border-amber-500"></select>
-
-            <div class="flex items-center justify-between gap-3 pt-1">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs text-slate-400 font-medium mr-1">Jumlah:</span>
-                <button type="button" onclick="adjustQty('sim-loader-qty', -1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">-</button>
-                <input type="number" id="sim-loader-qty" value="1" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-14 h-8 bg-slate-900 border border-slate-700 rounded-lg text-center font-bold text-amber-400 text-sm outline-none">
-                <button type="button" onclick="adjustQty('sim-loader-qty', 1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">+</button>
-                <span class="text-[11px] text-slate-500 ml-1">unit</span>
+            <select id="sim-loader" onchange="runSimulation()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
+                <button type="button" onclick="adjustQty('sim-loader-qty', -1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">-</button>
+                <input type="number" id="sim-loader-qty" value="1" min="0" onchange="runSimulation()" class="form-control font-mono" style="width: 3.5rem; text-align: center; font-weight: 700; color: #fbbf24;">
+                <button type="button" onclick="adjustQty('sim-loader-qty', 1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">+</button>
+                <span class="text-muted">unit</span>
               </div>
-              <div id="sim-loader-rate" class="px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 font-mono text-center min-w-[90px]">$0.00/h</div>
+              <div id="sim-loader-rate" class="badge font-mono" style="background-color: #020617; border: 1px solid #1e293b; padding: 0.4rem 0.6rem;">$0.00/h</div>
             </div>
           </div>
 
-          <!-- 2. Hauler Card -->
-          <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-2">
-            <label class="block text-xs font-semibold text-slate-300">Hauling Unit (Dump Truck)</label>
-            <select id="sim-hauler" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-100 outline-none focus:border-amber-500"></select>
-
-            <div class="flex items-center justify-between gap-3 pt-1">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs text-slate-400 font-medium mr-1">Jumlah:</span>
-                <button type="button" onclick="adjustQty('sim-hauler-qty', -1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">-</button>
-                <input type="number" id="sim-hauler-qty" value="5" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-14 h-8 bg-slate-900 border border-slate-700 rounded-lg text-center font-bold text-amber-400 text-sm outline-none">
-                <button type="button" onclick="adjustQty('sim-hauler-qty', 1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">+</button>
-                <span class="text-[11px] text-slate-500 ml-1">unit</span>
+          <!-- Hauler -->
+          <div class="card-sub" style="margin-bottom: 0.75rem;">
+            <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.4rem;">Hauling Unit (Dump Truck)</span>
+            <select id="sim-hauler" onchange="runSimulation()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
+                <button type="button" onclick="adjustQty('sim-hauler-qty', -1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">-</button>
+                <input type="number" id="sim-hauler-qty" value="5" min="0" onchange="runSimulation()" class="form-control font-mono" style="width: 3.5rem; text-align: center; font-weight: 700; color: #fbbf24;">
+                <button type="button" onclick="adjustQty('sim-hauler-qty', 1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">+</button>
+                <span class="text-muted">unit</span>
               </div>
-              <div id="sim-hauler-rate" class="px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 font-mono text-center min-w-[90px]">$0.00/h</div>
+              <div id="sim-hauler-rate" class="badge font-mono" style="background-color: #020617; border: 1px solid #1e293b; padding: 0.4rem 0.6rem;">$0.00/h</div>
             </div>
           </div>
 
-          <!-- 3. Support Units -->
-          <div class="space-y-2 pt-1">
-            <div class="flex justify-between items-center">
-              <label class="block text-xs font-semibold text-slate-300">Alat Support (Dozer, Grader, WT)</label>
-              <span class="text-[10px] text-slate-500">Pilih "None" otomatis Qty = 0</span>
+          <!-- Support Units Container -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.75rem; font-weight: 700;">Alat Support (Dozer, Grader, WT)</span>
+              <span style="font-size: 0.65rem; color: #64748b;">Pilih "None" otomatis Qty = 0</span>
             </div>
-            <div id="support-container" class="space-y-2.5"></div>
+            <div id="support-container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
           </div>
         </div>
 
-        <!-- Operational Parameters Card -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
-          <div class="flex justify-between items-center">
-            <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="sliders" class="w-4 h-4"></i> Parameter Lapangan
-            </h2>
-            <span class="text-[10px] text-slate-400">Parameter aktual pit / lab</span>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Parameter Operasional Pit -->
+        <div class="card">
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.75rem;">PARAMETER LAPANGAN (PIT & LAB)</label>
+          <div class="grid-4">
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Jarak Haul (km)</label>
-              <input type="number" step="0.1" id="param-dist" value="2.0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+              <label class="label-title">Jarak Haul (km)</label>
+              <input type="number" step="0.1" id="param-dist" value="2.0" onchange="runSimulation()" class="form-control">
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Speed Loaded (km/h)</label>
-              <input type="number" id="param-speed-l" value="20" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+              <label class="label-title">Speed Loaded (km/h)</label>
+              <input type="number" id="param-speed-l" value="20" onchange="runSimulation()" class="form-control">
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Speed Empty (km/h)</label>
-              <input type="number" id="param-speed-e" value="26" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+              <label class="label-title">Speed Empty (km/h)</label>
+              <input type="number" id="param-speed-e" value="26" onchange="runSimulation()" class="form-control">
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Jam/Shift (Jam)</label>
-              <input type="number" id="param-hours" value="10" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+              <label class="label-title">Jam/Shift (Jam)</label>
+              <input type="number" id="param-hours" value="10" onchange="runSimulation()" class="form-control">
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Densitas Insitu (Ton/m³)</label>
-              <input type="number" step="0.05" id="param-density" value="2.10" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+              <label class="label-title">Densitas (Ton/m³)</label>
+              <input type="number" step="0.05" id="param-density" value="2.10" onchange="runSimulation()" class="form-control">
             </div>
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Swell Factor (SF)</label>
-              <input type="number" step="0.05" id="param-sf" value="0.80" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+              <label class="label-title">Swell Factor (SF)</label>
+              <input type="number" step="0.05" id="param-sf" value="0.80" onchange="runSimulation()" class="form-control">
             </div>
-            <div class="col-span-2">
-              <label class="block text-xs text-slate-400 mb-1">Efisiensi Kerja (%)</label>
-              <input type="number" id="param-eff" value="83" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none">
+            <div style="grid-column: span 2;">
+              <label class="label-title">Efisiensi Kerja (%)</label>
+              <input type="number" id="param-eff" value="83" onchange="runSimulation()" class="form-control">
             </div>
           </div>
         </div>
@@ -398,173 +380,136 @@
       </div>
 
       <!-- ==================== TAB 2: MASTER DATA ==================== -->
-      <div id="tab-database" class="space-y-4 hidden">
+      <div id="tab-database" class="hidden">
         
-        <!-- Confidential Master Rates & Fleet Overhead -->
-        <div id="section-confidential-rates" class="bg-slate-900 border border-amber-500/40 rounded-xl p-4 shadow-lg relative overflow-hidden space-y-3">
-          <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-              <i id="lock-icon" data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
-              <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wide">Tarif Kontrak & Biaya Overhead Fleet (Khusus Admin)</h3>
+        <!-- Confidential Tarif Proyek (Khusus Admin) -->
+        <div id="section-confidential-rates" class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.5rem;">TARIF KONTRAK & OVERHEAD (KHUSUS ADMIN)</label>
+          <div class="grid-4" style="margin-bottom: 0.75rem;">
+            <div>
+              <label class="label-title">Tarif OB ($/BCM)</label>
+              <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="saveRates()" class="form-control text-amber font-mono">
+            </div>
+            <div>
+              <label class="label-title">Tarif Coal ($/Ton)</label>
+              <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="saveRates()" class="form-control text-amber font-mono">
+            </div>
+            <div>
+              <label class="label-title">Tarif Hauling ($/Ton.Km)</label>
+              <input type="number" step="0.01" id="master-rate-cohauling" value="0.12" oninput="saveRates()" class="form-control text-amber font-mono">
+            </div>
+            <div>
+              <label class="label-title">Biaya Overhead ($/Jam)</label>
+              <input type="number" step="1.0" id="master-fleet-overhead" value="50.00" oninput="saveRates()" class="form-control text-amber font-mono">
             </div>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Overburden ($/BCM)</label>
-              <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="saveRates()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal / Batubara ($/Ton)</label>
-              <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="saveRates()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Tarif Coal Hauling ($/Ton.Km)</label>
-              <input type="number" step="0.01" id="master-rate-cohauling" value="0.12" oninput="saveRates()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-semibold outline-none focus:border-amber-500">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Biaya Overhead Fleet ($/Jam)</label>
-              <input type="number" step="1.0" id="master-fleet-overhead" value="50.00" oninput="saveRates()" class="w-full bg-slate-950 border border-amber-500/50 rounded-lg px-3 py-2 text-sm text-amber-300 font-bold outline-none focus:border-amber-500">
-            </div>
-          </div>
-
-          <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
-            <span class="text-slate-400">Manajemen Akses User:</span>
-            <button onclick="adminResetUserPin()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-lg font-semibold flex items-center gap-1">
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset PIN User ke Default
-            </button>
+          <div style="border-top: 1px solid #1e293b; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <span class="text-muted">Manajemen Akun User:</span>
+            <button onclick="adminResetUserPin()" class="btn btn-dark" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: #fbbf24;">Reset PIN User ke Default</button>
           </div>
         </div>
 
-        <!-- Master Karakteristik Material OB Table -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
-          <div class="flex justify-between items-center">
-            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-              <i data-lucide="layers-3" class="w-4 h-4"></i> Master Karakteristik, Cost Multipliers & Blasting ($/BCM)
-            </h3>
-            <span class="text-[11px] text-slate-400">Pengaruh fisik & biaya peledakan</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-slate-300">
-              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+        <!-- Tabel Material OB -->
+        <div class="card">
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.5rem;">MASTER MULTIPLIER MATERIAL OB</label>
+          <div class="table-responsive">
+            <table>
+              <thead>
                 <tr>
-                  <th class="p-2">Tipe Material</th>
-                  <th class="p-2 w-20 text-center" title="Bucket Fill Factor">BFF</th>
-                  <th class="p-2 w-20 text-center" title="Pengali Cycle Time Excavator">Faktor CT</th>
-                  <th class="p-2 w-24 text-center" title="Biaya Drilling & Blasting ($/BCM)">Cost Blast ($/BCM)</th>
-                  <th class="p-2 w-20 text-center" title="Pengali Biaya/Jam Loader">Cost Loader</th>
-                  <th class="p-2 w-20 text-center" title="Pengali Biaya/Jam Hauler">Cost Hauler</th>
-                  <th class="p-2 w-20 text-center" title="Pengali Biaya/Jam Support">Cost Support</th>
+                  <th>Material</th>
+                  <th style="text-align: center;">BFF</th>
+                  <th style="text-align: center;">Faktor CT</th>
+                  <th style="text-align: center;">Blast ($/BCM)</th>
+                  <th style="text-align: center;">Cost Loader</th>
+                  <th style="text-align: center;">Cost Hauler</th>
+                  <th style="text-align: center;">Cost Support</th>
                 </tr>
               </thead>
-              <tbody id="table-materials-ob" class="divide-y divide-slate-800"></tbody>
+              <tbody id="table-materials-ob"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- Master Loaders -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
-          <div class="flex flex-wrap justify-between items-center gap-2">
-            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-              <i data-lucide="wrench" class="w-4 h-4"></i> Master Loading Unit (Excavator)
-            </h3>
-            <div class="flex items-center gap-2">
-              <button onclick="downloadLoaderCsvTemplate()" class="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Template
-              </button>
-              <label class="px-2.5 py-1 text-xs rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer transition flex items-center gap-1 shadow">
-                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CSV
-                <input type="file" id="csv-loader-input" accept=".csv" onchange="handleLoaderCsvUpload(event)" class="hidden">
+        <!-- Master Excavator -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER EXCAVATOR (LOADER)</label>
+            <div style="display: flex; gap: 0.35rem;">
+              <button onclick="downloadLoaderCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
+              <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                Impor CSV <input type="file" accept=".csv" onchange="handleLoaderCsvUpload(event)" class="hidden">
               </label>
-              <button onclick="addNewLoaderRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Unit
-              </button>
+              <button onclick="addNewLoaderRow()" class="btn btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">+ Tambah</button>
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-slate-300">
-              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+          <div class="table-responsive">
+            <table>
+              <thead>
                 <tr>
-                  <th class="p-2">Model Unit</th>
-                  <th class="p-2 w-28 text-center">Bucket (m³)</th>
-                  <th class="p-2 w-28 text-center">CT (dtk)</th>
-                  <th class="p-2 w-28 text-center">Cost Base ($/h)</th>
-                  <th class="p-2 w-12 text-center">Aksi</th>
+                  <th>Model Unit</th>
+                  <th style="text-align: center;">Bucket (m³)</th>
+                  <th style="text-align: center;">CT (dtk)</th>
+                  <th style="text-align: center;">Cost ($/h)</th>
+                  <th style="text-align: center;">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="table-loaders" class="divide-y divide-slate-800"></tbody>
+              <tbody id="table-loaders"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- Master Haulers -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
-          <div class="flex flex-wrap justify-between items-center gap-2">
-            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-              <i data-lucide="truck" class="w-4 h-4"></i> Master Hauling Unit (Dump Truck)
-            </h3>
-            <div class="flex items-center gap-2">
-              <button onclick="downloadHaulerCsvTemplate()" class="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Template
-              </button>
-              <label class="px-2.5 py-1 text-xs rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer transition flex items-center gap-1 shadow">
-                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CSV
-                <input type="file" id="csv-hauler-input" accept=".csv" onchange="handleHaulerCsvUpload(event)" class="hidden">
+        <!-- Master Dump Truck -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER DUMP TRUCK (HAULER)</label>
+            <div style="display: flex; gap: 0.35rem;">
+              <button onclick="downloadHaulerCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
+              <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                Impor CSV <input type="file" accept=".csv" onchange="handleHaulerCsvUpload(event)" class="hidden">
               </label>
-              <button onclick="addNewHaulerRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Unit
-              </button>
+              <button onclick="addNewHaulerRow()" class="btn btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">+ Tambah</button>
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-slate-300">
-              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+          <div class="table-responsive">
+            <table>
+              <thead>
                 <tr>
-                  <th class="p-2">Model Unit</th>
-                  <th class="p-2 w-28 text-center">Vessel (m³)</th>
-                  <th class="p-2 w-28 text-center">Dump (mnt)</th>
-                  <th class="p-2 w-28 text-center">Cost Base ($/h)</th>
-                  <th class="p-2 w-12 text-center">Aksi</th>
+                  <th>Model Unit</th>
+                  <th style="text-align: center;">Vessel (m³)</th>
+                  <th style="text-align: center;">Dump (mnt)</th>
+                  <th style="text-align: center;">Cost ($/h)</th>
+                  <th style="text-align: center;">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="table-haulers" class="divide-y divide-slate-800"></tbody>
+              <tbody id="table-haulers"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- Master Supports -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
-          <div class="flex flex-wrap justify-between items-center gap-2">
-            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-              <i data-lucide="shield" class="w-4 h-4"></i> Master Support Unit
-            </h3>
-            <div class="flex items-center gap-2">
-              <button onclick="downloadSupportCsvTemplate()" class="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Template
-              </button>
-              <label class="px-2.5 py-1 text-xs rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer transition flex items-center gap-1 shadow">
-                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CSV
-                <input type="file" id="csv-support-input" accept=".csv" onchange="handleSupportCsvUpload(event)" class="hidden">
+        <!-- Master Support -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER UNIT SUPPORT</label>
+            <div style="display: flex; gap: 0.35rem;">
+              <button onclick="downloadSupportCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
+              <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                Impor CSV <input type="file" accept=".csv" onchange="handleSupportCsvUpload(event)" class="hidden">
               </label>
-              <button onclick="addNewSupportRow()" class="px-2.5 py-1 text-xs rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1 shadow">
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Unit
-              </button>
-              <button onclick="resetDbToDefault()" class="px-2.5 py-1 text-xs rounded border border-rose-500/40 text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-1">
-                <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset Default
-              </button>
+              <button onclick="addNewSupportRow()" class="btn btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">+ Tambah</button>
+              <button onclick="resetDbToDefault()" class="btn btn-danger" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Reset Default</button>
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-slate-300">
-              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+          <div class="table-responsive">
+            <table>
+              <thead>
                 <tr>
-                  <th class="p-2">Model Unit</th>
-                  <th class="p-2">Fungsi Lapangan</th>
-                  <th class="p-2 w-32 text-center">Cost Base ($/h)</th>
-                  <th class="p-2 w-12 text-center">Aksi</th>
+                  <th>Model Unit</th>
+                  <th>Fungsi</th>
+                  <th style="text-align: center;">Cost ($/h)</th>
+                  <th style="text-align: center;">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="table-supports" class="divide-y divide-slate-800"></tbody>
+              <tbody id="table-supports"></tbody>
             </table>
           </div>
         </div>
@@ -642,17 +587,14 @@
       overheadHr: 50.00
     };
 
-    // Helper Penyesuaian Qty dengan Tombol +/-
     function adjustQty(elementId, change) {
       const el = document.getElementById(elementId);
       if (!el || el.disabled) return;
       let currentVal = parseInt(el.value, 10) || 0;
-      let newVal = Math.max(0, currentVal + change);
-      el.value = newVal;
+      el.value = Math.max(0, currentVal + change);
       runSimulation();
     }
 
-    // Handler Khusus Support Saat Dipilih "None"
     function handleSupportUnitChange(slotIndex) {
       const selectEl = document.getElementById(`sim-support-${slotIndex}`);
       const qtyEl = document.getElementById(`sim-support-qty-${slotIndex}`);
@@ -661,28 +603,15 @@
       if (selectEl.value.includes("None")) {
         qtyEl.value = 0;
         qtyEl.disabled = true;
-        qtyEl.classList.add("opacity-40", "bg-slate-900");
+        qtyEl.style.opacity = "0.4";
       } else {
         qtyEl.disabled = false;
-        qtyEl.classList.remove("opacity-40", "bg-slate-900");
+        qtyEl.style.opacity = "1";
         if (parseInt(qtyEl.value, 10) === 0) {
           qtyEl.value = 1;
         }
       }
       runSimulation();
-    }
-
-    function togglePassVisibility(inputId, iconId) {
-      const passInput = document.getElementById(inputId);
-      const icon = document.getElementById(iconId);
-      if (passInput.type === "password") {
-        passInput.type = "text";
-        icon.setAttribute("data-lucide", "eye-off");
-      } else {
-        passInput.type = "password";
-        icon.setAttribute("data-lucide", "eye");
-      }
-      lucide.createIcons();
     }
 
     function openForgotPinModal() {
@@ -703,7 +632,6 @@
         alert("Harap masukkan NIK Anda!");
         return;
       }
-
       const nikNum = parseInt(inputNik, 10);
       if (isNaN(nikNum) || nikNum < 1000000 || nikNum > 1999999) {
         alert("NIK harus 7 digit antara 1000000 s/d 1999999!");
@@ -753,7 +681,7 @@
         return;
       }
       if (newPin.length < 4) {
-        alert("PIN baru minimal 4 karakter / digit!");
+        alert("PIN baru minimal 4 digit!");
         return;
       }
       if (newPin !== confPin) {
@@ -774,12 +702,11 @@
 
     function adminResetUserPin() {
       if (!currentUser || currentUser.role !== 'admin') return;
-      const targetNik = prompt("Masukkan 7 digit NIK user yang ingin di-reset:");
+      const targetNik = prompt("Masukkan 7 digit NIK user:");
       if (!targetNik) return;
 
       const trimmedNik = targetNik.trim();
       const nikNum = parseInt(trimmedNik, 10);
-
       if (isNaN(nikNum) || nikNum < 1000000 || nikNum > 1999999) {
         alert("NIK harus 7 digit antara 1000000 s/d 1999999!");
         return;
@@ -807,7 +734,7 @@
       let user = null;
 
       if (inputNik === "9999") {
-        const savedAdmin = customUserAccounts["9999"] || { pin: "2000", role: "admin", name: "Super Admin / Commercial Head" };
+        const savedAdmin = customUserAccounts["9999"] || { pin: "2000", role: "admin", name: "Super Admin" };
         if (inputPass === savedAdmin.pin) {
           user = { nik: "9999", name: savedAdmin.name, role: "admin", pin: savedAdmin.pin };
         } else {
@@ -837,13 +764,13 @@
               customUserAccounts[inputNik] = user;
               localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
             } else {
-              errText.innerText = "PIN salah! Gunakan PIN default 1234 (Manajemen) atau 0000 (Operasional) untuk aktivasi pertama.";
+              errText.innerText = "Gunakan PIN default 1234 (Manajemen) atau 0000 (Operasional) untuk aktivasi pertama.";
               errEl.classList.remove("hidden");
               return;
             }
           }
         } else {
-          errText.innerText = "NIK tidak terdaftar! NIK harus 7 digit (1000000 s/d 1999999) atau 9999 untuk Admin.";
+          errText.innerText = "NIK harus 7 digit (1000000 s/d 1999999) atau 9999 untuk Admin.";
           errEl.classList.remove("hidden");
           return;
         }
@@ -859,21 +786,21 @@
       currentUser = user;
       document.getElementById("login-overlay").classList.add("hidden");
       document.getElementById("app-dashboard").classList.remove("hidden");
-      
+
       const userBadge = document.getElementById("user-badge");
       const navDb = document.getElementById("nav-db");
       const confidentialRateSection = document.getElementById("section-confidential-rates");
 
       if (user.role === 'admin') {
-        userBadge.innerHTML = `<i data-lucide="shield-check" class="w-3 h-3 text-amber-400"></i> <span class="text-amber-400 font-bold">${user.name} (Admin Full Access)</span>`;
+        userBadge.innerHTML = `<span class="text-amber font-bold">${user.name} (Admin)</span>`;
         navDb.classList.remove("hidden");
         confidentialRateSection.classList.remove("hidden");
       } else if (user.role === 'management') {
-        userBadge.innerHTML = `<i data-lucide="briefcase" class="w-3 h-3 text-blue-400"></i> <span class="text-blue-300 font-bold">${user.name} (Management - Master Fleet)</span>`;
+        userBadge.innerHTML = `<span class="text-blue font-bold">${user.name} (Management)</span>`;
         navDb.classList.remove("hidden");
         confidentialRateSection.classList.add("hidden");
       } else {
-        userBadge.innerHTML = `<i data-lucide="user" class="w-3 h-3 text-slate-400"></i> <span class="text-slate-300 font-medium">${user.name} (Operasional)</span>`;
+        userBadge.innerHTML = `<span style="color: #94a3b8;">${user.name} (Operasional)</span>`;
         navDb.classList.add("hidden");
       }
 
@@ -888,7 +815,6 @@
       document.getElementById("login-nik").value = "";
       document.getElementById("login-password").value = "";
       document.getElementById("login-error").classList.add("hidden");
-      lucide.createIcons();
     }
 
     function initApp() {
@@ -899,10 +825,8 @@
 
       rebuildDropdowns();
 
-      // Render Support Units dengan Layout Ramah Mobile
       const supportContainer = document.getElementById("support-container");
       supportContainer.innerHTML = "";
-      
       const sortedSupports = [...db.supports].sort((a, b) => {
         if (a.name.includes("None")) return -1;
         if (b.name.includes("None")) return 1;
@@ -917,19 +841,19 @@
         let optionsHtml = sortedSupports.map(s => `<option value="${s.name}" ${s.name === defaultSupportName ? 'selected' : ''}>${s.name} ($${s.cost.toFixed(2)}/h)</option>`).join("");
         
         supportContainer.innerHTML += `
-          <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 space-y-1.5">
-            <select id="sim-support-${i}" onchange="handleSupportUnitChange(${i})" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-slate-100 outline-none focus:border-amber-500">
+          <div class="card-sub" style="padding: 0.5rem 0.75rem;">
+            <select id="sim-support-${i}" onchange="handleSupportUnitChange(${i})" class="form-control" style="margin-bottom: 0.35rem; font-size: 0.75rem;">
               ${optionsHtml}
             </select>
-            <div class="flex items-center justify-between gap-2 pt-0.5">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs text-slate-400 font-medium mr-1">Jumlah:</span>
-                <button type="button" onclick="adjustQty('sim-support-qty-${i}', -1)" class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-xs border border-slate-700 active:scale-95 transition">-</button>
-                <input type="number" id="sim-support-qty-${i}" value="${defaultQty}" min="0" ${isNone ? 'disabled' : ''} onchange="runSimulation()" onkeyup="runSimulation()" class="w-12 h-7 bg-slate-900 border border-slate-700 rounded-lg text-center font-bold text-amber-400 text-xs outline-none ${isNone ? 'opacity-40 bg-slate-900' : ''}">
-                <button type="button" onclick="adjustQty('sim-support-qty-${i}', 1)" class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-xs border border-slate-700 active:scale-95 transition">+</button>
-                <span class="text-[11px] text-slate-500 ml-1">unit</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
+                <button type="button" onclick="adjustQty('sim-support-qty-${i}', -1)" class="btn btn-dark" style="width: 1.8rem; height: 1.8rem; font-size: 0.75rem;">-</button>
+                <input type="number" id="sim-support-qty-${i}" value="${defaultQty}" min="0" ${isNone ? 'disabled' : ''} onchange="runSimulation()" class="form-control font-mono" style="width: 3.2rem; text-align: center; font-size: 0.75rem; font-weight: 700; color: #fbbf24; ${isNone ? 'opacity: 0.4;' : ''}">
+                <button type="button" onclick="adjustQty('sim-support-qty-${i}', 1)" class="btn btn-dark" style="width: 1.8rem; height: 1.8rem; font-size: 0.75rem;">+</button>
+                <span class="text-muted">unit</span>
               </div>
-              <div id="sim-support-rate-${i}" class="text-xs text-slate-400 font-mono">Rate Standar</div>
+              <div id="sim-support-rate-${i}" class="text-muted font-mono" style="font-size: 0.7rem;">Rate Base</div>
             </div>
           </div>
         `;
@@ -937,7 +861,6 @@
 
       renderDatabaseTables();
       updateMaterialButtonLabels();
-      lucide.createIcons();
       setJobType("OB");
     }
 
@@ -946,12 +869,10 @@
       const currentHauler = document.getElementById("sim-hauler").value;
 
       const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
-      const loaderSelect = document.getElementById("sim-loader");
-      loaderSelect.innerHTML = sortedLoaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
+      document.getElementById("sim-loader").innerHTML = sortedLoaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
 
       const sortedHaulers = [...db.haulers].sort((a, b) => a.name.localeCompare(b.name));
-      const haulerSelect = document.getElementById("sim-hauler");
-      haulerSelect.innerHTML = sortedHaulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
+      document.getElementById("sim-hauler").innerHTML = sortedHaulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
     // --- CSV SUITE ---
@@ -960,12 +881,12 @@
       const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
       const sampleRows = sortedLoaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.setAttribute("href", csvContent);
-      downloadAnchor.setAttribute("download", "master_loading_units_template.csv");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const dl = document.createElement("a");
+      dl.setAttribute("href", csvContent);
+      dl.setAttribute("download", "master_loading_units_template.csv");
+      document.body.appendChild(dl);
+      dl.click();
+      dl.remove();
     }
 
     function handleLoaderCsvUpload(event) {
@@ -976,10 +897,7 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const lines = e.target.result.split(/\r\n|\n/).filter(line => line.trim() !== "");
-        if (lines.length <= 1) {
-          alert("File CSV kosong atau format tidak sesuai!");
-          return;
-        }
+        if (lines.length <= 1) { alert("File CSV kosong!"); return; }
 
         const newLoaders = [];
         for (let i = 1; i < lines.length; i++) {
@@ -999,9 +917,7 @@
           renderDatabaseTables();
           rebuildDropdowns();
           runSimulation();
-          alert(`Berhasil mengimpor ${newLoaders.length} unit Excavator dari CSV!`);
-        } else {
-          alert("Format CSV Excavator salah! Kolom wajib: Model Unit, Bucket, CT, Cost.");
+          alert(`Berhasil impor ${newLoaders.length} Excavator!`);
         }
       };
       reader.readAsText(file);
@@ -1012,12 +928,12 @@
       const sortedHaulers = [...db.haulers].sort((a, b) => a.name.localeCompare(b.name));
       const sampleRows = sortedHaulers.map(h => `"${h.name}",${h.vessel},${h.dumpMin},${h.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.setAttribute("href", csvContent);
-      downloadAnchor.setAttribute("download", "master_hauling_units_template.csv");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const dl = document.createElement("a");
+      dl.setAttribute("href", csvContent);
+      dl.setAttribute("download", "master_hauling_units_template.csv");
+      document.body.appendChild(dl);
+      dl.click();
+      dl.remove();
     }
 
     function handleHaulerCsvUpload(event) {
@@ -1028,10 +944,7 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const lines = e.target.result.split(/\r\n|\n/).filter(line => line.trim() !== "");
-        if (lines.length <= 1) {
-          alert("File CSV kosong atau format tidak sesuai!");
-          return;
-        }
+        if (lines.length <= 1) { alert("File CSV kosong!"); return; }
 
         const newHaulers = [];
         for (let i = 1; i < lines.length; i++) {
@@ -1051,9 +964,7 @@
           renderDatabaseTables();
           rebuildDropdowns();
           runSimulation();
-          alert(`Berhasil mengimpor ${newHaulers.length} unit Dump Truck dari CSV!`);
-        } else {
-          alert("Format CSV Dump Truck salah! Kolom wajib: Model Unit, Vessel, Dump, Cost.");
+          alert(`Berhasil impor ${newHaulers.length} Dump Truck!`);
         }
       };
       reader.readAsText(file);
@@ -1068,12 +979,12 @@
       });
       const sampleRows = sortedSupports.map(s => `"${s.name}","${s.role}",${s.cost}`).join("\n");
       const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.setAttribute("href", csvContent);
-      downloadAnchor.setAttribute("download", "master_support_units_template.csv");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const dl = document.createElement("a");
+      dl.setAttribute("href", csvContent);
+      dl.setAttribute("download", "master_support_units_template.csv");
+      document.body.appendChild(dl);
+      dl.click();
+      dl.remove();
     }
 
     function handleSupportCsvUpload(event) {
@@ -1084,10 +995,7 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const lines = e.target.result.split(/\r\n|\n/).filter(line => line.trim() !== "");
-        if (lines.length <= 1) {
-          alert("File CSV kosong atau format tidak sesuai!");
-          return;
-        }
+        if (lines.length <= 1) { alert("File CSV kosong!"); return; }
 
         const newSupports = [];
         for (let i = 1; i < lines.length; i++) {
@@ -1105,9 +1013,7 @@
           saveCustomDb();
           renderDatabaseTables();
           initApp();
-          alert(`Berhasil mengimpor ${newSupports.length} unit Support dari CSV!`);
-        } else {
-          alert("Format CSV Support salah! Kolom wajib: Model Unit, Fungsi Lapangan, Cost.");
+          alert(`Berhasil impor ${newSupports.length} Unit Support!`);
         }
       };
       reader.readAsText(file);
@@ -1115,11 +1021,11 @@
 
     function addNewLoaderRow() {
       if (currentUser && currentUser.role === 'operational') return;
-      const name = prompt("Nama / Model Excavator Baru:", "CATERPILLAR CAT390D (5.5m³)");
-      if (!name || name.trim() === "") return;
+      const name = prompt("Nama / Model Excavator Baru:", "CAT 390D");
+      if (!name || !name.trim()) return;
       const bucket = parseFloat(prompt("Kapasitas Bucket (m³):", "5.5")) || 5.0;
-      const ctSec = parseFloat(prompt("Cycle Time Standar (detik):", "25.0")) || 25.0;
-      const cost = parseFloat(prompt("Rate Sewa Base ($/jam):", "180.00")) || 150.0;
+      const ctSec = parseFloat(prompt("CT Standar (detik):", "25.0")) || 25.0;
+      const cost = parseFloat(prompt("Biaya Base ($/h):", "180.00")) || 150.0;
 
       db.loaders.push({ name: name.trim(), bucket, ctSec, cost });
       saveCustomDb();
@@ -1130,7 +1036,7 @@
 
     function deleteLoaderRow(idx) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm(`Hapus unit "${db.loaders[idx].name}" dari database?`)) {
+      if (confirm(`Hapus excavator "${db.loaders[idx].name}"?`)) {
         db.loaders.splice(idx, 1);
         saveCustomDb();
         renderDatabaseTables();
@@ -1141,11 +1047,11 @@
 
     function addNewHaulerRow() {
       if (currentUser && currentUser.role === 'operational') return;
-      const name = prompt("Nama / Model Dump Truck Baru:", "SCANIA P460 (30m³)");
-      if (!name || name.trim() === "") return;
-      const vessel = parseFloat(prompt("Kapasitas Bak / Vessel (m³):", "30.0")) || 30.0;
-      const dumpMin = parseFloat(prompt("Waktu Dumping & Spotting (menit):", "1.2")) || 1.2;
-      const cost = parseFloat(prompt("Rate Sewa Base ($/jam):", "55.00")) || 50.0;
+      const name = prompt("Nama / Model Dump Truck Baru:", "SCANIA P460");
+      if (!name || !name.trim()) return;
+      const vessel = parseFloat(prompt("Kapasitas Bak (m³):", "30.0")) || 30.0;
+      const dumpMin = parseFloat(prompt("Dumping / Spot (menit):", "1.2")) || 1.2;
+      const cost = parseFloat(prompt("Biaya Base ($/h):", "55.00")) || 50.0;
 
       db.haulers.push({ name: name.trim(), vessel, dumpMin, cost });
       saveCustomDb();
@@ -1156,7 +1062,7 @@
 
     function deleteHaulerRow(idx) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm(`Hapus unit "${db.haulers[idx].name}" dari database?`)) {
+      if (confirm(`Hapus hauler "${db.haulers[idx].name}"?`)) {
         db.haulers.splice(idx, 1);
         saveCustomDb();
         renderDatabaseTables();
@@ -1167,10 +1073,10 @@
 
     function addNewSupportRow() {
       if (currentUser && currentUser.role === 'operational') return;
-      const name = prompt("Nama / Model Unit Support Baru:", "CAT 16M Grader");
-      if (!name || name.trim() === "") return;
-      const role = prompt("Fungsi Lapangan:", "Haul Road Maintenance");
-      const cost = parseFloat(prompt("Rate Sewa Base ($/jam):", "85.00")) || 80.0;
+      const name = prompt("Nama / Model Support Baru:", "CAT 16M");
+      if (!name || !name.trim()) return;
+      const role = prompt("Fungsi Lapangan:", "Road Maintenance");
+      const cost = parseFloat(prompt("Biaya Base ($/h):", "85.00")) || 80.0;
 
       db.supports.push({ name: name.trim(), role: role || "-", cost });
       saveCustomDb();
@@ -1180,7 +1086,7 @@
 
     function deleteSupportRow(idx) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm(`Hapus unit support "${db.supports[idx].name}" dari database?`)) {
+      if (confirm(`Hapus unit support "${db.supports[idx].name}"?`)) {
         db.supports.splice(idx, 1);
         saveCustomDb();
         renderDatabaseTables();
@@ -1190,33 +1096,21 @@
 
     function updateLoaderParam(idx, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (field === 'name') {
-        db.loaders[idx][field] = value.trim();
-      } else {
-        db.loaders[idx][field] = parseFloat(value) || 0;
-      }
+      db.loaders[idx][field] = field === 'name' ? value.trim() : (parseFloat(value) || 0);
       saveCustomDb();
       rebuildDropdowns();
     }
 
     function updateHaulerParam(idx, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (field === 'name') {
-        db.haulers[idx][field] = value.trim();
-      } else {
-        db.haulers[idx][field] = parseFloat(value) || 0;
-      }
+      db.haulers[idx][field] = field === 'name' ? value.trim() : (parseFloat(value) || 0);
       saveCustomDb();
       rebuildDropdowns();
     }
 
     function updateSupportParam(idx, field, value) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (field === 'name' || field === 'role') {
-        db.supports[idx][field] = value.trim();
-      } else {
-        db.supports[idx][field] = parseFloat(value) || 0;
-      }
+      db.supports[idx][field] = (field === 'name' || field === 'role') ? value.trim() : (parseFloat(value) || 0);
       saveCustomDb();
       initApp();
     }
@@ -1244,7 +1138,7 @@
           if (k === 'blasting') {
             subEl.innerText = `BFF ${spec.bff.toFixed(2)} | +$${spec.blastingCostBcm.toFixed(2)}/BCM`;
           } else {
-            const costPct = spec.loaderCostFactor === 1.0 ? "Biaya Standar" : spec.loaderCostFactor < 1.0 ? `Biaya -${((1.0 - spec.loaderCostFactor) * 100).toFixed(0)}%` : `Biaya +${((spec.loaderCostFactor - 1.0) * 100).toFixed(0)}%`;
+            const costPct = spec.loaderCostFactor === 1.0 ? "Standar" : spec.loaderCostFactor < 1.0 ? `-${((1.0 - spec.loaderCostFactor) * 100).toFixed(0)}%` : `+${((spec.loaderCostFactor - 1.0) * 100).toFixed(0)}%`;
             subEl.innerText = `BFF ${spec.bff.toFixed(2)} | ${costPct}`;
           }
         }
@@ -1258,7 +1152,7 @@
 
     function resetDbToDefault() {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm("Kembalikan seluruh database alat & material ke spesifikasi standar pabrikan OOC?")) {
+      if (confirm("Reset seluruh data armada & material ke standar?")) {
         db = JSON.parse(JSON.stringify(defaultDb));
         obMaterialSpecs = JSON.parse(JSON.stringify(defaultObMaterialSpecs));
         localStorage.removeItem("fleet_custom_mat_ob");
@@ -1272,28 +1166,14 @@
 
     function renderDatabaseTables() {
       document.getElementById("table-materials-ob").innerHTML = Object.entries(obMaterialSpecs).map(([key, m]) => `
-        <tr class="hover:bg-slate-800">
-          <td class="p-2 font-medium">
-            <input type="text" value="${m.name}" onchange="updateMaterialParam('${key}', 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${m.bff}" onchange="updateMaterialParam('${key}', 'bff', this.value)" class="w-16 bg-slate-950 border border-slate-700 rounded px-1.5 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500" title="Bucket Fill Factor">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="w-16 bg-slate-950 border border-slate-700 rounded px-1.5 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500" title="Pengali CT">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.05" value="${m.blastingCostBcm || 0}" onchange="updateMaterialParam('${key}', 'blastingCostBcm', this.value)" class="w-20 bg-slate-950 border border-rose-500/50 rounded px-2 py-1 text-center text-xs text-rose-300 font-bold outline-none focus:border-rose-500" title="Biaya Drilling & Blasting ($/BCM)">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${m.loaderCostFactor}" onchange="updateMaterialParam('${key}', 'loaderCostFactor', this.value)" class="w-16 bg-slate-950 border border-amber-500/40 rounded px-1.5 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Pengali Biaya Loader ($/h)">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${m.haulerCostFactor}" onchange="updateMaterialParam('${key}', 'haulerCostFactor', this.value)" class="w-16 bg-slate-950 border border-amber-500/40 rounded px-1.5 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Pengali Biaya Hauler ($/h)">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${m.supportCostFactor}" onchange="updateMaterialParam('${key}', 'supportCostFactor', this.value)" class="w-16 bg-slate-950 border border-amber-500/40 rounded px-1.5 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Pengali Biaya Support ($/h)">
-          </td>
+        <tr>
+          <td><input type="text" value="${m.name}" onchange="updateMaterialParam('${key}', 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.bff}" onchange="updateMaterialParam('${key}', 'bff', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="form-control font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.05" value="${m.blastingCostBcm || 0}" onchange="updateMaterialParam('${key}', 'blastingCostBcm', this.value)" class="form-control text-rose font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.loaderCostFactor}" onchange="updateMaterialParam('${key}', 'loaderCostFactor', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.haulerCostFactor}" onchange="updateMaterialParam('${key}', 'haulerCostFactor', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.supportCostFactor}" onchange="updateMaterialParam('${key}', 'supportCostFactor', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
         </tr>
       `).join("");
 
@@ -1306,69 +1186,33 @@
       });
 
       document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
-        <tr class="hover:bg-slate-800">
-          <td class="p-2 font-medium">
-            <input type="text" value="${l.name}" onchange="updateLoaderParam(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${l.bucket}" onchange="updateLoaderParam(${idx}, 'bucket', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-300 font-semibold outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.5" value="${l.ctSec}" onchange="updateLoaderParam(${idx}, 'ctSec', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${l.cost}" onchange="updateLoaderParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <button onclick="deleteLoaderRow(${idx})" title="Hapus unit ini" class="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          </td>
+        <tr>
+          <td><input type="text" value="${l.name}" onchange="updateLoaderParam(${idx}, 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${l.bucket}" onchange="updateLoaderParam(${idx}, 'bucket', this.value)" class="form-control text-amber font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.5" value="${l.ctSec}" onchange="updateLoaderParam(${idx}, 'ctSec', this.value)" class="form-control font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${l.cost}" onchange="updateLoaderParam(${idx}, 'cost', this.value)" class="form-control text-amber font-mono" style="width: 5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><button onclick="deleteLoaderRow(${idx})" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Hapus</button></td>
         </tr>
       `).join("");
 
       document.getElementById("table-haulers").innerHTML = db.haulers.map((h, idx) => `
-        <tr class="hover:bg-slate-800">
-          <td class="p-2 font-medium">
-            <input type="text" value="${h.name}" onchange="updateHaulerParam(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.1" value="${h.dumpMin}" onchange="updateHaulerParam(${idx}, 'dumpMin', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${h.cost}" onchange="updateHaulerParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <button onclick="deleteHaulerRow(${idx})" title="Hapus unit ini" class="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          </td>
+        <tr>
+          <td><input type="text" value="${h.name}" onchange="updateHaulerParam(${idx}, 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="form-control text-amber font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.1" value="${h.dumpMin}" onchange="updateHaulerParam(${idx}, 'dumpMin', this.value)" class="form-control font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${h.cost}" onchange="updateHaulerParam(${idx}, 'cost', this.value)" class="form-control text-amber font-mono" style="width: 5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><button onclick="deleteHaulerRow(${idx})" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Hapus</button></td>
         </tr>
       `).join("");
 
       document.getElementById("table-supports").innerHTML = db.supports.map((s, idx) => `
-        <tr class="hover:bg-slate-800">
-          <td class="p-2 font-medium">
-            <input type="text" value="${s.name}" onchange="updateSupportParam(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2">
-            <input type="text" value="${s.role}" onchange="updateSupportParam(${idx}, 'role', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-400 outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <input type="number" step="0.01" value="${s.cost}" onchange="updateSupportParam(${idx}, 'cost', this.value)" class="w-24 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-amber-400 font-mono outline-none focus:border-amber-500">
-          </td>
-          <td class="p-2 text-center">
-            <button onclick="deleteSupportRow(${idx})" title="Hapus unit ini" class="p-1 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded transition">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          </td>
+        <tr>
+          <td><input type="text" value="${s.name}" onchange="updateSupportParam(${idx}, 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td><input type="text" value="${s.role}" onchange="updateSupportParam(${idx}, 'role', this.value)" class="form-control text-muted" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${s.cost}" onchange="updateSupportParam(${idx}, 'cost', this.value)" class="form-control text-amber font-mono" style="width: 5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><button onclick="deleteSupportRow(${idx})" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Hapus</button></td>
         </tr>
       `).join("");
-
-      lucide.createIcons();
     }
 
     function setObMaterial(matType) {
@@ -1381,17 +1225,12 @@
       };
 
       for (const [k, btn] of Object.entries(buttons)) {
-        if (k === matType) {
-          btn.className = "p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition";
-        } else {
-          btn.className = "p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition";
-        }
+        btn.className = (k === matType) ? "btn btn-primary" : "btn btn-dark";
       }
 
       const spec = obMaterialSpecs[matType];
-      const ctLabel = spec.ctFactor === 1.0 ? "CT: Normal" : spec.ctFactor < 1.0 ? `CT: -${((1.0 - spec.ctFactor) * 100).toFixed(0)}%` : `CT: +${((spec.ctFactor - 1.0) * 100).toFixed(0)}%`;
-      const blastLabel = (matType === 'blasting' && spec.blastingCostBcm > 0) ? ` | Blast: $${spec.blastingCostBcm.toFixed(2)}/BCM` : "";
-      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | ${ctLabel}${blastLabel}`;
+      const blastLabel = (matType === 'blasting' && spec.blastingCostBcm > 0) ? ` | Blast: $${spec.blastingCostBcm.toFixed(2)}` : "";
+      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | CT: ${(spec.ctFactor * 100).toFixed(0)}%${blastLabel}`;
 
       runSimulation();
     }
@@ -1410,19 +1249,20 @@
       if (tab === 'sim') {
         document.getElementById('tab-simulation').classList.remove('hidden');
         document.getElementById('tab-database').classList.add('hidden');
-        document.getElementById('nav-sim').className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow";
-        document.getElementById('nav-db').className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white";
+        document.getElementById('nav-sim').className = "btn btn-primary";
+        document.getElementById('nav-db').className = "btn";
+        document.getElementById('nav-db').style.color = "#94a3b8";
       } else {
         if (currentUser && currentUser.role === 'operational') {
-          alert("Akses Tab Master Data hanya untuk Management dan Admin.");
+          alert("Tab Master Data hanya untuk Manajemen dan Admin.");
           return;
         }
         document.getElementById('tab-simulation').classList.add('hidden');
         document.getElementById('tab-database').classList.remove('hidden');
-        document.getElementById('nav-db').className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow";
-        document.getElementById('nav-sim').className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white";
+        document.getElementById('nav-db').className = "btn btn-primary";
+        document.getElementById('nav-sim').className = "btn";
+        document.getElementById('nav-sim').style.color = "#94a3b8";
       }
-      lucide.createIcons();
     }
 
     function setJobType(type) {
@@ -1434,11 +1274,7 @@
       };
 
       for (const [k, btn] of Object.entries(buttons)) {
-        if (k === type) {
-          btn.className = "py-2.5 px-3 rounded-lg border text-center transition font-semibold text-xs md:text-sm bg-amber-500 border-amber-500 text-slate-950 shadow-md";
-        } else {
-          btn.className = "py-2.5 px-3 rounded-lg border text-center transition font-semibold text-xs md:text-sm bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600";
-        }
+        btn.className = (k === type) ? "btn btn-primary" : "btn btn-dark";
       }
 
       const obMatContainer = document.getElementById("container-ob-material");
@@ -1488,10 +1324,8 @@
       const haulerName = document.getElementById("sim-hauler").value;
       const loaderOwner = document.getElementById("sim-loader-owner").value;
 
-      const loaderQtyInput = document.getElementById("sim-loader-qty").value;
-      const haulerQtyInput = document.getElementById("sim-hauler-qty").value;
-      const loaderQty = loaderQtyInput === "" ? 0 : parseFloat(loaderQtyInput);
-      const haulerQty = haulerQtyInput === "" ? 0 : parseFloat(haulerQtyInput);
+      const loaderQty = parseFloat(document.getElementById("sim-loader-qty").value) || 0;
+      const haulerQty = parseFloat(document.getElementById("sim-hauler-qty").value) || 0;
 
       const loader = db.loaders.find(u => u.name === loaderName) || db.loaders[0];
       const hauler = db.haulers.find(u => u.name === haulerName) || db.haulers[0];
@@ -1524,15 +1358,10 @@
 
       const effectiveLoaderCost = loader.cost * loaderCostMultiplier;
       const effectiveHaulerCost = hauler.cost * haulerCostMultiplier;
-
       const isFinancialAuthorized = currentUser && (currentUser.role === 'admin' || currentUser.role === 'management');
 
       if (isFinancialAuthorized) {
-        if (loaderOwner === "owner") {
-          document.getElementById("sim-loader-rate").innerText = "$0.00/h (Owner)";
-        } else {
-          document.getElementById("sim-loader-rate").innerText = `$${effectiveLoaderCost.toFixed(2)}/h`;
-        }
+        document.getElementById("sim-loader-rate").innerText = (loaderOwner === "owner") ? "$0.00/h (Owner)" : `$${effectiveLoaderCost.toFixed(2)}/h`;
         document.getElementById("sim-hauler-rate").innerText = `$${effectiveHaulerCost.toFixed(2)}/h`;
       } else {
         document.getElementById("sim-loader-rate").innerText = `Rate: 🔒`;
@@ -1591,15 +1420,11 @@
         const rawHaulerTonHr = tripsPerHour * tonPerTrip;
 
         loaderMaxCapacityTonHr = (3600.0 / effectiveLoaderCtSec) * (effectiveBucketM3 * sf * density) * eff * activeLoaderQtyForProd;
-
         prodTonHr = Math.min(rawHaulerTonHr, loaderMaxCapacityTonHr);
         prodBcmHr = prodTonHr / density;
         prodTonKmHr = prodTonHr * dist;
 
-        if (rawHaulerTonHr > loaderMaxCapacityTonHr) {
-          isLoaderBottleneck = true;
-        }
-
+        if (rawHaulerTonHr > loaderMaxCapacityTonHr) isLoaderBottleneck = true;
         mf = (haulerQty * effectiveLoadTime) / (activeLoaderQtyForProd * displayCT);
 
       } else if (loaderQty > 0 && haulerQty > 0) {
@@ -1618,9 +1443,7 @@
         prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
         prodTonKmHr = prodTonHr * dist;
 
-        if (rawProdBcmHr > loaderMaxProdBcmHr) {
-          isLoaderBottleneck = true;
-        }
+        if (rawProdBcmHr > loaderMaxProdBcmHr) isLoaderBottleneck = true;
       }
 
       document.getElementById("ct-load").innerText = `${effectiveLoadTime.toFixed(2)} mnt`;
@@ -1635,19 +1458,13 @@
       let supportCostHr = 0;
       for (let i = 1; i <= supportSlotCount; i++) {
         const sName = document.getElementById(`sim-support-${i}`).value;
-        const sQtyInput = document.getElementById(`sim-support-qty-${i}`).value;
-        const sQty = sQtyInput === "" ? 0 : parseFloat(sQtyInput);
+        const sQty = parseFloat(document.getElementById(`sim-support-qty-${i}`).value) || 0;
         const sObj = db.supports.find(s => s.name === sName);
         if (sObj) {
-          const slotCost = ((sObj.cost * supportCostMultiplier) * sQty);
-          supportCostHr += slotCost;
+          supportCostHr += ((sObj.cost * supportCostMultiplier) * sQty);
           const rateSlotEl = document.getElementById(`sim-support-rate-${i}`);
           if (rateSlotEl) {
-            if (isFinancialAuthorized) {
-              rateSlotEl.innerText = sName.includes("None") ? "$0.00" : `$${(sObj.cost * supportCostMultiplier).toFixed(2)}/h`;
-            } else {
-              rateSlotEl.innerText = "🔒";
-            }
+            rateSlotEl.innerText = isFinancialAuthorized ? (sName.includes("None") ? "$0.00" : `$${(sObj.cost * supportCostMultiplier).toFixed(2)}/h`) : "🔒";
           }
         }
       }
@@ -1656,7 +1473,6 @@
       const equipmentCostHr = chargedLoaderCost + (effectiveHaulerCost * haulerQty);
       const fleetOverheadHr = (loaderQty > 0 || haulerQty > 0) ? (savedRates.overheadHr || 50.00) : 0.0;
       const totalBlastingCostHr = (currentJobType === "OB" && currentObMaterial === "blasting") ? (prodBcmHr * blastingCostPerBcm) : 0.0;
-
       const totalFleetCostHr = equipmentCostHr + supportCostHr + fleetOverheadHr + totalBlastingCostHr;
 
       let mainProdValue = 0;
@@ -1680,16 +1496,12 @@
       const bepProd = contractRate > 0 ? (totalFleetCostHr / contractRate) : 0;
       let bepDistance = 0;
 
-      if (haulerQty > 0 && contractRate > 0 && totalFleetCostHr > 0) {
+      if (haulerQty > 0 && contractRate > 0 && totalFleetCostHr > 0 && currentJobType !== "CoHauling") {
         let payload = (currentJobType === "OB") ? bcmPerTrip : tonPerTrip;
-        if (currentJobType === "CoHauling") {
-          bepDistance = 0;
-        } else {
-          const maxCycleTimeAllowed = (60.0 * payload * eff * haulerQty * contractRate) / totalFleetCostHr;
-          const maxTravelTimeAllowed = maxCycleTimeAllowed - calculatedLoadTimeMin - hauler.dumpMin;
-          if (maxTravelTimeAllowed > 0 && travelFactor > 0) {
-            bepDistance = maxTravelTimeAllowed / travelFactor;
-          }
+        const maxCycleTimeAllowed = (60.0 * payload * eff * haulerQty * contractRate) / totalFleetCostHr;
+        const maxTravelTimeAllowed = maxCycleTimeAllowed - calculatedLoadTimeMin - hauler.dumpMin;
+        if (maxTravelTimeAllowed > 0 && travelFactor > 0) {
+          bepDistance = maxTravelTimeAllowed / travelFactor;
         }
       }
 
@@ -1698,45 +1510,45 @@
       if (currentJobType === "CoHauling") {
         if (haulerQty === 0) {
           mfBadge.innerText = "No Operation";
-          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+          mfBadge.style.color = "#94a3b8";
         } else if (isLoaderBottleneck) {
-          mfBadge.innerText = `Terkunci Max Loader ROM (${loaderMaxCapacityTonHr.toFixed(0)} T/h)`;
-          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-rose-900/60 text-rose-300 font-bold animate-pulse";
+          mfBadge.innerText = `Terkunci Max ROM (${loaderMaxCapacityTonHr.toFixed(0)} T/h)`;
+          mfBadge.style.color = "#f87171";
         } else if (mf > 1.05) {
-          mfBadge.innerText = "Over-trucked (Truk Antri di ROM)";
-          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300";
+          mfBadge.innerText = "Over-trucked (Truk Antri ROM)";
+          mfBadge.style.color = "#60a5fa";
         } else {
-          mfBadge.innerText = "Hauling Optimal (ROM Flow Lancar)";
-          mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
+          mfBadge.innerText = "Optimal Match (Ideal)";
+          mfBadge.style.color = "#34d399";
         }
       } else if (loaderQty === 0 || haulerQty === 0) {
         mfBadge.innerText = "No Operation";
-        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+        mfBadge.style.color = "#94a3b8";
       } else if (mf < 0.95) {
         mfBadge.innerText = "Under-trucked (Loader Antri)";
-        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300";
+        mfBadge.style.color = "#fbbf24";
       } else if (mf > 1.05) {
-        mfBadge.innerText = isLoaderBottleneck ? "Terkunci Max Loader (Over-trucked)" : "Over-trucked (Truck Antri)";
-        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300";
+        mfBadge.innerText = isLoaderBottleneck ? "Terkunci Max Loader" : "Over-trucked (Truk Antri)";
+        mfBadge.style.color = "#60a5fa";
       } else {
         mfBadge.innerText = "Optimal Match (Ideal)";
-        mfBadge.className = "text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
+        mfBadge.style.color = "#34d399";
       }
 
       document.getElementById("res-prod-primary").innerText = mainProdValue.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       document.getElementById("res-prod-secondary").innerText = secondaryProdText;
 
-      // ==================== SWITCH KPI FINANSIAL VS OPERASIONAL ====================
+      // MODE FINANSIAL VS OPERASIONAL
       if (isFinancialAuthorized) {
         document.getElementById("label-unit-cost").innerText = `Unit Cost ($/${unitLabel})`;
         document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
-        document.getElementById("res-unit-cost").className = "text-xl font-bold mt-1 text-rose-400";
+        document.getElementById("res-unit-cost").className = "text-rose";
         document.getElementById("res-total-cost").innerText = `$${totalFleetCostHr.toFixed(2)}/Jam Total`;
 
         document.getElementById("label-profit-hr").innerText = `Net Profit ($/Jam)`;
         const profitEl = document.getElementById("res-profit-hr");
         profitEl.innerText = `$${netProfitHr.toFixed(2)}`;
-        profitEl.className = netProfitHr >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
+        profitEl.className = netProfitHr >= 0 ? "text-emerald" : "text-rose";
         document.getElementById("res-profit-unit").innerText = `$${netProfitPerUnit.toFixed(3)}/${unitLabel} Margin`;
         
         document.getElementById("cost-breakdown-banner").classList.remove("hidden");
@@ -1747,7 +1559,7 @@
         const blastingWrapper = document.getElementById("cb-blasting-wrapper");
         if (totalBlastingCostHr > 0) {
           blastingWrapper.classList.remove("hidden");
-          document.getElementById("cb-blasting").innerText = `$${totalBlastingCostHr.toFixed(2)} ($${blastingCostPerBcm.toFixed(2)}/BCM)`;
+          document.getElementById("cb-blasting").innerText = `$${totalBlastingCostHr.toFixed(2)}`;
         } else {
           blastingWrapper.classList.add("hidden");
         }
@@ -1759,7 +1571,7 @@
         // Kartu 3: Pdty per Hauler
         document.getElementById("label-unit-cost").innerText = `Pdty per Hauler (${unitLabel}/Jam)`;
         document.getElementById("res-unit-cost").innerText = pdtyPerTruck.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        document.getElementById("res-unit-cost").className = "text-xl font-bold mt-1 text-amber-400";
+        document.getElementById("res-unit-cost").className = "text-amber";
         document.getElementById("res-total-cost").innerText = `${ritasePerUnit.toFixed(1)} Rit/Jam per Truk`;
 
         // Kartu 4: Deviasi Produksi
@@ -1767,8 +1579,7 @@
         const profitEl = document.getElementById("res-profit-hr");
         const sign = prodDeviation >= 0 ? "+" : "";
         profitEl.innerText = `${sign}${prodDeviation.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unitLabel}`;
-        profitEl.className = prodDeviation >= 0 ? "text-xl font-bold mt-1 text-emerald-400" : "text-xl font-bold mt-1 text-rose-500";
-        
+        profitEl.className = prodDeviation >= 0 ? "text-emerald" : "text-rose";
         document.getElementById("res-profit-unit").innerText = `Target BEP: ${bepProd.toFixed(1)} ${unitLabel}/Jam`;
 
         document.getElementById("cost-breakdown-banner").classList.add("hidden");
@@ -1785,10 +1596,7 @@
           unlockApp(JSON.parse(savedAuth));
         } catch (e) {
           sessionStorage.removeItem("fleet_auth_user");
-          lucide.createIcons();
         }
-      } else {
-        lucide.createIcons();
       }
     };
   </script>
