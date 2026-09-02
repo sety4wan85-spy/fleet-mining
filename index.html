@@ -520,6 +520,29 @@
   </div>
 
   <script>
+    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS ====================
+    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyOXBk83AX3V-N5nK0aOhyLVDM2HmCjWye1OVt_kbGUdt-tsNZ5apGWvtmCQdz3bzd0TQ/exec";
+
+    function sendAccessLog(user) {
+      if (!SHEET_WEBHOOK_URL) return;
+
+      const payload = {
+        timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }),
+        nik: user.nik,
+        role: user.role,
+        device: navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop")
+      };
+
+      fetch(SHEET_WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(err => {
+        console.log("Offline mode: Log disimpan secara lokal.");
+      });
+    }
+
     let customUserAccounts = JSON.parse(localStorage.getItem("fleet_user_accounts")) || {};
 
     const defaultObMaterialSpecs = {
@@ -597,7 +620,7 @@
       runSimulation();
     }
 
-    // ==================== AUTO QTY 0 UNTUK SEMUA UNIT ====================
+    // Auto Qty 0 untuk Semua Unit
     function handleLoaderChange() {
       const selectEl = document.getElementById("sim-loader");
       const qtyEl = document.getElementById("sim-loader-qty");
@@ -813,6 +836,10 @@
 
     function unlockApp(user) {
       currentUser = user;
+
+      // Kirim log akses ke Google Spreadsheet secara otomatis
+      sendAccessLog(user);
+
       document.getElementById("login-overlay").classList.add("hidden");
       document.getElementById("app-dashboard").classList.remove("hidden");
 
@@ -897,7 +924,6 @@
       const currentLoader = document.getElementById("sim-loader").value;
       const currentHauler = document.getElementById("sim-hauler").value;
 
-      // Pastikan .None ada di urutan paling pertama untuk Loader
       const sortedLoaders = [...db.loaders].sort((a, b) => {
         if (a.name.includes("None")) return -1;
         if (b.name.includes("None")) return 1;
@@ -905,7 +931,6 @@
       });
       document.getElementById("sim-loader").innerHTML = sortedLoaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
 
-      // Pastikan .None ada di urutan paling pertama untuk Hauler
       const sortedHaulers = [...db.haulers].sort((a, b) => {
         if (a.name.includes("None")) return -1;
         if (b.name.includes("None")) return 1;
