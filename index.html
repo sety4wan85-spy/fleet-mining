@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mining Fleet Manager - Offline Matching Engine</title>
+  <title>Mining Fleet Manager - Offline Multi-Site Engine</title>
   <style>
     /* RESET & DASAR */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -66,15 +66,26 @@
   <!-- ==================== LOGIN SCREEN ==================== -->
   <div id="login-overlay" class="modal-overlay">
     <div class="modal-box" style="max-width: 24rem;">
-      <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div style="text-align: center; margin-bottom: 1.25rem;">
         <div style="display: inline-flex; padding: 0.75rem; background-color: #1e293b; border-radius: 1rem; margin-bottom: 0.5rem;">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m9 0h4l3-5h-7V5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
         </div>
         <h2 style="font-size: 1.25rem; font-weight: 700;">Mining Fleet Manager</h2>
-        <p style="font-size: 0.75rem; color: #94a3b8;">Masuk menggunakan NIK & PIN</p>
+        <p style="font-size: 0.75rem; color: #94a3b8;">Pilih Site & Masuk dengan Akun Site</p>
       </div>
 
       <form id="login-form" onsubmit="handleLogin(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div>
+          <label class="label-title" style="color: #fbbf24;">LOKASI KERJA (SITE PROYEK)</label>
+          <select id="login-site" required class="form-control" style="font-weight: 700; color: #fbbf24;">
+            <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
+            <option value="BSS-SITE TDM">BSS-SITE TDM</option>
+            <option value="BSS-SITE MHU">BSS-SITE MHU</option>
+            <option value="BSS-SITE CDI">BSS-SITE CDI</option>
+            <option value="BSS-SITE MBL">BSS-SITE MBL</option>
+            <option value="BSS-SITE IP">BSS-SITE IP</option>
+          </select>
+        </div>
         <div>
           <label class="label-title">Nomor Induk Karyawan (NIK)</label>
           <input type="text" id="login-nik" required class="form-control font-mono" placeholder="7 Digit NIK...">
@@ -86,7 +97,7 @@
         <div id="login-error" class="hidden" style="padding: 0.5rem; background-color: rgba(69, 10, 10, 0.4); border: 1px solid #991b1b; border-radius: 0.5rem; color: #f87171; font-size: 0.75rem;">
           <span id="login-error-text">NIK atau PIN salah!</span>
         </div>
-        <button type="submit" class="btn btn-primary" style="padding: 0.65rem; margin-top: 0.5rem; font-size: 0.875rem;">Masuk ke Sistem</button>
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem; margin-top: 0.25rem; font-size: 0.875rem;">Masuk ke Sistem Site</button>
         <div style="text-align: center; margin-top: 0.25rem;">
           <button type="button" onclick="openForgotPinModal()" style="background: none; border: none; font-size: 0.75rem; color: #94a3b8; cursor: pointer;">Lupa PIN / Password?</button>
         </div>
@@ -94,7 +105,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL LUPA PIN (EMERGENCY) ==================== -->
+  <!-- ==================== MODAL LUPA PIN ==================== -->
   <div id="modal-forgot-pin" class="modal-overlay hidden">
     <div class="modal-box">
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
@@ -151,7 +162,10 @@
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m9 0h4l3-5h-7V5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
           <div>
-            <div style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Mining Fleet Manager</div>
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Mining Fleet</span>
+              <span id="active-site-tag" class="badge" style="background-color: #f59e0b; color: #020617;">SITE</span>
+            </div>
             <div id="user-badge" style="font-size: 0.65rem;"></div>
           </div>
         </div>
@@ -171,9 +185,19 @@
       <!-- ==================== TAB 1: SIMULASI ==================== -->
       <div id="tab-simulation">
         
-        <!-- Job Type Selector -->
-        <div class="card">
-          <label class="label-title">TIPE PEKERJAAN (JOB TYPE)</label>
+        <!-- Site Selector & Job Type -->
+        <div class="card" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="label-title" style="margin-bottom: 0;">PILIHAN SITE PROYEK</label>
+            <select id="main-site-switch" onchange="changeActiveSite(this.value)" class="form-control" style="width: auto; padding: 0.25rem 0.6rem; font-weight: 700; color: #fbbf24; font-size: 0.75rem;">
+              <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
+              <option value="BSS-SITE TDM">BSS-SITE TDM</option>
+              <option value="BSS-SITE MHU">BSS-SITE MHU</option>
+              <option value="BSS-SITE CDI">BSS-SITE CDI</option>
+              <option value="BSS-SITE MBL">BSS-SITE MBL</option>
+              <option value="BSS-SITE IP">BSS-SITE IP</option>
+            </select>
+          </div>
           <div class="grid-3">
             <button id="btn-job-ob" onclick="setJobType('OB')" class="btn btn-primary" style="padding: 0.5rem; flex-direction: column;">
               <span style="font-size: 0.75rem;">Overburden (OB)</span>
@@ -344,35 +368,38 @@
 
         <!-- Parameter Operasional Pit -->
         <div class="card">
-          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.75rem;">PARAMETER LAPANGAN (PIT & LAB)</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">PARAMETER LAPANGAN (PIT & LAB)</label>
+            <span class="text-muted" style="font-size: 0.65rem;">Tersimpan khusus per site</span>
+          </div>
           <div class="grid-4">
             <div>
               <label class="label-title">Jarak Haul (km)</label>
-              <input type="number" step="0.1" id="param-dist" value="2.0" onchange="runSimulation()" class="form-control">
+              <input type="number" step="0.1" id="param-dist" value="2.0" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Speed Loaded (km/h)</label>
-              <input type="number" id="param-speed-l" value="20" onchange="runSimulation()" class="form-control">
+              <input type="number" id="param-speed-l" value="20" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Speed Empty (km/h)</label>
-              <input type="number" id="param-speed-e" value="26" onchange="runSimulation()" class="form-control">
+              <input type="number" id="param-speed-e" value="26" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Jam/Shift (Jam)</label>
-              <input type="number" id="param-hours" value="10" onchange="runSimulation()" class="form-control">
+              <input type="number" id="param-hours" value="10" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Densitas (Ton/m³)</label>
-              <input type="number" step="0.05" id="param-density" value="2.10" onchange="runSimulation()" class="form-control">
+              <input type="number" step="0.05" id="param-density" value="2.10" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Swell Factor (SF)</label>
-              <input type="number" step="0.05" id="param-sf" value="0.80" onchange="runSimulation()" class="form-control">
+              <input type="number" step="0.05" id="param-sf" value="0.80" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div style="grid-column: span 2;">
               <label class="label-title">Efisiensi Kerja (%)</label>
-              <input type="number" id="param-eff" value="83" onchange="runSimulation()" class="form-control">
+              <input type="number" id="param-eff" value="83" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
           </div>
         </div>
@@ -384,23 +411,26 @@
         
         <!-- Confidential Tarif Proyek (Khusus Admin) -->
         <div id="section-confidential-rates" class="card" style="border-color: rgba(245, 158, 11, 0.4);">
-          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.5rem;">TARIF KONTRAK & OVERHEAD (KHUSUS ADMIN)</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">TARIF KONTRAK & OVERHEAD (KHUSUS ADMIN)</label>
+            <span id="rate-site-name-tag" class="badge" style="background-color: #020617; border: 1px solid #1e293b; color: #fbbf24;">SITE</span>
+          </div>
           <div class="grid-4" style="margin-bottom: 0.75rem;">
             <div>
               <label class="label-title">Tarif OB ($/BCM)</label>
-              <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="saveRates()" class="form-control text-amber font-mono">
+              <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
             </div>
             <div>
               <label class="label-title">Tarif Coal ($/Ton)</label>
-              <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="saveRates()" class="form-control text-amber font-mono">
+              <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
             </div>
             <div>
               <label class="label-title">Tarif Hauling ($/Ton.Km)</label>
-              <input type="number" step="0.01" id="master-rate-cohauling" value="0.12" oninput="saveRates()" class="form-control text-amber font-mono">
+              <input type="number" step="0.01" id="master-rate-cohauling" value="0.12" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
             </div>
             <div>
               <label class="label-title">Biaya Overhead ($/Jam)</label>
-              <input type="number" step="1.0" id="master-fleet-overhead" value="50.00" oninput="saveRates()" class="form-control text-amber font-mono">
+              <input type="number" step="1.0" id="master-fleet-overhead" value="50.00" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
             </div>
           </div>
           <div style="border-top: 1px solid #1e293b; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
@@ -411,7 +441,7 @@
 
         <!-- Tabel Material OB -->
         <div class="card">
-          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.5rem;">MASTER MULTIPLIER MATERIAL OB</label>
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.5rem;">MASTER MULTIPLIER MATERIAL OB (BERLAKU SEMUA SITE)</label>
           <div class="table-responsive">
             <table>
               <thead>
@@ -433,7 +463,7 @@
         <!-- Master Excavator -->
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER EXCAVATOR (LOADER)</label>
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER EXCAVATOR (LOADER) - SEMUA SITE</label>
             <div style="display: flex; gap: 0.35rem;">
               <button onclick="downloadLoaderCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
               <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
@@ -461,7 +491,7 @@
         <!-- Master Dump Truck -->
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER DUMP TRUCK (HAULER)</label>
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER DUMP TRUCK (HAULER) - SEMUA SITE</label>
             <div style="display: flex; gap: 0.35rem;">
               <button onclick="downloadHaulerCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
               <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
@@ -489,7 +519,7 @@
         <!-- Master Support -->
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER UNIT SUPPORT</label>
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER UNIT SUPPORT - SEMUA SITE</label>
             <div style="display: flex; gap: 0.35rem;">
               <button onclick="downloadSupportCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
               <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
@@ -520,7 +550,7 @@
   </div>
 
   <script>
-    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS TERBARU ====================
+    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS ====================
     const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwW4FflExzrrHGjuhrzKPic5NoPQKTF7WOp8_bPaQZXZtlMFtcuhu1yU0Opcl2PI2-rEA/exec";
 
     function sendAccessLog(user) {
@@ -528,12 +558,13 @@
 
       try {
         const timeStr = encodeURIComponent(new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }));
+        const siteStr = encodeURIComponent(currentSite);
         const nikStr = encodeURIComponent(user.nik);
         const roleStr = encodeURIComponent(user.role);
         const devStr = encodeURIComponent(navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
 
-        // Mengirim via Image Ping (100% tembus CORS tanpa hambatan)
-        const pingUrl = `${SHEET_WEBHOOK_URL}?nik=${nikStr}&role=${roleStr}&device=${devStr}&timestamp=${timeStr}`;
+        // Mengirim via Image Ping dengan parameter SITE baru
+        const pingUrl = `${SHEET_WEBHOOK_URL}?nik=${nikStr}&site=${siteStr}&role=${roleStr}&device=${devStr}&timestamp=${timeStr}`;
         const beacon = new Image();
         beacon.src = pingUrl;
       } catch (err) {
@@ -542,6 +573,37 @@
     }
 
     let customUserAccounts = JSON.parse(localStorage.getItem("fleet_user_accounts")) || {};
+
+    // KONFIGURASI PRESET PARAMETER MASING-MASING SITE
+    const defaultSiteConfigs = {
+      "BSS-SITE MSJ": {
+        rates: { ob: 1.80, co: 3.50, cohauling: 0.12, overheadHr: 50.00 },
+        pit: { dist: 2.0, speedL: 20, speedE: 26, hours: 10, density: 2.10, sf: 0.80, eff: 83 }
+      },
+      "BSS-SITE TDM": {
+        rates: { ob: 1.85, co: 3.60, cohauling: 0.12, overheadHr: 55.00 },
+        pit: { dist: 2.5, speedL: 22, speedE: 28, hours: 10, density: 2.15, sf: 0.80, eff: 82 }
+      },
+      "BSS-SITE MHU": {
+        rates: { ob: 1.75, co: 3.40, cohauling: 0.11, overheadHr: 45.00 },
+        pit: { dist: 1.8, speedL: 20, speedE: 25, hours: 10, density: 2.05, sf: 0.82, eff: 84 }
+      },
+      "BSS-SITE CDI": {
+        rates: { ob: 1.90, co: 3.75, cohauling: 0.13, overheadHr: 60.00 },
+        pit: { dist: 3.0, speedL: 18, speedE: 24, hours: 10, density: 2.20, sf: 0.78, eff: 80 }
+      },
+      "BSS-SITE MBL": {
+        rates: { ob: 1.82, co: 3.55, cohauling: 0.12, overheadHr: 52.00 },
+        pit: { dist: 2.2, speedL: 21, speedE: 27, hours: 10, density: 2.12, sf: 0.81, eff: 83 }
+      },
+      "BSS-SITE IP": {
+        rates: { ob: 1.78, co: 3.45, cohauling: 0.11, overheadHr: 48.00 },
+        pit: { dist: 1.5, speedL: 20, speedE: 25, hours: 10, density: 2.08, sf: 0.80, eff: 85 }
+      }
+    };
+
+    let siteConfigs = JSON.parse(localStorage.getItem("fleet_site_configs")) || defaultSiteConfigs;
+    let currentSite = localStorage.getItem("fleet_active_site") || "BSS-SITE MSJ";
 
     const defaultObMaterialSpecs = {
       softsoil: { name: "Soft Soil (Lunak)", bff: 1.05, ctFactor: 0.90, blastingCostBcm: 0.0, loaderCostFactor: 0.95, haulerCostFactor: 0.95, supportCostFactor: 0.95 },
@@ -603,13 +665,6 @@
     const supportSlotCount = 3;
     let currentUser = null;
 
-    let savedRates = JSON.parse(localStorage.getItem("fleet_saved_rates")) || {
-      ob: 1.80,
-      co: 3.50,
-      cohauling: 0.12,
-      overheadHr: 50.00
-    };
-
     function adjustQty(elementId, change) {
       const el = document.getElementById(elementId);
       if (!el || el.disabled) return;
@@ -631,9 +686,7 @@
       } else {
         qtyEl.disabled = false;
         qtyEl.style.opacity = "1";
-        if (parseInt(qtyEl.value, 10) === 0) {
-          qtyEl.value = 1;
-        }
+        if (parseInt(qtyEl.value, 10) === 0) qtyEl.value = 1;
       }
       runSimulation();
     }
@@ -650,9 +703,7 @@
       } else {
         qtyEl.disabled = false;
         qtyEl.style.opacity = "1";
-        if (parseInt(qtyEl.value, 10) === 0) {
-          qtyEl.value = 5;
-        }
+        if (parseInt(qtyEl.value, 10) === 0) qtyEl.value = 5;
       }
       runSimulation();
     }
@@ -669,10 +720,63 @@
       } else {
         qtyEl.disabled = false;
         qtyEl.style.opacity = "1";
-        if (parseInt(qtyEl.value, 10) === 0) {
-          qtyEl.value = 1;
-        }
+        if (parseInt(qtyEl.value, 10) === 0) qtyEl.value = 1;
       }
+      runSimulation();
+    }
+
+    function changeActiveSite(newSite) {
+      currentSite = newSite;
+      localStorage.setItem("fleet_active_site", newSite);
+      document.getElementById("main-site-switch").value = newSite;
+      document.getElementById("login-site").value = newSite;
+      document.getElementById("active-site-tag").innerText = newSite.replace("BSS-SITE ", "");
+      document.getElementById("rate-site-name-tag").innerText = newSite;
+
+      loadSiteSettings(newSite);
+      runSimulation();
+    }
+
+    function loadSiteSettings(siteName) {
+      const cfg = siteConfigs[siteName] || defaultSiteConfigs["BSS-SITE MSJ"];
+      
+      // Muat Tarif Kontrak
+      document.getElementById("master-rate-ob").value = cfg.rates.ob;
+      document.getElementById("master-rate-co").value = cfg.rates.co;
+      document.getElementById("master-rate-cohauling").value = cfg.rates.cohauling;
+      document.getElementById("master-fleet-overhead").value = cfg.rates.overheadHr;
+
+      // Muat Parameter Pit
+      document.getElementById("param-dist").value = cfg.pit.dist;
+      document.getElementById("param-speed-l").value = cfg.pit.speedL;
+      document.getElementById("param-speed-e").value = cfg.pit.speedE;
+      document.getElementById("param-hours").value = cfg.pit.hours;
+      document.getElementById("param-density").value = cfg.pit.density;
+      document.getElementById("param-sf").value = cfg.pit.sf;
+      document.getElementById("param-eff").value = cfg.pit.eff;
+    }
+
+    function saveCurrentSiteSettings() {
+      if (!siteConfigs[currentSite]) {
+        siteConfigs[currentSite] = JSON.parse(JSON.stringify(defaultSiteConfigs["BSS-SITE MSJ"]));
+      }
+
+      // Simpan tarif
+      siteConfigs[currentSite].rates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
+      siteConfigs[currentSite].rates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
+      siteConfigs[currentSite].rates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
+      siteConfigs[currentSite].rates.overheadHr = parseFloat(document.getElementById("master-fleet-overhead").value) || 0;
+
+      // Simpan parameter lapangan
+      siteConfigs[currentSite].pit.dist = parseFloat(document.getElementById("param-dist").value) || 0.1;
+      siteConfigs[currentSite].pit.speedL = parseFloat(document.getElementById("param-speed-l").value) || 20;
+      siteConfigs[currentSite].pit.speedE = parseFloat(document.getElementById("param-speed-e").value) || 26;
+      siteConfigs[currentSite].pit.hours = parseFloat(document.getElementById("param-hours").value) || 10;
+      siteConfigs[currentSite].pit.density = parseFloat(document.getElementById("param-density").value) || 2.1;
+      siteConfigs[currentSite].pit.sf = parseFloat(document.getElementById("param-sf").value) || 0.8;
+      siteConfigs[currentSite].pit.eff = parseFloat(document.getElementById("param-eff").value) || 83;
+
+      localStorage.setItem("fleet_site_configs", JSON.stringify(siteConfigs));
       runSimulation();
     }
 
@@ -776,6 +880,7 @@
 
     function handleLogin(e) {
       e.preventDefault();
+      const selectedSite = document.getElementById("login-site").value;
       const inputNik = document.getElementById("login-nik").value.trim();
       const inputPass = document.getElementById("login-password").value.trim();
       const errEl = document.getElementById("login-error");
@@ -829,13 +934,14 @@
       errEl.classList.add("hidden");
       currentUser = user;
       sessionStorage.setItem("fleet_auth_user", JSON.stringify(user));
+      changeActiveSite(selectedSite);
       unlockApp(user);
     }
 
     function unlockApp(user) {
       currentUser = user;
 
-      // Kirim log akses ke Google Spreadsheet secara otomatis
+      // Kirim log akses ke Google Spreadsheet dengan nama Site
       sendAccessLog(user);
 
       document.getElementById("login-overlay").classList.add("hidden");
@@ -872,11 +978,7 @@
     }
 
     function initApp() {
-      document.getElementById("master-rate-ob").value = savedRates.ob;
-      document.getElementById("master-rate-co").value = savedRates.co;
-      document.getElementById("master-rate-cohauling").value = savedRates.cohauling;
-      document.getElementById("master-fleet-overhead").value = savedRates.overheadHr || 50.00;
-
+      changeActiveSite(currentSite);
       rebuildDropdowns();
 
       const supportContainer = document.getElementById("support-container");
@@ -1226,12 +1328,14 @@
       if (confirm("Reset seluruh data armada & material ke standar?")) {
         db = JSON.parse(JSON.stringify(defaultDb));
         obMaterialSpecs = JSON.parse(JSON.stringify(defaultObMaterialSpecs));
+        siteConfigs = JSON.parse(JSON.stringify(defaultSiteConfigs));
         localStorage.removeItem("fleet_custom_mat_ob");
+        localStorage.removeItem("fleet_site_configs");
         saveCustomDb();
         renderDatabaseTables();
         updateMaterialButtonLabels();
         rebuildDropdowns();
-        runSimulation();
+        initApp();
       }
     }
 
@@ -1306,16 +1410,6 @@
       runSimulation();
     }
 
-    function saveRates() {
-      if (currentUser && currentUser.role !== 'admin') return;
-      savedRates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
-      savedRates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
-      savedRates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
-      savedRates.overheadHr = parseFloat(document.getElementById("master-fleet-overhead").value) || 0;
-      localStorage.setItem("fleet_saved_rates", JSON.stringify(savedRates));
-      runSimulation();
-    }
-
     function switchTab(tab) {
       if (tab === 'sim') {
         document.getElementById('tab-simulation').classList.remove('hidden');
@@ -1353,9 +1447,6 @@
       if (type === "OB") {
         obMatContainer.classList.remove("hidden");
         setObMaterial("hardsoil");
-        document.getElementById("param-dist").value = "2.0";
-        document.getElementById("param-speed-l").value = "20";
-        document.getElementById("param-speed-e").value = "26";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
         document.getElementById("sim-loader-qty").disabled = false;
@@ -1367,11 +1458,6 @@
         document.getElementById("sim-hauler").value = "CMT106 (Wide Body) (40m³)";
       } else if (type === "CO") {
         obMatContainer.classList.add("hidden");
-        document.getElementById("param-dist").value = "3.0";
-        document.getElementById("param-speed-l").value = "22";
-        document.getElementById("param-speed-e").value = "28";
-        document.getElementById("param-density").value = "1.30";
-        document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
         document.getElementById("sim-loader-qty").disabled = false;
@@ -1383,11 +1469,6 @@
         document.getElementById("sim-hauler").value = "CMT96 (Wide Body) (35m³)";
       } else if (type === "CoHauling") {
         obMatContainer.classList.add("hidden");
-        document.getElementById("param-dist").value = "50.0";
-        document.getElementById("param-speed-l").value = "30";
-        document.getElementById("param-speed-e").value = "40";
-        document.getElementById("param-density").value = "1.30";
-        document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "owner";
         document.getElementById("sim-loader-qty").value = "1";
         document.getElementById("sim-loader-qty").disabled = false;
@@ -1453,19 +1534,21 @@
 
       let contractRate = 0;
       let unitLabel = "BCM";
+      const currentRates = siteConfigs[currentSite]?.rates || defaultSiteConfigs["BSS-SITE MSJ"].rates;
+
       if (currentJobType === "OB") {
         unitLabel = "BCM";
-        contractRate = savedRates.ob;
+        contractRate = currentRates.ob;
         document.getElementById("label-prod-primary").innerText = "Produksi (BCM/Jam)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (BCM/Jam)";
       } else if (currentJobType === "CO") {
         unitLabel = "Ton";
-        contractRate = savedRates.co;
+        contractRate = currentRates.co;
         document.getElementById("label-prod-primary").innerText = "Produksi (Ton/Jam)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton/Jam)";
       } else if (currentJobType === "CoHauling") {
         unitLabel = "Ton.Km";
-        contractRate = savedRates.cohauling;
+        contractRate = currentRates.cohauling;
         document.getElementById("label-prod-primary").innerText = "Produksi (Ton.Km/Jam)";
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
@@ -1494,8 +1577,6 @@
       let loaderMaxCapacityTonHr = 0;
 
       const activeLoaderQtyForProd = loaderQty > 0 ? loaderQty : 1;
-
-      // CEK KONDISI NONE
       const isNoneUnit = loaderName.includes("None") || loaderQty === 0 || haulerName.includes("None") || haulerQty === 0;
 
       if (!isNoneUnit) {
@@ -1560,7 +1641,7 @@
       const chargedLoaderCost = (loaderOwner === "owner" || loaderName.includes("None")) ? 0.0 : (effectiveLoaderCost * loaderQty);
       const chargedHaulerCost = haulerName.includes("None") ? 0.0 : (effectiveHaulerCost * haulerQty);
       const equipmentCostHr = chargedLoaderCost + chargedHaulerCost;
-      const fleetOverheadHr = (!isNoneUnit) ? (savedRates.overheadHr || 50.00) : 0.0;
+      const fleetOverheadHr = (!isNoneUnit) ? (currentRates.overheadHr || 50.00) : 0.0;
       const totalBlastingCostHr = (currentJobType === "OB" && currentObMaterial === "blasting") ? (prodBcmHr * blastingCostPerBcm) : 0.0;
       const totalFleetCostHr = equipmentCostHr + supportCostHr + fleetOverheadHr + totalBlastingCostHr;
 
@@ -1657,13 +1738,11 @@
         const pdtyPerTruck = haulerQty > 0 ? (mainProdValue / haulerQty) : 0;
         const prodDeviation = mainProdValue - bepProd;
 
-        // Kartu 3: Pdty per Hauler
         document.getElementById("label-unit-cost").innerText = `Pdty per Hauler (${unitLabel}/Jam)`;
         document.getElementById("res-unit-cost").innerText = pdtyPerTruck.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
         document.getElementById("res-unit-cost").className = "text-amber";
         document.getElementById("res-total-cost").innerText = `${ritasePerUnit.toFixed(1)} Rit/Jam per Truk`;
 
-        // Kartu 4: Deviasi Produksi
         document.getElementById("label-profit-hr").innerText = `Deviasi Prod (${unitLabel}/Jam)`;
         const profitEl = document.getElementById("res-profit-hr");
         const sign = prodDeviation >= 0 ? "+" : "";
