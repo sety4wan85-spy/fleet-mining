@@ -1,4 +1,1017 @@
-function initApp() {
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mining Fleet Manager - Offline Multi-Site Engine</title>
+  <style>
+    /* RESET & DASAR */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #020617; color: #f8fafc; line-height: 1.5; padding-bottom: 3rem; }
+    input, select, button { font-family: inherit; font-size: inherit; color: inherit; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .hidden { display: none !important; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+    /* LAYOUT & UTILITY */
+    .container { max-width: 56rem; margin: 0 auto; padding: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    @media (min-width: 768px) {
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* CARD & KOMPONEN */
+    .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; }
+    .card-sub { background-color: rgba(2, 6, 23, 0.7); border: 1px solid #1e293b; border-radius: 0.5rem; padding: 0.75rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 600; border-radius: 0.5rem; cursor: pointer; border: 1px solid transparent; transition: 0.15s ease; text-align: center; }
+    .btn-primary { background: linear-gradient(to right, #f59e0b, #d97706); color: #020617; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-dark { background-color: #1e293b; border-color: #334155; color: #cbd5e1; }
+    .btn-dark:hover { color: #ffffff; }
+    .btn-danger { background-color: #450a0a; border-color: #991b1b; color: #f87171; }
+
+    /* FORM INPUT */
+    .form-control { width: 100%; background-color: #020617; border: 1px solid #334155; border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: #f8fafc; outline: none; }
+    .form-control:focus { border-color: #f59e0b; }
+    .label-title { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; font-weight: 600; }
+
+    /* WARNA STATUS */
+    .text-amber { color: #fbbf24; }
+    .text-emerald { color: #34d399; }
+    .text-rose { color: #f87171; }
+    .text-blue { color: #60a5fa; }
+    .text-muted { color: #64748b; font-size: 0.75rem; }
+    .badge { display: inline-block; font-size: 0.625rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 0.25rem; }
+
+    /* TABEL MASTER DATA */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left; }
+    th { background-color: #020617; color: #94a3b8; padding: 0.5rem; text-transform: uppercase; font-size: 0.65rem; }
+    td { padding: 0.5rem; border-top: 1px solid #1e293b; }
+    tr:hover { background-color: rgba(30, 41, 59, 0.5); }
+
+    /* HEADER STICKY */
+    header { background-color: #0f172a; border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 40; padding: 0.75rem 1rem; }
+    .header-content { max-width: 56rem; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background-color: rgba(2, 6, 23, 0.85); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-box { width: 100%; max-width: 28rem; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 1rem; padding: 1.5rem; }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="login-overlay" class="modal-overlay">
+    <div class="modal-box" style="max-width: 24rem;">
+      <div style="text-align: center; margin-bottom: 1.25rem;">
+        <div style="display: inline-flex; padding: 0.75rem; background-color: #1e293b; border-radius: 1rem; margin-bottom: 0.5rem;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m9 0h4l3-5h-7V5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        </div>
+        <h2 style="font-size: 1.25rem; font-weight: 700;">Mining Fleet Manager</h2>
+        <p style="font-size: 0.75rem; color: #94a3b8;">Pilih Site & Masuk dengan Akun Site</p>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div>
+          <label class="label-title" style="color: #fbbf24;">LOKASI KERJA (SITE PROYEK)</label>
+          <select id="login-site" required class="form-control" style="font-weight: 700; color: #fbbf24;">
+            <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
+            <option value="BSS-SITE TDM">BSS-SITE TDM (Khusus Coal Hauling)</option>
+            <option value="BSS-SITE MHU">BSS-SITE MHU</option>
+            <option value="BSS-SITE CDI">BSS-SITE CDI</option>
+            <option value="BSS-SITE MBL">BSS-SITE MBL</option>
+            <option value="BSS-SITE IP">BSS-SITE IP</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-title">Nomor Induk Karyawan (NIK)</label>
+          <input type="text" id="login-nik" required class="form-control font-mono" placeholder="7 Digit NIK...">
+        </div>
+        <div>
+          <label class="label-title">PIN / Password</label>
+          <input type="password" id="login-password" required class="form-control" placeholder="Masukkan PIN...">
+        </div>
+        <div id="login-error" class="hidden" style="padding: 0.5rem; background-color: rgba(69, 10, 10, 0.4); border: 1px solid #991b1b; border-radius: 0.5rem; color: #f87171; font-size: 0.75rem;">
+          <span id="login-error-text">NIK atau PIN salah!</span>
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem; margin-top: 0.25rem; font-size: 0.875rem;">Masuk ke Sistem Site</button>
+        <div style="text-align: center; margin-top: 0.25rem;">
+          <button type="button" onclick="openForgotPinModal()" style="background: none; border: none; font-size: 0.75rem; color: #94a3b8; cursor: pointer;">Lupa PIN / Password?</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL LUPA PIN ==================== -->
+  <div id="modal-forgot-pin" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 0.875rem; font-weight: 700; color: #f59e0b;">Pemulihan PIN Mandiri</h3>
+        <button onclick="closeForgotPinModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.25rem;">&times;</button>
+      </div>
+      <p style="font-size: 0.75rem; color: #cbd5e1; margin-bottom: 1rem;">Masukkan NIK dan <strong>Master Pass</strong> dari Admin untuk mereset PIN akun Anda.</p>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+        <div>
+          <label class="label-title">NIK Anda (7 Digit)</label>
+          <input type="text" id="reset-nik" class="form-control font-mono" placeholder="Contoh: 1002001">
+        </div>
+        <div>
+          <label class="label-title">Master Pass Pemulihan</label>
+          <input type="password" id="reset-emergency-pass" class="form-control" placeholder="Ketik Master Pass...">
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" onclick="closeForgotPinModal()" class="btn btn-dark" style="flex: 1; padding: 0.5rem;">Batal</button>
+        <button type="button" onclick="submitEmergencyReset()" class="btn btn-primary" style="flex: 1; padding: 0.5rem;">Reset PIN Saya</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL GANTI PIN USER ==================== -->
+  <div id="modal-change-pin" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 0.875rem; font-weight: 700; color: #f59e0b;">Ganti PIN Saya</h3>
+        <button onclick="closeChangePinModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.25rem;">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+        <div>
+          <label class="label-title">PIN Lama</label>
+          <input type="password" id="pin-old" class="form-control">
+        </div>
+        <div>
+          <label class="label-title">PIN Baru (min. 4 digit)</label>
+          <input type="password" id="pin-new" class="form-control">
+        </div>
+        <div>
+          <label class="label-title">Konfirmasi PIN Baru</label>
+          <input type="password" id="pin-confirm" class="form-control">
+        </div>
+      </div>
+      <button type="button" onclick="submitChangePin()" class="btn btn-primary" style="width: 100%; padding: 0.5rem;">Simpan PIN Baru</button>
+    </div>
+  </div>
+
+  <!-- ==================== APLIKASI UTAMA ==================== -->
+  <div id="app-dashboard" class="hidden">
+    <header>
+      <div class="header-content">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m9 0h4l3-5h-7V5"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span style="font-weight: 700; font-size: 0.875rem; line-height: 1.2;">Mining Fleet</span>
+              <span id="active-site-tag" class="badge" style="background-color: #f59e0b; color: #020617;">SITE</span>
+            </div>
+            <div id="user-badge" style="font-size: 0.65rem;"></div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="display: flex; background-color: #020617; padding: 0.2rem; border-radius: 0.5rem; border: 1px solid #1e293b;">
+            <button id="nav-sim" onclick="switchTab('sim')" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Simulasi</button>
+            <button id="nav-db" onclick="switchTab('db')" class="btn" style="background: none; padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #94a3b8;">Master Data</button>
+          </div>
+          <button onclick="openChangePinModal()" title="Ubah PIN" class="btn btn-dark" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">PIN</button>
+          <button onclick="handleLogout()" class="btn btn-danger" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      
+      <!-- ==================== TAB 1: SIMULASI ==================== -->
+      <div id="tab-simulation">
+        
+        <!-- Site Selector & Job Type -->
+        <div class="card" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="label-title" style="margin-bottom: 0;">PILIHAN SITE PROYEK</label>
+            <select id="main-site-switch" onchange="changeActiveSite(this.value)" class="form-control" style="width: auto; padding: 0.25rem 0.6rem; font-weight: 700; color: #fbbf24; font-size: 0.75rem;">
+              <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
+              <option value="BSS-SITE TDM">BSS-SITE TDM (Khusus Coal Hauling)</option>
+              <option value="BSS-SITE MHU">BSS-SITE MHU</option>
+              <option value="BSS-SITE CDI">BSS-SITE CDI</option>
+              <option value="BSS-SITE MBL">BSS-SITE MBL</option>
+              <option value="BSS-SITE IP">BSS-SITE IP</option>
+            </select>
+          </div>
+          <div id="job-type-selector-grid" class="grid-3">
+            <button id="btn-job-ob" onclick="setJobType('OB')" class="btn btn-primary" style="padding: 0.5rem; flex-direction: column;">
+              <span style="font-size: 0.75rem;">Overburden (OB)</span>
+              <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: BCM</span>
+            </button>
+            <button id="btn-job-co" onclick="setJobType('CO')" class="btn btn-dark" style="padding: 0.5rem; flex-direction: column;">
+              <span style="font-size: 0.75rem;">Coal / Batubara</span>
+              <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: Ton</span>
+            </button>
+            <button id="btn-job-cohauling" onclick="setJobType('CoHauling')" class="btn btn-dark" style="padding: 0.5rem; flex-direction: column;">
+              <span style="font-size: 0.75rem;">Coal Hauling</span>
+              <span style="font-size: 0.625rem; font-weight: normal; opacity: 0.85;">Satuan: Ton.Km</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Karakteristik OB Material -->
+        <div id="container-ob-material" class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">KARAKTERISTIK MATERIAL OB</label>
+            <span id="badge-material-effect" class="badge" style="background-color: #020617; border: 1px solid #1e293b; color: #94a3b8;">BFF: 0.95</span>
+          </div>
+          <div class="grid-4" style="gap: 0.5rem;">
+            <button type="button" id="btn-mat-softsoil" onclick="setObMaterial('softsoil')" class="btn btn-dark" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-softsoil">Soft Soil</span>
+              <span style="font-size: 0.625rem; color: #34d399;" id="label-mat-sub-softsoil">BFF 1.05</span>
+            </button>
+            <button type="button" id="btn-mat-hardsoil" onclick="setObMaterial('hardsoil')" class="btn btn-primary" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-hardsoil">Hard Soil</span>
+              <span style="font-size: 0.625rem; opacity: 0.85;" id="label-mat-sub-hardsoil">BFF 0.95</span>
+            </button>
+            <button type="button" id="btn-mat-blasting" onclick="setObMaterial('blasting')" class="btn btn-dark" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-blasting">Blasting/Rock</span>
+              <span style="font-size: 0.625rem; color: #fbbf24;" id="label-mat-sub-blasting">BFF 0.85</span>
+            </button>
+            <button type="button" id="btn-mat-mud" onclick="setObMaterial('mud')" class="btn btn-dark" style="padding: 0.4rem; flex-direction: column;">
+              <span style="font-size: 0.75rem; font-weight: 700;" id="label-mat-name-mud">Lumpur / Mud</span>
+              <span style="font-size: 0.625rem; color: #60a5fa;" id="label-mat-sub-mud">BFF 0.80</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="grid-4" style="margin-bottom: 1rem;">
+          <div class="card" style="margin-bottom: 0;">
+            <span class="label-title">Match Factor (MF)</span>
+            <div id="res-mf" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">0.00</div>
+            <span id="res-mf-badge" class="badge" style="background-color: #1e293b; color: #cbd5e1;">-</span>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <span id="label-prod-primary" class="label-title">Produksi (BCM/Jam)</span>
+            <div id="res-prod-primary" class="text-amber" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">0.0</div>
+            <span id="res-prod-secondary" class="text-muted">0.0 Ton/Jam</span>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <span id="label-unit-cost" class="label-title">Unit Cost ($/BCM)</span>
+            <div id="res-unit-cost" class="text-rose" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">$0.000</div>
+            <span id="res-total-cost" class="text-muted font-mono">$0.00/Jam Total</span>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <span id="label-profit-hr" class="label-title">Net Profit ($/Jam)</span>
+            <div id="res-profit-hr" class="text-emerald" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">$0.00</div>
+            <span id="res-profit-unit" class="text-muted font-mono">$0.000 Margin</span>
+          </div>
+        </div>
+
+        <!-- Breakdown Biaya (Khusus Manajemen/Admin) -->
+        <div id="cost-breakdown-banner" class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.75rem; padding: 0.6rem 1rem;">
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <span style="color: #94a3b8;">Biaya/Jam:</span>
+            <span>Alat: <strong id="cb-equipment" class="font-mono text-amber">$0.00</strong></span>
+            <span>Support: <strong id="cb-support" class="font-mono text-amber">$0.00</strong></span>
+            <span>Overhead: <strong id="cb-overhead" class="font-mono text-amber">$0.00</strong></span>
+            <span id="cb-blasting-wrapper" class="hidden">Blasting: <strong id="cb-blasting" class="font-mono text-rose">$0.00</strong></span>
+          </div>
+          <div id="cb-total-summary" class="font-mono text-muted">Total: $0.00/h</div>
+        </div>
+
+        <!-- Breakdown Cycle Time -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="label-title" style="color: #fbbf24; margin-bottom: 0;">BREAKDOWN CYCLE TIME HAULER</span>
+            <span style="font-size: 0.75rem;">Total CT: <strong id="ct-total" class="text-amber font-mono">0.00</strong> mnt (<span id="ct-ritase" class="font-mono">0.00</span> rit/jam)</span>
+          </div>
+          <div class="grid-4" style="gap: 0.5rem;">
+            <div class="card-sub">
+              <span class="text-muted">1. Loading Time</span>
+              <div id="ct-load" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+            <div class="card-sub">
+              <span class="text-muted">2. Hauling (Loaded)</span>
+              <div id="ct-travel-l" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+            <div class="card-sub">
+              <span class="text-muted">3. Dumping / Spot</span>
+              <div id="ct-dump" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+            <div class="card-sub">
+              <span class="text-muted">4. Return (Empty)</span>
+              <div id="ct-travel-e" class="font-mono" style="font-weight: 700; margin-top: 0.2rem;">0.00 mnt</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Break Even Distance -->
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to right, #0f172a, #1e293b);">
+          <div>
+            <span class="label-title">Batas Jarak Impas (Break-Even Distance)</span>
+            <div style="font-size: 1.15rem; font-weight: 700; color: #fbbf24;"><span id="res-bep-dist">0.00</span> km <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">satu arah</span></div>
+          </div>
+          <div style="text-align: right;">
+            <span id="label-bep-prod" class="label-title">BEP Prod (BCM/Jam)</span>
+            <div id="res-bep-prod" style="font-weight: 700; font-size: 0.875rem;">0.0 BCM</div>
+          </div>
+        </div>
+
+        <!-- ==================== KONFIGURASI ARMADA ==================== -->
+        <div class="card">
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.75rem;">KONFIGURASI UNIT ARMADA</label>
+
+          <!-- Loader Card -->
+          <div class="card-sub" style="margin-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.75rem; font-weight: 700;">Loading Unit (Excavator)</span>
+              <select id="sim-loader-owner" onchange="runSimulation()" class="form-control" style="width: auto; padding: 0.2rem 0.4rem; font-size: 0.65rem; color: #fbbf24;">
+                <option value="contractor">Unit Milik Sendiri (Cost Masuk)</option>
+                <option value="owner">Disediakan Owner ($0.00)</option>
+              </select>
+            </div>
+            <select id="sim-loader" onchange="handleLoaderChange()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
+                <button type="button" onclick="adjustQty('sim-loader-qty', -1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">-</button>
+                <input type="number" id="sim-loader-qty" value="1" min="0" onchange="runSimulation()" class="form-control font-mono" style="width: 3.5rem; text-align: center; font-weight: 700; color: #fbbf24;">
+                <button type="button" onclick="adjustQty('sim-loader-qty', 1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">+</button>
+                <span class="text-muted">unit</span>
+              </div>
+              <div id="sim-loader-rate" class="badge font-mono" style="background-color: #020617; border: 1px solid #1e293b; padding: 0.4rem 0.6rem;">$0.00/h</div>
+            </div>
+          </div>
+
+          <!-- Hauler Card -->
+          <div class="card-sub" style="margin-bottom: 0.75rem;">
+            <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.4rem;">Hauling Unit (Dump Truck)</span>
+            <select id="sim-hauler" onchange="handleHaulerChange()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
+                <button type="button" onclick="adjustQty('sim-hauler-qty', -1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">-</button>
+                <input type="number" id="sim-hauler-qty" value="5" min="0" onchange="runSimulation()" class="form-control font-mono" style="width: 3.5rem; text-align: center; font-weight: 700; color: #fbbf24;">
+                <button type="button" onclick="adjustQty('sim-hauler-qty', 1)" class="btn btn-dark" style="width: 2rem; height: 2rem;">+</button>
+                <span class="text-muted">unit</span>
+              </div>
+              <div id="sim-hauler-rate" class="badge font-mono" style="background-color: #020617; border: 1px solid #1e293b; padding: 0.4rem 0.6rem;">$0.00/h</div>
+            </div>
+          </div>
+
+          <!-- Support Units Container -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.75rem; font-weight: 700;">Alat Support (Dozer, Grader, WT)</span>
+              <span style="font-size: 0.65rem; color: #64748b;">Pilih "None" otomatis Qty = 0</span>
+            </div>
+            <div id="support-container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+          </div>
+        </div>
+
+        <!-- Parameter Operasional Pit -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">PARAMETER LAPANGAN (PIT & LAB)</label>
+            <span class="text-muted" style="font-size: 0.65rem;">Tersimpan khusus per site</span>
+          </div>
+          <div class="grid-4">
+            <div>
+              <label class="label-title">Jarak Haul (km)</label>
+              <input type="number" step="0.1" id="param-dist" value="2.0" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+            <div>
+              <label class="label-title">Speed Loaded (km/h)</label>
+              <input type="number" id="param-speed-l" value="20" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+            <div>
+              <label class="label-title">Speed Empty (km/h)</label>
+              <input type="number" id="param-speed-e" value="26" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+            <div>
+              <label class="label-title">Jam/Shift (Jam)</label>
+              <input type="number" id="param-hours" value="10" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+            <div>
+              <label class="label-title">Densitas (Ton/m³)</label>
+              <input type="number" step="0.05" id="param-density" value="2.10" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+            <div>
+              <label class="label-title">Swell Factor (SF)</label>
+              <input type="number" step="0.05" id="param-sf" value="0.80" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+            <div style="grid-column: span 2;">
+              <label class="label-title">Efisiensi Kerja (%)</label>
+              <input type="number" id="param-eff" value="83" oninput="saveCurrentSiteSettings()" class="form-control">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== TAB 2: MASTER DATA ==================== -->
+      <div id="tab-database" class="hidden">
+        
+        <!-- Confidential Tarif Proyek (Khusus Admin) -->
+        <div id="section-confidential-rates" class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">TARIF KONTRAK & OVERHEAD (KHUSUS ADMIN)</label>
+            <span id="rate-site-name-tag" class="badge" style="background-color: #020617; border: 1px solid #1e293b; color: #fbbf24;">SITE</span>
+          </div>
+          <div class="grid-4" style="margin-bottom: 0.75rem;">
+            <div>
+              <label class="label-title">Tarif OB ($/BCM)</label>
+              <input type="number" step="0.01" id="master-rate-ob" value="1.80" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
+            </div>
+            <div>
+              <label class="label-title">Tarif Coal ($/Ton)</label>
+              <input type="number" step="0.01" id="master-rate-co" value="3.50" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
+            </div>
+            <div>
+              <label class="label-title">Tarif Hauling ($/Ton.Km)</label>
+              <input type="number" step="0.01" id="master-rate-cohauling" value="0.12" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
+            </div>
+            <div>
+              <label class="label-title">Biaya Overhead ($/Jam)</label>
+              <input type="number" step="1.0" id="master-fleet-overhead" value="50.00" oninput="saveCurrentSiteSettings()" class="form-control text-amber font-mono">
+            </div>
+          </div>
+          <div style="border-top: 1px solid #1e293b; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <span class="text-muted">Manajemen Akun User:</span>
+            <button onclick="adminResetUserPin()" class="btn btn-dark" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: #fbbf24;">Reset PIN User ke Default</button>
+          </div>
+        </div>
+
+        <!-- Tabel Material OB -->
+        <div class="card">
+          <label class="label-title" style="color: #fbbf24; margin-bottom: 0.5rem;">MASTER MULTIPLIER MATERIAL OB (BERLAKU SEMUA SITE)</label>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th style="text-align: center;">BFF</th>
+                  <th style="text-align: center;">Faktor CT</th>
+                  <th style="text-align: center;">Blast ($/BCM)</th>
+                  <th style="text-align: center;">Cost Loader</th>
+                  <th style="text-align: center;">Cost Hauler</th>
+                  <th style="text-align: center;">Cost Support</th>
+                </tr>
+              </thead>
+              <tbody id="table-materials-ob"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Master Excavator -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER EXCAVATOR (LOADER) - SEMUA SITE</label>
+            <div style="display: flex; gap: 0.35rem;">
+              <button onclick="downloadLoaderCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
+              <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                Impor CSV <input type="file" accept=".csv" onchange="handleLoaderCsvUpload(event)" class="hidden">
+              </label>
+              <button onclick="addNewLoaderRow()" class="btn btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">+ Tambah</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model Unit</th>
+                  <th style="text-align: center;">Bucket (m³)</th>
+                  <th style="text-align: center;">CT (dtk)</th>
+                  <th style="text-align: center;">Cost ($/h)</th>
+                  <th style="text-align: center;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-loaders"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Master Dump Truck -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER DUMP TRUCK (HAULER) - SEMUA SITE</label>
+            <div style="display: flex; gap: 0.35rem;">
+              <button onclick="downloadHaulerCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
+              <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                Impor CSV <input type="file" accept=".csv" onchange="handleHaulerCsvUpload(event)" class="hidden">
+              </label>
+              <button onclick="addNewHaulerRow()" class="btn btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">+ Tambah</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model Unit</th>
+                  <th style="text-align: center;">Vessel (m³)</th>
+                  <th style="text-align: center;">Dump (mnt)</th>
+                  <th style="text-align: center;">Cost ($/h)</th>
+                  <th style="text-align: center;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-haulers"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Master Support -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <label class="label-title" style="color: #fbbf24; margin-bottom: 0;">MASTER UNIT SUPPORT - SEMUA SITE</label>
+            <div style="display: flex; gap: 0.35rem;">
+              <button onclick="downloadSupportCsvTemplate()" class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Unduh CSV</button>
+              <label class="btn btn-dark" style="padding: 0.3rem 0.5rem; font-size: 0.7rem; cursor: pointer;">
+                Impor CSV <input type="file" accept=".csv" onchange="handleSupportCsvUpload(event)" class="hidden">
+              </label>
+              <button onclick="addNewSupportRow()" class="btn btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">+ Tambah</button>
+              <button onclick="resetDbToDefault()" class="btn btn-danger" style="padding: 0.3rem 0.5rem; font-size: 0.7rem;">Reset Default</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model Unit</th>
+                  <th>Fungsi</th>
+                  <th style="text-align: center;">Cost ($/h)</th>
+                  <th style="text-align: center;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-supports"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS ====================
+    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwW4FflExzrrHGjuhrzKPic5NoPQKTF7WOp8_bPaQZXZtlMFtcuhu1yU0Opcl2PI2-rEA/exec";
+
+    function sendAccessLog(user) {
+      if (!SHEET_WEBHOOK_URL) return;
+
+      try {
+        const timeStr = encodeURIComponent(new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }));
+        const siteStr = encodeURIComponent(currentSite);
+        const nikStr = encodeURIComponent(user.nik);
+        const roleStr = encodeURIComponent(user.role);
+        const devStr = encodeURIComponent(navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
+
+        const pingUrl = `${SHEET_WEBHOOK_URL}?nik=${nikStr}&site=${siteStr}&role=${roleStr}&device=${devStr}&timestamp=${timeStr}`;
+        const beacon = new Image();
+        beacon.src = pingUrl;
+      } catch (err) {
+        console.log("Offline mode: Log tidak terkirim.");
+      }
+    }
+
+    let customUserAccounts = JSON.parse(localStorage.getItem("fleet_user_accounts")) || {};
+
+    // KONFIGURASI PRESET PARAMETER MASING-MASING SITE
+    const defaultSiteConfigs = {
+      "BSS-SITE MSJ": {
+        rates: { ob: 1.80, co: 3.50, cohauling: 0.12, overheadHr: 50.00 },
+        pit: { dist: 2.0, speedL: 20, speedE: 26, hours: 10, density: 2.10, sf: 0.80, eff: 83 }
+      },
+      "BSS-SITE TDM": {
+        rates: { ob: 1.85, co: 3.60, cohauling: 0.12, overheadHr: 55.00 },
+        pit: { dist: 35.0, speedL: 28, speedE: 38, hours: 10, density: 1.30, sf: 0.85, eff: 83 }
+      },
+      "BSS-SITE MHU": {
+        rates: { ob: 1.75, co: 3.40, cohauling: 0.11, overheadHr: 45.00 },
+        pit: { dist: 1.8, speedL: 20, speedE: 25, hours: 10, density: 2.05, sf: 0.82, eff: 84 }
+      },
+      "BSS-SITE CDI": {
+        rates: { ob: 1.90, co: 3.75, cohauling: 0.13, overheadHr: 60.00 },
+        pit: { dist: 3.0, speedL: 18, speedE: 24, hours: 10, density: 2.20, sf: 0.78, eff: 80 }
+      },
+      "BSS-SITE MBL": {
+        rates: { ob: 1.82, co: 3.55, cohauling: 0.12, overheadHr: 52.00 },
+        pit: { dist: 2.2, speedL: 21, speedE: 27, hours: 10, density: 2.12, sf: 0.81, eff: 83 }
+      },
+      "BSS-SITE IP": {
+        rates: { ob: 1.78, co: 3.45, cohauling: 0.11, overheadHr: 48.00 },
+        pit: { dist: 1.5, speedL: 20, speedE: 25, hours: 10, density: 2.08, sf: 0.80, eff: 85 }
+      }
+    };
+
+    let siteConfigs = JSON.parse(localStorage.getItem("fleet_site_configs")) || defaultSiteConfigs;
+    let currentSite = localStorage.getItem("fleet_active_site") || "BSS-SITE MSJ";
+
+    const defaultObMaterialSpecs = {
+      softsoil: { name: "Soft Soil (Lunak)", bff: 1.05, ctFactor: 0.90, blastingCostBcm: 0.0, loaderCostFactor: 0.95, haulerCostFactor: 0.95, supportCostFactor: 0.95 },
+      hardsoil: { name: "Hard Soil / Clay", bff: 0.95, ctFactor: 1.00, blastingCostBcm: 0.0, loaderCostFactor: 1.00, haulerCostFactor: 1.00, supportCostFactor: 1.00 },
+      blasting: { name: "Blasting / Rock", bff: 0.85, ctFactor: 1.15, blastingCostBcm: 0.45, loaderCostFactor: 1.15, haulerCostFactor: 1.10, supportCostFactor: 1.15 },
+      mud:      { name: "Lumpur / Mud", bff: 0.80, ctFactor: 1.10, blastingCostBcm: 0.0, loaderCostFactor: 1.10, haulerCostFactor: 1.12, supportCostFactor: 1.10 }
+    };
+
+    const defaultDb = {
+      loaders: [
+        { name: ".None (Tidak Pakai)", bucket: 0.0, ctSec: 0.0, cost: 0.0 },
+        { name: "CATERPILLAR CAT390D (5.5m³)", bucket: 5.50, ctSec: 25.0, cost: 180.00 },
+        { name: "DOOSAN S500LC-V (2.7m³)", bucket: 2.70, ctSec: 24.0, cost: 77.19 },
+        { name: "HITACHI ZX200-3G (0.91m³)", bucket: 0.91, ctSec: 20.0, cost: 37.78 },
+        { name: "HITACHI ZX330 (1.62m³)", bucket: 1.62, ctSec: 22.0, cost: 63.48 },
+        { name: "HITACHI ZX470H-5G (2.5m³)", bucket: 2.50, ctSec: 23.0, cost: 81.24 },
+        { name: "HITACHI ZX870H-5G (4.5m³)", bucket: 4.50, ctSec: 25.0, cost: 147.62 },
+        { name: "KOMATSU PC200-8 (0.93m³)", bucket: 0.93, ctSec: 20.0, cost: 37.66 },
+        { name: "KOMATSU PC300SE-8 (1.6m³)", bucket: 1.60, ctSec: 22.0, cost: 65.00 },
+        { name: "KOMATSU PC400LC-7 (2.2m³)", bucket: 2.20, ctSec: 23.0, cost: 83.67 },
+        { name: "KOMATSU PC400SE-8 (2.2m³)", bucket: 2.20, ctSec: 23.0, cost: 83.95 },
+        { name: "KOMATSU PC1250SP-8R (6.7m³)", bucket: 6.70, ctSec: 26.0, cost: 223.27 },
+        { name: "KOMATSU PC2000-8 (12.0m³)", bucket: 12.00, ctSec: 26.0, cost: 390.00 }
+      ],
+      haulers: [
+        { name: ".None (Tidak Pakai)", vessel: 0.0, dumpMin: 0.0, cost: 0.0 },
+        { name: "BEIBEN 3842 (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 32.87 },
+        { name: "CATERPILLAR CAT740B (24m³)", vessel: 24.0, dumpMin: 1.3, cost: 96.82 },
+        { name: "CMT96 (Wide Body) (35m³)", vessel: 35.0, dumpMin: 1.3, cost: 62.84 },
+        { name: "CMT106 (Wide Body) (40m³)", vessel: 40.0, dumpMin: 1.4, cost: 75.00 },
+        { name: "DONGFENG 375FT (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 22.66 },
+        { name: "HINO FM260TI (14m³)", vessel: 14.0, dumpMin: 1.1, cost: 29.79 },
+        { name: "HINO FM320TI (15m³)", vessel: 15.0, dumpMin: 1.1, cost: 29.02 },
+        { name: "HINO ZY1E/700 (20m³)", vessel: 20.0, dumpMin: 1.2, cost: 41.74 },
+        { name: "KOMATSU HD785-7 (60m³)", vessel: 60.0, dumpMin: 1.5, cost: 200.42 },
+        { name: "MERCEDES BENZ ACTROSS 4043K (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 42.67 },
+        { name: "MERCEDES BENZ ACTROSS 4843K (24m³)", vessel: 24.0, dumpMin: 1.2, cost: 36.13 },
+        { name: "RTH100 (Rigid Truck) (40m³)", vessel: 40.0, dumpMin: 1.3, cost: 72.00 },
+        { name: "SCANIA P460 (30m³)", vessel: 30.0, dumpMin: 1.2, cost: 55.00 }
+      ],
+      supports: [
+        { name: "None (Tidak Pakai)", role: "-", cost: 0.0 },
+        { name: "INGERSOLL RAND SD100D", role: "Road Maintenance", cost: 22.02 },
+        { name: "KOMATSU D65P", role: "Clean Up Loading Point", cost: 61.20 },
+        { name: "KOMATSU D85E-SS-2", role: "Pit Maintenance", cost: 70.84 },
+        { name: "KOMATSU D155A-6R", role: "Ripping & Spreading", cost: 118.30 },
+        { name: "KOMATSU D375A-6R", role: "Ripping & Spreading", cost: 210.05 },
+        { name: "KOMATSU GD705A-4", role: "Road Maintenance", cost: 71.73 },
+        { name: "Water Truck 40,000L", role: "Dust Suppression", cost: 45.00 },
+        { name: "ZAKAI SV515E", role: "Road Maintenance", cost: 21.67 }
+      ]
+    };
+
+    let db = JSON.parse(localStorage.getItem("fleet_custom_db")) || JSON.parse(JSON.stringify(defaultDb));
+    let obMaterialSpecs = JSON.parse(localStorage.getItem("fleet_custom_mat_ob")) || JSON.parse(JSON.stringify(defaultObMaterialSpecs));
+
+    let currentJobType = "OB";
+    let currentObMaterial = "hardsoil";
+    const supportSlotCount = 3;
+    let currentUser = null;
+
+    function adjustQty(elementId, change) {
+      const el = document.getElementById(elementId);
+      if (!el || el.disabled) return;
+      let currentVal = parseInt(el.value, 10) || 0;
+      el.value = Math.max(0, currentVal + change);
+      runSimulation();
+    }
+
+    function handleLoaderChange() {
+      const selectEl = document.getElementById("sim-loader");
+      const qtyEl = document.getElementById("sim-loader-qty");
+      if (!selectEl || !qtyEl) return;
+
+      if (selectEl.value.includes("None")) {
+        qtyEl.value = 0;
+        qtyEl.disabled = true;
+        qtyEl.style.opacity = "0.4";
+      } else {
+        qtyEl.disabled = false;
+        qtyEl.style.opacity = "1";
+        if (parseInt(qtyEl.value, 10) === 0) qtyEl.value = 1;
+      }
+      runSimulation();
+    }
+
+    function handleHaulerChange() {
+      const selectEl = document.getElementById("sim-hauler");
+      const qtyEl = document.getElementById("sim-hauler-qty");
+      if (!selectEl || !qtyEl) return;
+
+      if (selectEl.value.includes("None")) {
+        qtyEl.value = 0;
+        qtyEl.disabled = true;
+        qtyEl.style.opacity = "0.4";
+      } else {
+        qtyEl.disabled = false;
+        qtyEl.style.opacity = "1";
+        if (parseInt(qtyEl.value, 10) === 0) qtyEl.value = 5;
+      }
+      runSimulation();
+    }
+
+    function handleSupportUnitChange(slotIndex) {
+      const selectEl = document.getElementById(`sim-support-${slotIndex}`);
+      const qtyEl = document.getElementById(`sim-support-qty-${slotIndex}`);
+      if (!selectEl || !qtyEl) return;
+
+      if (selectEl.value.includes("None")) {
+        qtyEl.value = 0;
+        qtyEl.disabled = true;
+        qtyEl.style.opacity = "0.4";
+      } else {
+        qtyEl.disabled = false;
+        qtyEl.style.opacity = "1";
+        if (parseInt(qtyEl.value, 10) === 0) qtyEl.value = 1;
+      }
+      runSimulation();
+    }
+
+    function changeActiveSite(newSite) {
+      currentSite = newSite;
+      localStorage.setItem("fleet_active_site", newSite);
+      
+      const mainSwitch = document.getElementById("main-site-switch");
+      if (mainSwitch) mainSwitch.value = newSite;
+      
+      const loginSiteEl = document.getElementById("login-site");
+      if (loginSiteEl) loginSiteEl.value = newSite;
+      
+      const activeTag = document.getElementById("active-site-tag");
+      if (activeTag) activeTag.innerText = newSite.replace("BSS-SITE ", "");
+      
+      const rateTag = document.getElementById("rate-site-name-tag");
+      if (rateTag) rateTag.innerText = newSite;
+
+      applySiteRestrictions(newSite);
+      loadSiteSettings(newSite);
+      runSimulation();
+    }
+
+    // ATURAN KHUSUS: SITE TDM HANYA COAL HAULING
+    function applySiteRestrictions(siteName) {
+      const btnOb = document.getElementById("btn-job-ob");
+      const btnCo = document.getElementById("btn-job-co");
+      const selectorGrid = document.getElementById("job-type-selector-grid");
+
+      if (siteName === "BSS-SITE TDM") {
+        if (btnOb) btnOb.classList.add("hidden");
+        if (btnCo) btnCo.classList.add("hidden");
+        if (selectorGrid) selectorGrid.style.gridTemplateColumns = "1fr";
+        setJobType("CoHauling");
+      } else {
+        if (btnOb) btnOb.classList.remove("hidden");
+        if (btnCo) btnCo.classList.remove("hidden");
+        if (selectorGrid) selectorGrid.style.gridTemplateColumns = "repeat(3, 1fr)";
+        if (currentJobType === "CoHauling" && siteName !== "BSS-SITE TDM") {
+          setJobType("OB");
+        }
+      }
+    }
+
+    function loadSiteSettings(siteName) {
+      const cfg = siteConfigs[siteName] || defaultSiteConfigs["BSS-SITE MSJ"];
+      
+      const obEl = document.getElementById("master-rate-ob");
+      if (obEl) obEl.value = cfg.rates.ob;
+      const coEl = document.getElementById("master-rate-co");
+      if (coEl) coEl.value = cfg.rates.co;
+      const cohEl = document.getElementById("master-rate-cohauling");
+      if (cohEl) cohEl.value = cfg.rates.cohauling;
+      const ovhEl = document.getElementById("master-fleet-overhead");
+      if (ovhEl) ovhEl.value = cfg.rates.overheadHr;
+
+      const distEl = document.getElementById("param-dist");
+      if (distEl) distEl.value = cfg.pit.dist;
+      const spdLEl = document.getElementById("param-speed-l");
+      if (spdLEl) spdLEl.value = cfg.pit.speedL;
+      const spdEEl = document.getElementById("param-speed-e");
+      if (spdEEl) spdEEl.value = cfg.pit.speedE;
+      const hrsEl = document.getElementById("param-hours");
+      if (hrsEl) hrsEl.value = cfg.pit.hours;
+      const denEl = document.getElementById("param-density");
+      if (denEl) denEl.value = cfg.pit.density;
+      const sfEl = document.getElementById("param-sf");
+      if (sfEl) sfEl.value = cfg.pit.sf;
+      const effEl = document.getElementById("param-eff");
+      if (effEl) effEl.value = cfg.pit.eff;
+    }
+
+    function saveCurrentSiteSettings() {
+      if (!siteConfigs[currentSite]) {
+        siteConfigs[currentSite] = JSON.parse(JSON.stringify(defaultSiteConfigs["BSS-SITE MSJ"]));
+      }
+
+      siteConfigs[currentSite].rates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
+      siteConfigs[currentSite].rates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
+      siteConfigs[currentSite].rates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
+      siteConfigs[currentSite].rates.overheadHr = parseFloat(document.getElementById("master-fleet-overhead").value) || 0;
+
+      siteConfigs[currentSite].pit.dist = parseFloat(document.getElementById("param-dist").value) || 0.1;
+      siteConfigs[currentSite].pit.speedL = parseFloat(document.getElementById("param-speed-l").value) || 20;
+      siteConfigs[currentSite].pit.speedE = parseFloat(document.getElementById("param-speed-e").value) || 26;
+      siteConfigs[currentSite].pit.hours = parseFloat(document.getElementById("param-hours").value) || 10;
+      siteConfigs[currentSite].pit.density = parseFloat(document.getElementById("param-density").value) || 2.1;
+      siteConfigs[currentSite].pit.sf = parseFloat(document.getElementById("param-sf").value) || 0.8;
+      siteConfigs[currentSite].pit.eff = parseFloat(document.getElementById("param-eff").value) || 83;
+
+      localStorage.setItem("fleet_site_configs", JSON.stringify(siteConfigs));
+      runSimulation();
+    }
+
+    function openForgotPinModal() {
+      document.getElementById("reset-nik").value = "";
+      document.getElementById("reset-emergency-pass").value = "";
+      document.getElementById("modal-forgot-pin").classList.remove("hidden");
+    }
+
+    function closeForgotPinModal() {
+      document.getElementById("modal-forgot-pin").classList.add("hidden");
+    }
+
+    function submitEmergencyReset() {
+      const inputNik = document.getElementById("reset-nik").value.trim();
+      const emergencyPass = document.getElementById("reset-emergency-pass").value.trim();
+
+      if (!inputNik) { alert("Harap masukkan NIK Anda!"); return; }
+      const nikNum = parseInt(inputNik, 10);
+      if (isNaN(nikNum) || nikNum < 1000000 || nikNum > 1999999) {
+        alert("NIK harus 7 digit antara 1000000 s/d 1999999!");
+        return;
+      }
+
+      if (emergencyPass === "0000@@") {
+        customUserAccounts[inputNik] = { pin: "0000", role: "operational", name: `Dispatcher / GL (${inputNik})` };
+        localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+        alert(`BERHASIL! NIK ${inputNik} di-reset ke OPERASIONAL (PIN: 0000). Silakan masuk.`);
+        closeForgotPinModal();
+        document.getElementById("login-nik").value = inputNik;
+        document.getElementById("login-password").value = "0000";
+      } else if (emergencyPass === "1234@@") {
+        customUserAccounts[inputNik] = { pin: "1234", role: "management", name: `Management (${inputNik})` };
+        localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+        alert(`BERHASIL! NIK ${inputNik} di-reset ke MANAJEMEN (PIN: 1234). Silakan masuk.`);
+        closeForgotPinModal();
+        document.getElementById("login-nik").value = inputNik;
+        document.getElementById("login-password").value = "1234";
+      } else {
+        alert("Master Pass Pemulihan Salah! Hubungi Super Admin.");
+      }
+    }
+
+    function openChangePinModal() {
+      document.getElementById("pin-old").value = "";
+      document.getElementById("pin-new").value = "";
+      document.getElementById("pin-confirm").value = "";
+      document.getElementById("modal-change-pin").classList.remove("hidden");
+    }
+
+    function closeChangePinModal() {
+      document.getElementById("modal-change-pin").classList.add("hidden");
+    }
+
+    function submitChangePin() {
+      const oldPin = document.getElementById("pin-old").value.trim();
+      const newPin = document.getElementById("pin-new").value.trim();
+      const confPin = document.getElementById("pin-confirm").value.trim();
+
+      if (!currentUser) return;
+      const userRecord = customUserAccounts[currentUser.nik] || { pin: currentUser.pin, role: currentUser.role, name: currentUser.name };
+
+      if (oldPin !== userRecord.pin) { alert("PIN lama salah!"); return; }
+      if (newPin.length < 4) { alert("PIN baru minimal 4 digit!"); return; }
+      if (newPin !== confPin) { alert("Konfirmasi PIN baru tidak cocok!"); return; }
+
+      userRecord.pin = newPin;
+      customUserAccounts[currentUser.nik] = userRecord;
+      localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+
+      currentUser.pin = newPin;
+      sessionStorage.setItem("fleet_auth_user", JSON.stringify(currentUser));
+
+      alert("PIN berhasil diubah!");
+      closeChangePinModal();
+    }
+
+    function adminResetUserPin() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const targetNik = prompt("Masukkan 7 digit NIK user:");
+      if (!targetNik) return;
+
+      const trimmedNik = targetNik.trim();
+      const nikNum = parseInt(trimmedNik, 10);
+      if (isNaN(nikNum) || nikNum < 1000000 || nikNum > 1999999) {
+        alert("NIK harus 7 digit antara 1000000 s/d 1999999!");
+        return;
+      }
+
+      const roleChoice = prompt("Reset ke: Ketik 1 untuk Manajemen (PIN: 1234), Ketik 2 untuk Operasional (PIN: 0000):", "2");
+      if (roleChoice === "1") {
+        customUserAccounts[trimmedNik] = { pin: "1234", role: "management", name: `Management (${trimmedNik})` };
+        localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+        alert(`NIK ${trimmedNik} di-reset ke Manajemen (PIN: 1234).`);
+      } else if (roleChoice === "2") {
+        customUserAccounts[trimmedNik] = { pin: "0000", role: "operational", name: `Staff Lapangan (${trimmedNik})` };
+        localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+        alert(`NIK ${trimmedNik} di-reset ke Operasional (PIN: 0000).`);
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const selectedSite = document.getElementById("login-site").value;
+      const inputNik = document.getElementById("login-nik").value.trim();
+      const inputPass = document.getElementById("login-password").value.trim();
+      const errEl = document.getElementById("login-error");
+      const errText = document.getElementById("login-error-text");
+
+      let user = null;
+
+      if (inputNik === "9999") {
+        const savedAdmin = customUserAccounts["9999"] || { pin: "2000", role: "admin", name: "Super Admin" };
+        if (inputPass === savedAdmin.pin) {
+          user = { nik: "9999", name: savedAdmin.name, role: "admin", pin: savedAdmin.pin };
+        } else {
+          errText.innerText = "PIN Admin salah!";
+          errEl.classList.remove("hidden");
+          return;
+        }
+      } else {
+        const nikNum = parseInt(inputNik, 10);
+        if (!isNaN(nikNum) && nikNum >= 1000000 && nikNum <= 1999999) {
+          if (customUserAccounts[inputNik]) {
+            const acc = customUserAccounts[inputNik];
+            if (inputPass === acc.pin) {
+              user = { nik: inputNik, name: acc.name, role: acc.role, pin: acc.pin };
+            } else {
+              errText.innerText = "PIN salah untuk NIK ini!";
+              errEl.classList.remove("hidden");
+              return;
+            }
+          } else {
+            if (inputPass === "1234") {
+              user = { nik: inputNik, name: `Management (${inputNik})`, role: "management", pin: "1234" };
+              customUserAccounts[inputNik] = user;
+              localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+            } else if (inputPass === "0000") {
+              user = { nik: inputNik, name: `Dispatcher / GL (${inputNik})`, role: "operational", pin: "0000" };
+              customUserAccounts[inputNik] = user;
+              localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
+            } else {
+              errText.innerText = "Gunakan PIN default 1234 (Manajemen) atau 0000 (Operasional) untuk aktivasi pertama.";
+              errEl.classList.remove("hidden");
+              return;
+            }
+          }
+        } else {
+          errText.innerText = "NIK harus 7 digit (1000000 s/d 1999999) atau 9999 untuk Admin.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+      }
+
+      errEl.classList.add("hidden");
+      currentUser = user;
+      currentSite = selectedSite;
+      localStorage.setItem("fleet_active_site", selectedSite);
+      sessionStorage.setItem("fleet_auth_user", JSON.stringify(user));
+      unlockApp(user);
+    }
+
+    function unlockApp(user) {
+      currentUser = user;
+      sendAccessLog(user);
+
+      document.getElementById("login-overlay").classList.add("hidden");
+      document.getElementById("app-dashboard").classList.remove("hidden");
+
+      const userBadge = document.getElementById("user-badge");
+      const navDb = document.getElementById("nav-db");
+      const confidentialRateSection = document.getElementById("section-confidential-rates");
+
+      if (user.role === 'admin') {
+        userBadge.innerHTML = `<span class="text-amber font-bold">${user.name} (Admin)</span>`;
+        navDb.classList.remove("hidden");
+        confidentialRateSection.classList.remove("hidden");
+      } else if (user.role === 'management') {
+        userBadge.innerHTML = `<span class="text-blue font-bold">${user.name} (Management)</span>`;
+        navDb.classList.remove("hidden");
+        confidentialRateSection.classList.add("hidden");
+      } else {
+        userBadge.innerHTML = `<span style="color: #94a3b8;">${user.name} (Operasional)</span>`;
+        navDb.classList.add("hidden");
+      }
+
+      initApp();
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem("fleet_auth_user");
+      currentUser = null;
+      document.getElementById("app-dashboard").classList.add("hidden");
+      document.getElementById("login-overlay").classList.remove("hidden");
+      document.getElementById("login-nik").value = "";
+      document.getElementById("login-password").value = "";
+      document.getElementById("login-error").classList.add("hidden");
+    }
+
+    function initApp() {
       rebuildDropdowns();
 
       const supportContainer = document.getElementById("support-container");
@@ -39,3 +1052,809 @@ function initApp() {
       updateMaterialButtonLabels();
       changeActiveSite(currentSite);
     }
+
+    function rebuildDropdowns() {
+      const loaderEl = document.getElementById("sim-loader");
+      const haulerEl = document.getElementById("sim-hauler");
+      const currentLoader = loaderEl ? loaderEl.value : "";
+      const currentHauler = haulerEl ? haulerEl.value : "";
+
+      const sortedLoaders = [...db.loaders].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      if (loaderEl) {
+        loaderEl.innerHTML = sortedLoaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
+      }
+
+      const sortedHaulers = [...db.haulers].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      if (haulerEl) {
+        haulerEl.innerHTML = sortedHaulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
+      }
+    }
+
+    function downloadLoaderCsvTemplate() {
+      const headers = "Model Unit,Bucket,CT,Cost\n";
+      const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
+      const sampleRows = sortedLoaders.map(l => `"${l.name}",${l.bucket},${l.ctSec},${l.cost}`).join("\n");
+      const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
+      const dl = document.createElement("a");
+      dl.setAttribute("href", csvContent);
+      dl.setAttribute("download", "master_loading_units_template.csv");
+      document.body.appendChild(dl);
+      dl.click();
+      dl.remove();
+    }
+
+    function handleLoaderCsvUpload(event) {
+      if (currentUser && currentUser.role === 'operational') return;
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split(/\r\n|\n/).filter(line => line.trim() !== "");
+        if (lines.length <= 1) { alert("File CSV kosong!"); return; }
+
+        const newLoaders = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 4) {
+            const name = cols[0];
+            const bucket = parseFloat(cols[1]) || 0;
+            const ctSec = parseFloat(cols[2]) || 25.0;
+            const cost = parseFloat(cols[3]) || 0;
+            if (name) newLoaders.push({ name, bucket, ctSec, cost });
+          }
+        }
+
+        if (newLoaders.length > 0) {
+          if (!newLoaders.some(l => l.name.includes("None"))) {
+            newLoaders.unshift({ name: ".None (Tidak Pakai)", bucket: 0.0, ctSec: 0.0, cost: 0.0 });
+          }
+          db.loaders = newLoaders;
+          saveCustomDb();
+          renderDatabaseTables();
+          rebuildDropdowns();
+          runSimulation();
+          alert(`Berhasil impor ${newLoaders.length} Excavator!`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadHaulerCsvTemplate() {
+      const headers = "Model Unit,Vessel,Dump,Cost\n";
+      const sortedHaulers = [...db.haulers].sort((a, b) => a.name.localeCompare(b.name));
+      const sampleRows = sortedHaulers.map(h => `"${h.name}",${h.vessel},${h.dumpMin},${h.cost}`).join("\n");
+      const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
+      const dl = document.createElement("a");
+      dl.setAttribute("href", csvContent);
+      dl.setAttribute("download", "master_hauling_units_template.csv");
+      document.body.appendChild(dl);
+      dl.click();
+      dl.remove();
+    }
+
+    function handleHaulerCsvUpload(event) {
+      if (currentUser && currentUser.role === 'operational') return;
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split(/\r\n|\n/).filter(line => line.trim() !== "");
+        if (lines.length <= 1) { alert("File CSV kosong!"); return; }
+
+        const newHaulers = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 4) {
+            const name = cols[0];
+            const vessel = parseFloat(cols[1]) || 0;
+            const dumpMin = parseFloat(cols[2]) || 1.2;
+            const cost = parseFloat(cols[3]) || 0;
+            if (name) newHaulers.push({ name, vessel, dumpMin, cost });
+          }
+        }
+
+        if (newHaulers.length > 0) {
+          if (!newHaulers.some(h => h.name.includes("None"))) {
+            newHaulers.unshift({ name: ".None (Tidak Pakai)", vessel: 0.0, dumpMin: 0.0, cost: 0.0 });
+          }
+          db.haulers = newHaulers;
+          saveCustomDb();
+          renderDatabaseTables();
+          rebuildDropdowns();
+          runSimulation();
+          alert(`Berhasil impor ${newHaulers.length} Dump Truck!`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadSupportCsvTemplate() {
+      const headers = "Model Unit,Fungsi Lapangan,Cost\n";
+      const sortedSupports = [...db.supports].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      const sampleRows = sortedSupports.map(s => `"${s.name}","${s.role}",${s.cost}`).join("\n");
+      const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(headers + sampleRows);
+      const dl = document.createElement("a");
+      dl.setAttribute("href", csvContent);
+      dl.setAttribute("download", "master_support_units_template.csv");
+      document.body.appendChild(dl);
+      dl.click();
+      dl.remove();
+    }
+
+    function handleSupportCsvUpload(event) {
+      if (currentUser && currentUser.role === 'operational') return;
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.split(/\r\n|\n/).filter(line => line.trim() !== "");
+        if (lines.length <= 1) { alert("File CSV kosong!"); return; }
+
+        const newSupports = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 3) {
+            const name = cols[0];
+            const role = cols[1] || "-";
+            const cost = parseFloat(cols[2]) || 0;
+            if (name) newSupports.push({ name, role, cost });
+          }
+        }
+
+        if (newSupports.length > 0) {
+          if (!newSupports.some(s => s.name.includes("None"))) {
+            newSupports.unshift({ name: "None (Tidak Pakai)", role: "-", cost: 0.0 });
+          }
+          db.supports = newSupports;
+          saveCustomDb();
+          renderDatabaseTables();
+          initApp();
+          alert(`Berhasil impor ${newSupports.length} Unit Support!`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function addNewLoaderRow() {
+      if (currentUser && currentUser.role === 'operational') return;
+      const name = prompt("Nama / Model Excavator Baru:", "CAT 390D");
+      if (!name || !name.trim()) return;
+      const bucket = parseFloat(prompt("Kapasitas Bucket (m³):", "5.5")) || 5.0;
+      const ctSec = parseFloat(prompt("CT Standar (detik):", "25.0")) || 25.0;
+      const cost = parseFloat(prompt("Biaya Base ($/h):", "180.00")) || 150.0;
+
+      db.loaders.push({ name: name.trim(), bucket, ctSec, cost });
+      saveCustomDb();
+      renderDatabaseTables();
+      rebuildDropdowns();
+      runSimulation();
+    }
+
+    function deleteLoaderRow(idx) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (confirm(`Hapus excavator "${db.loaders[idx].name}"?`)) {
+        db.loaders.splice(idx, 1);
+        saveCustomDb();
+        renderDatabaseTables();
+        rebuildDropdowns();
+        runSimulation();
+      }
+    }
+
+    function addNewHaulerRow() {
+      if (currentUser && currentUser.role === 'operational') return;
+      const name = prompt("Nama / Model Dump Truck Baru:", "SCANIA P460");
+      if (!name || !name.trim()) return;
+      const vessel = parseFloat(prompt("Kapasitas Bak (m³):", "30.0")) || 30.0;
+      const dumpMin = parseFloat(prompt("Dumping / Spot (menit):", "1.2")) || 1.2;
+      const cost = parseFloat(prompt("Biaya Base ($/h):", "55.00")) || 50.0;
+
+      db.haulers.push({ name: name.trim(), vessel, dumpMin, cost });
+      saveCustomDb();
+      renderDatabaseTables();
+      rebuildDropdowns();
+      runSimulation();
+    }
+
+    function deleteHaulerRow(idx) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (confirm(`Hapus hauler "${db.haulers[idx].name}"?`)) {
+        db.haulers.splice(idx, 1);
+        saveCustomDb();
+        renderDatabaseTables();
+        rebuildDropdowns();
+        runSimulation();
+      }
+    }
+
+    function addNewSupportRow() {
+      if (currentUser && currentUser.role === 'operational') return;
+      const name = prompt("Nama / Model Support Baru:", "CAT 16M");
+      if (!name || !name.trim()) return;
+      const role = prompt("Fungsi Lapangan:", "Road Maintenance");
+      const cost = parseFloat(prompt("Biaya Base ($/h):", "85.00")) || 80.0;
+
+      db.supports.push({ name: name.trim(), role: role || "-", cost });
+      saveCustomDb();
+      renderDatabaseTables();
+      initApp();
+    }
+
+    function deleteSupportRow(idx) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (confirm(`Hapus unit support "${db.supports[idx].name}"?`)) {
+        db.supports.splice(idx, 1);
+        saveCustomDb();
+        renderDatabaseTables();
+        initApp();
+      }
+    }
+
+    function updateLoaderParam(idx, field, value) {
+      if (currentUser && currentUser.role === 'operational') return;
+      db.loaders[idx][field] = field === 'name' ? value.trim() : (parseFloat(value) || 0);
+      saveCustomDb();
+      rebuildDropdowns();
+    }
+
+    function updateHaulerParam(idx, field, value) {
+      if (currentUser && currentUser.role === 'operational') return;
+      db.haulers[idx][field] = field === 'name' ? value.trim() : (parseFloat(value) || 0);
+      saveCustomDb();
+      rebuildDropdowns();
+    }
+
+    function updateSupportParam(idx, field, value) {
+      if (currentUser && currentUser.role === 'operational') return;
+      db.supports[idx][field] = (field === 'name' || field === 'role') ? value.trim() : (parseFloat(value) || 0);
+      saveCustomDb();
+      initApp();
+    }
+
+    function updateMaterialParam(matKey, field, value) {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (field === 'name') {
+        obMaterialSpecs[matKey][field] = value.trim();
+      } else if (field === 'blastingCostBcm') {
+        obMaterialSpecs[matKey][field] = value === "" ? 0.0 : (parseFloat(value) || 0.0);
+      } else {
+        obMaterialSpecs[matKey][field] = value === "" ? 1.00 : (parseFloat(value) || 1.00);
+      }
+      localStorage.setItem("fleet_custom_mat_ob", JSON.stringify(obMaterialSpecs));
+      updateMaterialButtonLabels();
+      runSimulation();
+    }
+
+    function updateMaterialButtonLabels() {
+      for (const [k, spec] of Object.entries(obMaterialSpecs)) {
+        const nameEl = document.getElementById(`label-mat-name-${k}`);
+        const subEl = document.getElementById(`label-mat-sub-${k}`);
+        if (nameEl) nameEl.innerText = spec.name;
+        if (subEl) {
+          if (k === 'blasting') {
+            subEl.innerText = `BFF ${spec.bff.toFixed(2)} | +$${spec.blastingCostBcm.toFixed(2)}/BCM`;
+          } else {
+            const costPct = spec.loaderCostFactor === 1.0 ? "Standar" : spec.loaderCostFactor < 1.0 ? `-${((1.0 - spec.loaderCostFactor) * 100).toFixed(0)}%` : `+${((spec.loaderCostFactor - 1.0) * 100).toFixed(0)}%`;
+            subEl.innerText = `BFF ${spec.bff.toFixed(2)} | ${costPct}`;
+          }
+        }
+      }
+    }
+
+    function saveCustomDb() {
+      localStorage.setItem("fleet_custom_db", JSON.stringify(db));
+      runSimulation();
+    }
+
+    function resetDbToDefault() {
+      if (currentUser && currentUser.role === 'operational') return;
+      if (confirm("Reset seluruh data armada & material ke standar?")) {
+        db = JSON.parse(JSON.stringify(defaultDb));
+        obMaterialSpecs = JSON.parse(JSON.stringify(defaultObMaterialSpecs));
+        siteConfigs = JSON.parse(JSON.stringify(defaultSiteConfigs));
+        localStorage.removeItem("fleet_custom_mat_ob");
+        localStorage.removeItem("fleet_site_configs");
+        saveCustomDb();
+        renderDatabaseTables();
+        updateMaterialButtonLabels();
+        rebuildDropdowns();
+        initApp();
+      }
+    }
+
+    function renderDatabaseTables() {
+      document.getElementById("table-materials-ob").innerHTML = Object.entries(obMaterialSpecs).map(([key, m]) => `
+        <tr>
+          <td><input type="text" value="${m.name}" onchange="updateMaterialParam('${key}', 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.bff}" onchange="updateMaterialParam('${key}', 'bff', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="form-control font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.05" value="${m.blastingCostBcm || 0}" onchange="updateMaterialParam('${key}', 'blastingCostBcm', this.value)" class="form-control text-rose font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.loaderCostFactor}" onchange="updateMaterialParam('${key}', 'loaderCostFactor', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.haulerCostFactor}" onchange="updateMaterialParam('${key}', 'haulerCostFactor', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${m.supportCostFactor}" onchange="updateMaterialParam('${key}', 'supportCostFactor', this.value)" class="form-control text-amber font-mono" style="width: 4rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+        </tr>
+      `).join("");
+
+      db.loaders.sort((a, b) => a.name.localeCompare(b.name));
+      db.haulers.sort((a, b) => a.name.localeCompare(b.name));
+      db.supports.sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
+        <tr>
+          <td><input type="text" value="${l.name}" onchange="updateLoaderParam(${idx}, 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${l.bucket}" onchange="updateLoaderParam(${idx}, 'bucket', this.value)" class="form-control text-amber font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.5" value="${l.ctSec}" onchange="updateLoaderParam(${idx}, 'ctSec', this.value)" class="form-control font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${l.cost}" onchange="updateLoaderParam(${idx}, 'cost', this.value)" class="form-control text-amber font-mono" style="width: 5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><button onclick="deleteLoaderRow(${idx})" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Hapus</button></td>
+        </tr>
+      `).join("");
+
+      document.getElementById("table-haulers").innerHTML = db.haulers.map((h, idx) => `
+        <tr>
+          <td><input type="text" value="${h.name}" onchange="updateHaulerParam(${idx}, 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="form-control text-amber font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.1" value="${h.dumpMin}" onchange="updateHaulerParam(${idx}, 'dumpMin', this.value)" class="form-control font-mono" style="width: 4.5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${h.cost}" onchange="updateHaulerParam(${idx}, 'cost', this.value)" class="form-control text-amber font-mono" style="width: 5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><button onclick="deleteHaulerRow(${idx})" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Hapus</button></td>
+        </tr>
+      `).join("");
+
+      document.getElementById("table-supports").innerHTML = db.supports.map((s, idx) => `
+        <tr>
+          <td><input type="text" value="${s.name}" onchange="updateSupportParam(${idx}, 'name', this.value)" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td><input type="text" value="${s.role}" onchange="updateSupportParam(${idx}, 'role', this.value)" class="form-control text-muted" style="font-size: 0.75rem; padding: 0.25rem 0.4rem;"></td>
+          <td style="text-align: center;"><input type="number" step="0.01" value="${s.cost}" onchange="updateSupportParam(${idx}, 'cost', this.value)" class="form-control text-amber font-mono" style="width: 5rem; text-align: center; font-size: 0.75rem; padding: 0.25rem;"></td>
+          <td style="text-align: center;"><button onclick="deleteSupportRow(${idx})" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">Hapus</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function setObMaterial(matType) {
+      currentObMaterial = matType;
+      const buttons = {
+        softsoil: document.getElementById("btn-mat-softsoil"),
+        hardsoil: document.getElementById("btn-mat-hardsoil"),
+        blasting: document.getElementById("btn-mat-blasting"),
+        mud:      document.getElementById("btn-mat-mud")
+      };
+
+      for (const [k, btn] of Object.entries(buttons)) {
+        if (btn) btn.className = (k === matType) ? "btn btn-primary" : "btn btn-dark";
+      }
+
+      const spec = obMaterialSpecs[matType];
+      const blastLabel = (matType === 'blasting' && spec.blastingCostBcm > 0) ? ` | Blast: $${spec.blastingCostBcm.toFixed(2)}` : "";
+      const effectBadge = document.getElementById("badge-material-effect");
+      if (effectBadge) effectBadge.innerText = `BFF: ${spec.bff.toFixed(2)} | CT: ${(spec.ctFactor * 100).toFixed(0)}%${blastLabel}`;
+
+      runSimulation();
+    }
+
+    function switchTab(tab) {
+      if (tab === 'sim') {
+        document.getElementById('tab-simulation').classList.remove('hidden');
+        document.getElementById('tab-database').classList.add('hidden');
+        document.getElementById('nav-sim').className = "btn btn-primary";
+        document.getElementById('nav-db').className = "btn";
+        document.getElementById('nav-db').style.color = "#94a3b8";
+      } else {
+        if (currentUser && currentUser.role === 'operational') {
+          alert("Tab Master Data hanya untuk Manajemen dan Admin.");
+          return;
+        }
+        document.getElementById('tab-simulation').classList.add('hidden');
+        document.getElementById('tab-database').classList.remove('hidden');
+        document.getElementById('nav-db').className = "btn btn-primary";
+        document.getElementById('nav-sim').className = "btn";
+        document.getElementById('nav-sim').style.color = "#94a3b8";
+      }
+    }
+
+    function setJobType(type) {
+      currentJobType = type;
+      const buttons = {
+        'OB': document.getElementById("btn-job-ob"),
+        'CO': document.getElementById("btn-job-co"),
+        'CoHauling': document.getElementById("btn-job-cohauling")
+      };
+
+      for (const [k, btn] of Object.entries(buttons)) {
+        if (btn) btn.className = (k === type) ? "btn btn-primary" : "btn btn-dark";
+      }
+
+      const obMatContainer = document.getElementById("container-ob-material");
+
+      if (type === "OB") {
+        if (obMatContainer) obMatContainer.classList.remove("hidden");
+        setObMaterial("hardsoil");
+        const loaderOwnerEl = document.getElementById("sim-loader-owner");
+        if (loaderOwnerEl) loaderOwnerEl.value = "contractor";
+        
+        const loaderQtyEl = document.getElementById("sim-loader-qty");
+        if (loaderQtyEl) {
+          loaderQtyEl.value = "1";
+          loaderQtyEl.disabled = false;
+          loaderQtyEl.style.opacity = "1";
+        }
+        
+        const haulerQtyEl = document.getElementById("sim-hauler-qty");
+        if (haulerQtyEl) {
+          haulerQtyEl.value = "9";
+          haulerQtyEl.disabled = false;
+          haulerQtyEl.style.opacity = "1";
+        }
+        
+        const loaderEl = document.getElementById("sim-loader");
+        if (loaderEl) loaderEl.value = "KOMATSU PC2000-8 (12.0m³)";
+        
+        const haulerEl = document.getElementById("sim-hauler");
+        if (haulerEl) haulerEl.value = "CMT106 (Wide Body) (40m³)";
+      } else if (type === "CO") {
+        if (obMatContainer) obMatContainer.classList.add("hidden");
+        const loaderOwnerEl = document.getElementById("sim-loader-owner");
+        if (loaderOwnerEl) loaderOwnerEl.value = "contractor";
+        
+        const loaderQtyEl = document.getElementById("sim-loader-qty");
+        if (loaderQtyEl) {
+          loaderQtyEl.value = "1";
+          loaderQtyEl.disabled = false;
+          loaderQtyEl.style.opacity = "1";
+        }
+        
+        const haulerQtyEl = document.getElementById("sim-hauler-qty");
+        if (haulerQtyEl) {
+          haulerQtyEl.value = "5";
+          haulerQtyEl.disabled = false;
+          haulerQtyEl.style.opacity = "1";
+        }
+        
+        const loaderEl = document.getElementById("sim-loader");
+        if (loaderEl) loaderEl.value = "KOMATSU PC400LC-7 (2.2m³)";
+        
+        const haulerEl = document.getElementById("sim-hauler");
+        if (haulerEl) haulerEl.value = "CMT96 (Wide Body) (35m³)";
+      } else if (type === "CoHauling") {
+        if (obMatContainer) obMatContainer.classList.add("hidden");
+        const loaderOwnerEl = document.getElementById("sim-loader-owner");
+        if (loaderOwnerEl) loaderOwnerEl.value = "owner";
+        
+        const loaderQtyEl = document.getElementById("sim-loader-qty");
+        if (loaderQtyEl) {
+          loaderQtyEl.value = "1";
+          loaderQtyEl.disabled = false;
+          loaderQtyEl.style.opacity = "1";
+        }
+        
+        const haulerQtyEl = document.getElementById("sim-hauler-qty");
+        if (haulerQtyEl) {
+          haulerQtyEl.value = "20";
+          haulerQtyEl.disabled = false;
+          haulerQtyEl.style.opacity = "1";
+        }
+        
+        const loaderEl = document.getElementById("sim-loader");
+        if (loaderEl) loaderEl.value = "KOMATSU PC400LC-7 (2.2m³)";
+        
+        const haulerEl = document.getElementById("sim-hauler");
+        if (haulerEl) haulerEl.value = "HINO ZY1E/700 (20m³)";
+      }
+
+      runSimulation();
+    }
+
+    function runSimulation() {
+      const loaderEl = document.getElementById("sim-loader");
+      const haulerEl = document.getElementById("sim-hauler");
+      const loaderOwnerEl = document.getElementById("sim-loader-owner");
+      const loaderQtyEl = document.getElementById("sim-loader-qty");
+      const haulerQtyEl = document.getElementById("sim-hauler-qty");
+
+      if (!loaderEl || !haulerEl || !loaderOwnerEl || !loaderQtyEl || !haulerQtyEl) return;
+
+      const loaderName = loaderEl.value;
+      const haulerName = haulerEl.value;
+      const loaderOwner = loaderOwnerEl.value;
+      const loaderQty = parseFloat(loaderQtyEl.value) || 0;
+      const haulerQty = parseFloat(haulerQtyEl.value) || 0;
+
+      const loader = db.loaders.find(u => u.name === loaderName) || db.loaders[0];
+      const hauler = db.haulers.find(u => u.name === haulerName) || db.haulers[0];
+
+      const dist = parseFloat(document.getElementById("param-dist").value) || 0.1;
+      const speedL = parseFloat(document.getElementById("param-speed-l").value) || 20.0;
+      const speedE = parseFloat(document.getElementById("param-speed-e").value) || 26.0;
+      const density = parseFloat(document.getElementById("param-density").value) || 1.3;
+      const sf = parseFloat(document.getElementById("param-sf").value) || 0.85;
+      const eff = (parseFloat(document.getElementById("param-eff").value) || 83) / 100.0;
+
+      let bff = 1.0;
+      let ctMultiplier = 1.0;
+      let blastingCostPerBcm = 0.0;
+      let loaderCostMultiplier = 1.0;
+      let haulerCostMultiplier = 1.0;
+      let supportCostMultiplier = 1.0;
+
+      if (currentJobType === "OB") {
+        const matSpec = obMaterialSpecs[currentObMaterial];
+        if (matSpec) {
+          bff = matSpec.bff;
+          ctMultiplier = matSpec.ctFactor;
+          blastingCostPerBcm = matSpec.blastingCostBcm || 0.0;
+          loaderCostMultiplier = matSpec.loaderCostFactor;
+          haulerCostMultiplier = matSpec.haulerCostFactor;
+          supportCostMultiplier = matSpec.supportCostFactor;
+        }
+      }
+
+      const effectiveLoaderCost = loader.cost * loaderCostMultiplier;
+      const effectiveHaulerCost = hauler.cost * haulerCostMultiplier;
+      const isFinancialAuthorized = currentUser && (currentUser.role === 'admin' || currentUser.role === 'management');
+
+      if (isFinancialAuthorized) {
+        document.getElementById("sim-loader-rate").innerText = loaderName.includes("None") ? "$0.00/h" : (loaderOwner === "owner" ? "$0.00/h (Owner)" : `$${effectiveLoaderCost.toFixed(2)}/h`);
+        document.getElementById("sim-hauler-rate").innerText = haulerName.includes("None") ? "$0.00/h" : `$${effectiveHaulerCost.toFixed(2)}/h`;
+      } else {
+        document.getElementById("sim-loader-rate").innerText = `Rate: 🔒`;
+        document.getElementById("sim-hauler-rate").innerText = `Rate: 🔒`;
+      }
+
+      let contractRate = 0;
+      let unitLabel = "BCM";
+      const currentRates = siteConfigs[currentSite]?.rates || defaultSiteConfigs["BSS-SITE MSJ"].rates;
+
+      if (currentJobType === "OB") {
+        unitLabel = "BCM";
+        contractRate = currentRates.ob;
+        document.getElementById("label-prod-primary").innerText = "Produksi (BCM/Jam)";
+        document.getElementById("label-bep-prod").innerText = "BEP Prod (BCM/Jam)";
+      } else if (currentJobType === "CO") {
+        unitLabel = "Ton";
+        contractRate = currentRates.co;
+        document.getElementById("label-prod-primary").innerText = "Produksi (Ton/Jam)";
+        document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton/Jam)";
+      } else if (currentJobType === "CoHauling") {
+        unitLabel = "Ton.Km";
+        contractRate = currentRates.cohauling;
+        document.getElementById("label-prod-primary").innerText = "Produksi (Ton.Km/Jam)";
+        document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
+      }
+
+      const effectiveBucketM3 = (loader.bucket || 0) * bff;
+      const effectiveLoaderCtSec = (loader.ctSec || 25.0) * ctMultiplier;
+
+      const passes = effectiveBucketM3 > 0 ? ((hauler.vessel || 0) / effectiveBucketM3) : 0;
+      const calculatedLoadTimeMin = passes * (effectiveLoaderCtSec / 60.0);
+      const travelLoadedMin = (dist / speedL) * 60.0;
+      const travelEmptyMin = (dist / speedE) * 60.0;
+      const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE));
+      const dumpSpotMin = hauler.dumpMin || 0;
+
+      const looseM3PerTrip = hauler.vessel || 0;
+      const bcmPerTrip = looseM3PerTrip * sf;
+      const tonPerTrip = bcmPerTrip * density;
+
+      let mf = 0;
+      let prodBcmHr = 0;
+      let prodTonHr = 0;
+      let prodTonKmHr = 0;
+      let displayCT = 0;
+      let effectiveLoadTime = calculatedLoadTimeMin;
+      let isLoaderBottleneck = false;
+      let loaderMaxCapacityTonHr = 0;
+
+      const activeLoaderQtyForProd = loaderQty > 0 ? loaderQty : 1;
+      const isNoneUnit = loaderName.includes("None") || loaderQty === 0 || haulerName.includes("None") || haulerQty === 0;
+
+      if (!isNoneUnit) {
+        if (currentJobType === "CoHauling" && haulerQty > 0) {
+          effectiveLoadTime = calculatedLoadTimeMin;
+          displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
+
+          const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
+          const rawHaulerTonHr = tripsPerHour * tonPerTrip;
+
+          loaderMaxCapacityTonHr = (3600.0 / effectiveLoaderCtSec) * (effectiveBucketM3 * sf * density) * eff * activeLoaderQtyForProd;
+          prodTonHr = Math.min(rawHaulerTonHr, loaderMaxCapacityTonHr);
+          prodBcmHr = prodTonHr / density;
+          prodTonKmHr = prodTonHr * dist;
+
+          if (rawHaulerTonHr > loaderMaxCapacityTonHr) isLoaderBottleneck = true;
+          mf = (haulerQty * effectiveLoadTime) / (activeLoaderQtyForProd * displayCT);
+
+        } else if (loaderQty > 0 && haulerQty > 0) {
+          displayCT = calculatedLoadTimeMin + travelLoadedMin + dumpSpotMin + travelEmptyMin;
+          mf = (haulerQty * calculatedLoadTimeMin) / (loaderQty * displayCT);
+
+          const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
+          const rawProdBcmHr = tripsPerHour * bcmPerTrip;
+          const rawProdTonHr = tripsPerHour * tonPerTrip;
+
+          const loaderMaxTripsPerHour = (60.0 / calculatedLoadTimeMin) * eff * loaderQty;
+          const loaderMaxProdBcmHr = loaderMaxTripsPerHour * bcmPerTrip;
+          const loaderMaxProdTonHr = loaderMaxTripsPerHour * tonPerTrip;
+
+          prodBcmHr = Math.min(rawProdBcmHr, loaderMaxProdBcmHr);
+          prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
+          prodTonKmHr = prodTonHr * dist;
+
+          if (rawProdBcmHr > loaderMaxProdBcmHr) isLoaderBottleneck = true;
+        }
+      }
+
+      document.getElementById("ct-load").innerText = `${effectiveLoadTime.toFixed(2)} mnt`;
+      document.getElementById("ct-travel-l").innerText = `${travelLoadedMin.toFixed(2)} mnt`;
+      document.getElementById("ct-dump").innerText = `${dumpSpotMin.toFixed(2)} mnt`;
+      document.getElementById("ct-travel-e").innerText = `${travelEmptyMin.toFixed(2)} mnt`;
+      document.getElementById("ct-total").innerText = displayCT.toFixed(2);
+      
+      const ritasePerUnit = displayCT > 0 ? ((60.0 / displayCT) * eff) : 0;
+      document.getElementById("ct-ritase").innerText = ritasePerUnit.toFixed(2);
+
+      let supportCostHr = 0;
+      for (let i = 1; i <= supportSlotCount; i++) {
+        const supportEl = document.getElementById(`sim-support-${i}`);
+        const supportQtyEl = document.getElementById(`sim-support-qty-${i}`);
+        if (!supportEl || !supportQtyEl) continue;
+
+        const sName = supportEl.value;
+        const sQty = parseFloat(supportQtyEl.value) || 0;
+        const sObj = db.supports.find(s => s.name === sName);
+        if (sObj) {
+          supportCostHr += ((sObj.cost * supportCostMultiplier) * sQty);
+          const rateSlotEl = document.getElementById(`sim-support-rate-${i}`);
+          if (rateSlotEl) {
+            rateSlotEl.innerText = isFinancialAuthorized ? (sName.includes("None") ? "$0.00" : `$${(sObj.cost * supportCostMultiplier).toFixed(2)}/h`) : "🔒";
+          }
+        }
+      }
+
+      const chargedLoaderCost = (loaderOwner === "owner" || loaderName.includes("None")) ? 0.0 : (effectiveLoaderCost * loaderQty);
+      const chargedHaulerCost = haulerName.includes("None") ? 0.0 : (effectiveHaulerCost * haulerQty);
+      const equipmentCostHr = chargedLoaderCost + chargedHaulerCost;
+      const fleetOverheadHr = (!isNoneUnit) ? (currentRates.overheadHr || 50.00) : 0.0;
+      const totalBlastingCostHr = (currentJobType === "OB" && currentObMaterial === "blasting") ? (prodBcmHr * blastingCostPerBcm) : 0.0;
+      const totalFleetCostHr = equipmentCostHr + supportCostHr + fleetOverheadHr + totalBlastingCostHr;
+
+      let mainProdValue = 0;
+      let secondaryProdText = "";
+      if (currentJobType === "OB") {
+        mainProdValue = prodBcmHr;
+        secondaryProdText = `${prodTonHr.toFixed(1)} Ton/Jam`;
+      } else if (currentJobType === "CO") {
+        mainProdValue = prodTonHr;
+        secondaryProdText = `${prodBcmHr.toFixed(1)} BCM/Jam`;
+      } else if (currentJobType === "CoHauling") {
+        mainProdValue = prodTonKmHr;
+        secondaryProdText = `${prodTonHr.toFixed(1)} Ton/Jam | ${dist} km`;
+      }
+
+      const unitCost = mainProdValue > 0 ? (totalFleetCostHr / mainProdValue) : 0;
+      const grossRevenueHr = mainProdValue * contractRate;
+      const netProfitHr = grossRevenueHr - totalFleetCostHr;
+      const netProfitPerUnit = mainProdValue > 0 ? (netProfitHr / mainProdValue) : 0;
+
+      const bepProd = contractRate > 0 ? (totalFleetCostHr / contractRate) : 0;
+      let bepDistance = 0;
+
+      if (haulerQty > 0 && contractRate > 0 && totalFleetCostHr > 0 && currentJobType !== "CoHauling" && !isNoneUnit) {
+        let payload = (currentJobType === "OB") ? bcmPerTrip : tonPerTrip;
+        const maxCycleTimeAllowed = (60.0 * payload * eff * haulerQty * contractRate) / totalFleetCostHr;
+        const maxTravelTimeAllowed = maxCycleTimeAllowed - calculatedLoadTimeMin - hauler.dumpMin;
+        if (maxTravelTimeAllowed > 0 && travelFactor > 0) {
+          bepDistance = maxTravelTimeAllowed / travelFactor;
+        }
+      }
+
+      document.getElementById("res-mf").innerText = mf.toFixed(2);
+      const mfBadge = document.getElementById("res-mf-badge");
+      if (isNoneUnit) {
+        mfBadge.innerText = "No Operation";
+        mfBadge.style.color = "#94a3b8";
+      } else if (currentJobType === "CoHauling") {
+        if (isLoaderBottleneck) {
+          mfBadge.innerText = `Terkunci Max ROM (${loaderMaxCapacityTonHr.toFixed(0)} T/h)`;
+          mfBadge.style.color = "#f87171";
+        } else if (mf > 1.05) {
+          mfBadge.innerText = "Over-trucked (Truk Antri ROM)";
+          mfBadge.style.color = "#60a5fa";
+        } else {
+          mfBadge.innerText = "Optimal Match (Ideal)";
+          mfBadge.style.color = "#34d399";
+        }
+      } else if (loaderQty === 0 || haulerQty === 0) {
+        mfBadge.innerText = "No Operation";
+        mfBadge.style.color = "#94a3b8";
+      } else if (mf < 0.95) {
+        mfBadge.innerText = "Under-trucked (Loader Antri)";
+        mfBadge.style.color = "#fbbf24";
+      } else if (mf > 1.05) {
+        mfBadge.innerText = isLoaderBottleneck ? "Terkunci Max Loader" : "Over-trucked (Truk Antri)";
+        mfBadge.style.color = "#60a5fa";
+      } else {
+        mfBadge.innerText = "Optimal Match (Ideal)";
+        mfBadge.style.color = "#34d399";
+      }
+
+      document.getElementById("res-prod-primary").innerText = mainProdValue.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      document.getElementById("res-prod-secondary").innerText = secondaryProdText;
+
+      if (isFinancialAuthorized) {
+        document.getElementById("label-unit-cost").innerText = `Unit Cost ($/${unitLabel})`;
+        document.getElementById("res-unit-cost").innerText = `$${unitCost.toFixed(3)}`;
+        document.getElementById("res-unit-cost").className = "text-rose";
+        document.getElementById("res-total-cost").innerText = `$${totalFleetCostHr.toFixed(2)}/Jam Total`;
+
+        document.getElementById("label-profit-hr").innerText = `Net Profit ($/Jam)`;
+        const profitEl = document.getElementById("res-profit-hr");
+        profitEl.innerText = `$${netProfitHr.toFixed(2)}`;
+        profitEl.className = netProfitHr >= 0 ? "text-emerald" : "text-rose";
+        document.getElementById("res-profit-unit").innerText = `$${netProfitPerUnit.toFixed(3)}/${unitLabel} Margin`;
+        
+        document.getElementById("cost-breakdown-banner").classList.remove("hidden");
+        document.getElementById("cb-equipment").innerText = `$${equipmentCostHr.toFixed(2)}`;
+        document.getElementById("cb-support").innerText = `$${supportCostHr.toFixed(2)}`;
+        document.getElementById("cb-overhead").innerText = `$${fleetOverheadHr.toFixed(2)}`;
+        
+        const blastingWrapper = document.getElementById("cb-blasting-wrapper");
+        if (totalBlastingCostHr > 0) {
+          blastingWrapper.classList.remove("hidden");
+          document.getElementById("cb-blasting").innerText = `$${totalBlastingCostHr.toFixed(2)}`;
+        } else {
+          blastingWrapper.classList.add("hidden");
+        }
+        document.getElementById("cb-total-summary").innerText = `Total: $${totalFleetCostHr.toFixed(2)}/Jam`;
+      } else {
+        const pdtyPerTruck = haulerQty > 0 ? (mainProdValue / haulerQty) : 0;
+        const prodDeviation = mainProdValue - bepProd;
+
+        document.getElementById("label-unit-cost").innerText = `Pdty per Hauler (${unitLabel}/Jam)`;
+        document.getElementById("res-unit-cost").innerText = pdtyPerTruck.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        document.getElementById("res-unit-cost").className = "text-amber";
+        document.getElementById("res-total-cost").innerText = `${ritasePerUnit.toFixed(1)} Rit/Jam per Truk`;
+
+        document.getElementById("label-profit-hr").innerText = `Deviasi Prod (${unitLabel}/Jam)`;
+        const profitEl = document.getElementById("res-profit-hr");
+        const sign = prodDeviation >= 0 ? "+" : "";
+        profitEl.innerText = `${sign}${prodDeviation.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unitLabel}`;
+        profitEl.className = prodDeviation >= 0 ? "text-emerald" : "text-rose";
+        document.getElementById("res-profit-unit").innerText = `Target BEP: ${bepProd.toFixed(1)} ${unitLabel}/Jam`;
+
+        document.getElementById("cost-breakdown-banner").classList.add("hidden");
+      }
+
+      document.getElementById("res-bep-dist").innerText = bepDistance.toFixed(2);
+      document.getElementById("res-bep-prod").innerText = `${bepProd.toFixed(1)} ${unitLabel}`;
+    }
+
+    window.onload = function() {
+      const savedAuth = sessionStorage.getItem("fleet_auth_user");
+      if (savedAuth) {
+        try {
+          unlockApp(JSON.parse(savedAuth));
+        } catch (e) {
+          sessionStorage.removeItem("fleet_auth_user");
+        }
+      }
+    };
+  </script>
+</body>
+</html>
