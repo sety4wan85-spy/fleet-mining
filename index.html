@@ -237,12 +237,12 @@
             <span id="res-mf-badge" class="badge" style="background-color: #1e293b; color: #cbd5e1;">-</span>
           </div>
           <div class="card" style="margin-bottom: 0;">
-            <span id="label-prod-primary" class="label-title">Produksi (BCM/Jam)</span>
+            <span id="label-prod-primary" class="label-title">Produksi (Ton.Km/Jam)</span>
             <div id="res-prod-primary" class="text-amber" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">0.0</div>
             <span id="res-prod-secondary" class="text-muted">0.0 Ton/Jam</span>
           </div>
           <div class="card" style="margin-bottom: 0;">
-            <span id="label-unit-cost" class="label-title">Unit Cost ($/BCM)</span>
+            <span id="label-unit-cost" class="label-title">Unit Cost ($/Ton.Km)</span>
             <div id="res-unit-cost" class="text-rose" style="font-size: 1.25rem; font-weight: 700; margin: 0.25rem 0;">$0.000</div>
             <span id="res-total-cost" class="text-muted font-mono">$0.00/Jam Total</span>
           </div>
@@ -295,8 +295,8 @@
             <div style="font-size: 1.15rem; font-weight: 700; color: #fbbf24;"><span id="res-bep-dist">0.00</span> km <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">satu arah</span></div>
           </div>
           <div style="text-align: right;">
-            <span id="label-bep-prod" class="label-title">BEP Prod (BCM/Jam)</span>
-            <div id="res-bep-prod" style="font-weight: 700; font-size: 0.875rem;">0.0 BCM</div>
+            <span id="label-bep-prod" class="label-title">BEP Prod (Ton.Km/Jam)</span>
+            <div id="res-bep-prod" style="font-weight: 700; font-size: 0.875rem;">0.0 Ton.Km</div>
           </div>
         </div>
 
@@ -357,15 +357,15 @@
           <div class="grid-4">
             <div>
               <label class="label-title">Jarak Haul (km)</label>
-              <input type="number" step="0.1" id="param-dist" value="2.0" oninput="saveCurrentSiteSettings()" class="form-control">
+              <input type="number" step="0.1" id="param-dist" value="25.0" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Speed Loaded (km/h)</label>
-              <input type="number" id="param-speed-l" value="20" oninput="saveCurrentSiteSettings()" class="form-control">
+              <input type="number" id="param-speed-l" value="25" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Speed Empty (km/h)</label>
-              <input type="number" id="param-speed-e" value="26" oninput="saveCurrentSiteSettings()" class="form-control">
+              <input type="number" id="param-speed-e" value="35" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Jam/Shift (Jam)</label>
@@ -373,11 +373,11 @@
             </div>
             <div>
               <label class="label-title">Densitas (Ton/m³)</label>
-              <input type="number" step="0.05" id="param-density" value="2.10" oninput="saveCurrentSiteSettings()" class="form-control">
+              <input type="number" step="0.05" id="param-density" value="1.30" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div>
               <label class="label-title">Swell Factor (SF)</label>
-              <input type="number" step="0.05" id="param-sf" value="0.80" oninput="saveCurrentSiteSettings()" class="form-control">
+              <input type="number" step="0.05" id="param-sf" value="0.85" oninput="saveCurrentSiteSettings()" class="form-control">
             </div>
             <div style="grid-column: span 2;">
               <label class="label-title">Efisiensi Kerja (%)</label>
@@ -723,19 +723,20 @@
       var btnOb = document.getElementById("btn-job-ob");
       var btnCo = document.getElementById("btn-job-co");
       var selectorGrid = document.getElementById("job-type-selector-grid");
+      var obMatContainer = document.getElementById("container-ob-material");
 
       if (siteName === "BSS-SITE MSJ" || siteName === "BSS-SITE TDM") {
-        if (btnOb) btnOb.classList.add("hidden");
-        if (btnCo) btnCo.classList.add("hidden");
+        if (btnOb) btnOb.style.setProperty("display", "none", "important");
+        if (btnCo) btnCo.style.setProperty("display", "none", "important");
+        if (obMatContainer) obMatContainer.style.setProperty("display", "none", "important");
         if (selectorGrid) selectorGrid.style.gridTemplateColumns = "1fr";
         setJobType("CoHauling");
       } else {
-        if (btnOb) btnOb.classList.remove("hidden");
-        if (btnCo) btnCo.classList.remove("hidden");
+        if (btnOb) btnOb.style.removeProperty("display");
+        if (btnCo) btnCo.style.removeProperty("display");
+        if (obMatContainer) obMatContainer.style.removeProperty("display");
         if (selectorGrid) selectorGrid.style.gridTemplateColumns = "repeat(3, 1fr)";
-        if (currentJobType === "CoHauling" && siteName !== "BSS-SITE MSJ" && siteName !== "BSS-SITE TDM") {
-          setJobType("OB");
-        }
+        setJobType("OB");
       }
     }
 
@@ -1227,7 +1228,7 @@
       var ctSec = parseFloat(prompt("CT Standar (detik):", "25.0")) || 25.0;
       var cost = parseFloat(prompt("Biaya Base ($/h):", "180.00")) || 150.0;
 
-      db.loaders.push({ name: name.trim(), bucket, ctSec, cost });
+      db.loaders.push({ name: name.trim(), bucket: bucket, ctSec: ctSec, cost: cost });
       saveCustomDb();
       renderDatabaseTables();
       rebuildDropdowns();
@@ -1253,7 +1254,7 @@
       var dumpMin = parseFloat(prompt("Dumping / Spot (menit):", "1.2")) || 1.2;
       var cost = parseFloat(prompt("Biaya Base ($/h):", "55.00")) || 50.0;
 
-      db.haulers.push({ name: name.trim(), vessel, dumpMin, cost });
+      db.haulers.push({ name: name.trim(), vessel: vessel, dumpMin: dumpMin, cost: cost });
       saveCustomDb();
       renderDatabaseTables();
       rebuildDropdowns();
