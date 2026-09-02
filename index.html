@@ -520,25 +520,25 @@
   </div>
 
   <script>
-    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS (STABIL) ====================
-    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyOXBk83AX3V-N5nK0aOhyLVDM2HmCjWye1OVt_kbGUdt-tsNZ5apGWvtmCQdz3bzd0TQ/exec";
+    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS ====================
+    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwNkl5QH1f-cvwOFtRNoQSxyCnTbnF0f0uuPaByP80-0ZFKJr-haNhAJHDv8R4DLwwKsw/exec";
 
     function sendAccessLog(user) {
       if (!SHEET_WEBHOOK_URL) return;
 
-      const payload = new URLSearchParams();
-      payload.append("timestamp", new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }));
-      payload.append("nik", user.nik);
-      payload.append("role", user.role);
-      payload.append("device", navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
+      try {
+        const timeStr = encodeURIComponent(new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }));
+        const nikStr = encodeURIComponent(user.nik);
+        const roleStr = encodeURIComponent(user.role);
+        const devStr = encodeURIComponent(navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
 
-      fetch(SHEET_WEBHOOK_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: payload
-      }).catch(err => {
+        // Mengirim via Image Ping (100% tembus & bebas hambatan CORS)
+        const pingUrl = `${SHEET_WEBHOOK_URL}?nik=${nikStr}&role=${roleStr}&device=${devStr}&timestamp=${timeStr}`;
+        const beacon = new Image();
+        beacon.src = pingUrl;
+      } catch (err) {
         console.log("Offline mode: Log tidak terkirim.");
-      });
+      }
     }
 
     let customUserAccounts = JSON.parse(localStorage.getItem("fleet_user_accounts")) || {};
