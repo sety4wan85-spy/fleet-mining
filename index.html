@@ -520,8 +520,8 @@
   </div>
 
   <script>
-    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS ====================
-    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwNkl5QH1f-cvwOFtRNoQSxyCnTbnF0f0uuPaByP80-0ZFKJr-haNhAJHDv8R4DLwwKsw/exec";
+    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS TERBARU ====================
+    const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwW4FflExzrrHGjuhrzKPic5NoPQKTF7WOp8_bPaQZXZtlMFtcuhu1yU0Opcl2PI2-rEA/exec";
 
     function sendAccessLog(user) {
       if (!SHEET_WEBHOOK_URL) return;
@@ -532,7 +532,7 @@
         const roleStr = encodeURIComponent(user.role);
         const devStr = encodeURIComponent(navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
 
-        // Mengirim via Image Ping (100% tembus & bebas hambatan CORS)
+        // Mengirim via Image Ping (100% tembus CORS tanpa hambatan)
         const pingUrl = `${SHEET_WEBHOOK_URL}?nik=${nikStr}&role=${roleStr}&device=${devStr}&timestamp=${timeStr}`;
         const beacon = new Image();
         beacon.src = pingUrl;
