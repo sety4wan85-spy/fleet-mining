@@ -101,7 +101,7 @@
         <h3 style="font-size: 0.875rem; font-weight: 700; color: #f59e0b;">Pemulihan PIN Mandiri</h3>
         <button onclick="closeForgotPinModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.25rem;">&times;</button>
       </div>
-      <p style="font-size: 0.75rem; color: #cbd5e1; margin-bottom: 1rem;">Masukkan NIK dan <strong>Master Pass</strong> yang diberikan oleh Admin untuk mereset PIN Anda.</p>
+      <p style="font-size: 0.75rem; color: #cbd5e1; margin-bottom: 1rem;">Masukkan NIK dan <strong>Master Pass</strong> dari Admin untuk mereset PIN akun Anda.</p>
       <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
         <div>
           <label class="label-title">NIK Anda (7 Digit)</label>
@@ -290,11 +290,11 @@
           </div>
         </div>
 
-        <!-- Konfigurasi Armada (Tata Letak Ramah HP) -->
+        <!-- ==================== KONFIGURASI ARMADA ==================== -->
         <div class="card">
           <label class="label-title" style="color: #fbbf24; margin-bottom: 0.75rem;">KONFIGURASI UNIT ARMADA</label>
 
-          <!-- Loader -->
+          <!-- Loader Card -->
           <div class="card-sub" style="margin-bottom: 0.75rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
               <span style="font-size: 0.75rem; font-weight: 700;">Loading Unit (Excavator)</span>
@@ -303,7 +303,7 @@
                 <option value="owner">Disediakan Owner ($0.00)</option>
               </select>
             </div>
-            <select id="sim-loader" onchange="runSimulation()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
+            <select id="sim-loader" onchange="handleLoaderChange()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 0.35rem;">
                 <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
@@ -316,10 +316,10 @@
             </div>
           </div>
 
-          <!-- Hauler -->
+          <!-- Hauler Card -->
           <div class="card-sub" style="margin-bottom: 0.75rem;">
             <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.4rem;">Hauling Unit (Dump Truck)</span>
-            <select id="sim-hauler" onchange="runSimulation()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
+            <select id="sim-hauler" onchange="handleHaulerChange()" class="form-control" style="margin-bottom: 0.4rem; font-size: 0.8rem;"></select>
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 0.35rem;">
                 <span style="font-size: 0.75rem; color: #94a3b8;">Qty:</span>
@@ -531,6 +531,7 @@
 
     const defaultDb = {
       loaders: [
+        { name: ".None (Tidak Pakai)", bucket: 0.0, ctSec: 0.0, cost: 0.0 },
         { name: "CATERPILLAR CAT390D (5.5m³)", bucket: 5.50, ctSec: 25.0, cost: 180.00 },
         { name: "DOOSAN S500LC-V (2.7m³)", bucket: 2.70, ctSec: 24.0, cost: 77.19 },
         { name: "HITACHI ZX200-3G (0.91m³)", bucket: 0.91, ctSec: 20.0, cost: 37.78 },
@@ -545,6 +546,7 @@
         { name: "KOMATSU PC2000-8 (12.0m³)", bucket: 12.00, ctSec: 26.0, cost: 390.00 }
       ],
       haulers: [
+        { name: ".None (Tidak Pakai)", vessel: 0.0, dumpMin: 0.0, cost: 0.0 },
         { name: "BEIBEN 3842 (22m³)", vessel: 22.0, dumpMin: 1.2, cost: 32.87 },
         { name: "CATERPILLAR CAT740B (24m³)", vessel: 24.0, dumpMin: 1.3, cost: 96.82 },
         { name: "CMT96 (Wide Body) (35m³)", vessel: 35.0, dumpMin: 1.3, cost: 62.84 },
@@ -595,6 +597,45 @@
       runSimulation();
     }
 
+    // ==================== AUTO QTY 0 UNTUK SEMUA UNIT ====================
+    function handleLoaderChange() {
+      const selectEl = document.getElementById("sim-loader");
+      const qtyEl = document.getElementById("sim-loader-qty");
+      if (!selectEl || !qtyEl) return;
+
+      if (selectEl.value.includes("None")) {
+        qtyEl.value = 0;
+        qtyEl.disabled = true;
+        qtyEl.style.opacity = "0.4";
+      } else {
+        qtyEl.disabled = false;
+        qtyEl.style.opacity = "1";
+        if (parseInt(qtyEl.value, 10) === 0) {
+          qtyEl.value = 1;
+        }
+      }
+      runSimulation();
+    }
+
+    function handleHaulerChange() {
+      const selectEl = document.getElementById("sim-hauler");
+      const qtyEl = document.getElementById("sim-hauler-qty");
+      if (!selectEl || !qtyEl) return;
+
+      if (selectEl.value.includes("None")) {
+        qtyEl.value = 0;
+        qtyEl.disabled = true;
+        qtyEl.style.opacity = "0.4";
+      } else {
+        qtyEl.disabled = false;
+        qtyEl.style.opacity = "1";
+        if (parseInt(qtyEl.value, 10) === 0) {
+          qtyEl.value = 5;
+        }
+      }
+      runSimulation();
+    }
+
     function handleSupportUnitChange(slotIndex) {
       const selectEl = document.getElementById(`sim-support-${slotIndex}`);
       const qtyEl = document.getElementById(`sim-support-qty-${slotIndex}`);
@@ -628,10 +669,7 @@
       const inputNik = document.getElementById("reset-nik").value.trim();
       const emergencyPass = document.getElementById("reset-emergency-pass").value.trim();
 
-      if (!inputNik) {
-        alert("Harap masukkan NIK Anda!");
-        return;
-      }
+      if (!inputNik) { alert("Harap masukkan NIK Anda!"); return; }
       const nikNum = parseInt(inputNik, 10);
       if (isNaN(nikNum) || nikNum < 1000000 || nikNum > 1999999) {
         alert("NIK harus 7 digit antara 1000000 s/d 1999999!");
@@ -676,18 +714,9 @@
       if (!currentUser) return;
       const userRecord = customUserAccounts[currentUser.nik] || { pin: currentUser.pin, role: currentUser.role, name: currentUser.name };
 
-      if (oldPin !== userRecord.pin) {
-        alert("PIN lama salah!");
-        return;
-      }
-      if (newPin.length < 4) {
-        alert("PIN baru minimal 4 digit!");
-        return;
-      }
-      if (newPin !== confPin) {
-        alert("Konfirmasi PIN baru tidak cocok!");
-        return;
-      }
+      if (oldPin !== userRecord.pin) { alert("PIN lama salah!"); return; }
+      if (newPin.length < 4) { alert("PIN baru minimal 4 digit!"); return; }
+      if (newPin !== confPin) { alert("Konfirmasi PIN baru tidak cocok!"); return; }
 
       userRecord.pin = newPin;
       customUserAccounts[currentUser.nik] = userRecord;
@@ -868,10 +897,20 @@
       const currentLoader = document.getElementById("sim-loader").value;
       const currentHauler = document.getElementById("sim-hauler").value;
 
-      const sortedLoaders = [...db.loaders].sort((a, b) => a.name.localeCompare(b.name));
+      // Pastikan .None ada di urutan paling pertama untuk Loader
+      const sortedLoaders = [...db.loaders].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
       document.getElementById("sim-loader").innerHTML = sortedLoaders.map(l => `<option value="${l.name}" ${l.name === currentLoader ? 'selected' : ''}>${l.name}</option>`).join("");
 
-      const sortedHaulers = [...db.haulers].sort((a, b) => a.name.localeCompare(b.name));
+      // Pastikan .None ada di urutan paling pertama untuk Hauler
+      const sortedHaulers = [...db.haulers].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
       document.getElementById("sim-hauler").innerHTML = sortedHaulers.map(h => `<option value="${h.name}" ${h.name === currentHauler ? 'selected' : ''}>${h.name}</option>`).join("");
     }
 
@@ -907,11 +946,14 @@
             const bucket = parseFloat(cols[1]) || 0;
             const ctSec = parseFloat(cols[2]) || 25.0;
             const cost = parseFloat(cols[3]) || 0;
-            if (name && bucket > 0) newLoaders.push({ name, bucket, ctSec, cost });
+            if (name) newLoaders.push({ name, bucket, ctSec, cost });
           }
         }
 
         if (newLoaders.length > 0) {
+          if (!newLoaders.some(l => l.name.includes("None"))) {
+            newLoaders.unshift({ name: ".None (Tidak Pakai)", bucket: 0.0, ctSec: 0.0, cost: 0.0 });
+          }
           db.loaders = newLoaders;
           saveCustomDb();
           renderDatabaseTables();
@@ -954,11 +996,14 @@
             const vessel = parseFloat(cols[1]) || 0;
             const dumpMin = parseFloat(cols[2]) || 1.2;
             const cost = parseFloat(cols[3]) || 0;
-            if (name && vessel > 0) newHaulers.push({ name, vessel, dumpMin, cost });
+            if (name) newHaulers.push({ name, vessel, dumpMin, cost });
           }
         }
 
         if (newHaulers.length > 0) {
+          if (!newHaulers.some(h => h.name.includes("None"))) {
+            newHaulers.unshift({ name: ".None (Tidak Pakai)", vessel: 0.0, dumpMin: 0.0, cost: 0.0 });
+          }
           db.haulers = newHaulers;
           saveCustomDb();
           renderDatabaseTables();
@@ -1009,6 +1054,9 @@
         }
 
         if (newSupports.length > 0) {
+          if (!newSupports.some(s => s.name.includes("None"))) {
+            newSupports.unshift({ name: "None (Tidak Pakai)", role: "-", cost: 0.0 });
+          }
           db.supports = newSupports;
           saveCustomDb();
           renderDatabaseTables();
@@ -1287,7 +1335,11 @@
         document.getElementById("param-speed-e").value = "26";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
+        document.getElementById("sim-loader-qty").disabled = false;
+        document.getElementById("sim-loader-qty").style.opacity = "1";
         document.getElementById("sim-hauler-qty").value = "9";
+        document.getElementById("sim-hauler-qty").disabled = false;
+        document.getElementById("sim-hauler-qty").style.opacity = "1";
         document.getElementById("sim-loader").value = "KOMATSU PC2000-8 (12.0m³)";
         document.getElementById("sim-hauler").value = "CMT106 (Wide Body) (40m³)";
       } else if (type === "CO") {
@@ -1299,7 +1351,11 @@
         document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "contractor";
         document.getElementById("sim-loader-qty").value = "1";
+        document.getElementById("sim-loader-qty").disabled = false;
+        document.getElementById("sim-loader-qty").style.opacity = "1";
         document.getElementById("sim-hauler-qty").value = "5";
+        document.getElementById("sim-hauler-qty").disabled = false;
+        document.getElementById("sim-hauler-qty").style.opacity = "1";
         document.getElementById("sim-loader").value = "KOMATSU PC400LC-7 (2.2m³)";
         document.getElementById("sim-hauler").value = "CMT96 (Wide Body) (35m³)";
       } else if (type === "CoHauling") {
@@ -1311,7 +1367,11 @@
         document.getElementById("param-sf").value = "0.85";
         document.getElementById("sim-loader-owner").value = "owner";
         document.getElementById("sim-loader-qty").value = "1";
+        document.getElementById("sim-loader-qty").disabled = false;
+        document.getElementById("sim-loader-qty").style.opacity = "1";
         document.getElementById("sim-hauler-qty").value = "20";
+        document.getElementById("sim-hauler-qty").disabled = false;
+        document.getElementById("sim-hauler-qty").style.opacity = "1";
         document.getElementById("sim-loader").value = "KOMATSU PC400LC-7 (2.2m³)";
         document.getElementById("sim-hauler").value = "HINO ZY1E/700 (20m³)";
       }
@@ -1361,8 +1421,8 @@
       const isFinancialAuthorized = currentUser && (currentUser.role === 'admin' || currentUser.role === 'management');
 
       if (isFinancialAuthorized) {
-        document.getElementById("sim-loader-rate").innerText = (loaderOwner === "owner") ? "$0.00/h (Owner)" : `$${effectiveLoaderCost.toFixed(2)}/h`;
-        document.getElementById("sim-hauler-rate").innerText = `$${effectiveHaulerCost.toFixed(2)}/h`;
+        document.getElementById("sim-loader-rate").innerText = loaderName.includes("None") ? "$0.00/h" : (loaderOwner === "owner" ? "$0.00/h (Owner)" : `$${effectiveLoaderCost.toFixed(2)}/h`);
+        document.getElementById("sim-hauler-rate").innerText = haulerName.includes("None") ? "$0.00/h" : `$${effectiveHaulerCost.toFixed(2)}/h`;
       } else {
         document.getElementById("sim-loader-rate").innerText = `Rate: 🔒`;
         document.getElementById("sim-hauler-rate").innerText = `Rate: 🔒`;
@@ -1387,17 +1447,17 @@
         document.getElementById("label-bep-prod").innerText = "BEP Prod (Ton.Km/Jam)";
       }
 
-      const effectiveBucketM3 = loader.bucket * bff;
-      const effectiveLoaderCtSec = loader.ctSec * ctMultiplier;
+      const effectiveBucketM3 = (loader.bucket || 0) * bff;
+      const effectiveLoaderCtSec = (loader.ctSec || 25.0) * ctMultiplier;
 
-      const passes = hauler.vessel / effectiveBucketM3;
+      const passes = effectiveBucketM3 > 0 ? ((hauler.vessel || 0) / effectiveBucketM3) : 0;
       const calculatedLoadTimeMin = passes * (effectiveLoaderCtSec / 60.0);
       const travelLoadedMin = (dist / speedL) * 60.0;
       const travelEmptyMin = (dist / speedE) * 60.0;
       const travelFactor = 60.0 * ((1.0 / speedL) + (1.0 / speedE));
-      const dumpSpotMin = hauler.dumpMin;
+      const dumpSpotMin = hauler.dumpMin || 0;
 
-      const looseM3PerTrip = hauler.vessel;
+      const looseM3PerTrip = hauler.vessel || 0;
       const bcmPerTrip = looseM3PerTrip * sf;
       const tonPerTrip = bcmPerTrip * density;
 
@@ -1412,38 +1472,43 @@
 
       const activeLoaderQtyForProd = loaderQty > 0 ? loaderQty : 1;
 
-      if (currentJobType === "CoHauling" && haulerQty > 0) {
-        effectiveLoadTime = calculatedLoadTimeMin;
-        displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
+      // CEK KONDISI NONE
+      const isNoneUnit = loaderName.includes("None") || loaderQty === 0 || haulerName.includes("None") || haulerQty === 0;
 
-        const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
-        const rawHaulerTonHr = tripsPerHour * tonPerTrip;
+      if (!isNoneUnit) {
+        if (currentJobType === "CoHauling" && haulerQty > 0) {
+          effectiveLoadTime = calculatedLoadTimeMin;
+          displayCT = effectiveLoadTime + travelLoadedMin + dumpSpotMin + travelEmptyMin;
 
-        loaderMaxCapacityTonHr = (3600.0 / effectiveLoaderCtSec) * (effectiveBucketM3 * sf * density) * eff * activeLoaderQtyForProd;
-        prodTonHr = Math.min(rawHaulerTonHr, loaderMaxCapacityTonHr);
-        prodBcmHr = prodTonHr / density;
-        prodTonKmHr = prodTonHr * dist;
+          const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
+          const rawHaulerTonHr = tripsPerHour * tonPerTrip;
 
-        if (rawHaulerTonHr > loaderMaxCapacityTonHr) isLoaderBottleneck = true;
-        mf = (haulerQty * effectiveLoadTime) / (activeLoaderQtyForProd * displayCT);
+          loaderMaxCapacityTonHr = (3600.0 / effectiveLoaderCtSec) * (effectiveBucketM3 * sf * density) * eff * activeLoaderQtyForProd;
+          prodTonHr = Math.min(rawHaulerTonHr, loaderMaxCapacityTonHr);
+          prodBcmHr = prodTonHr / density;
+          prodTonKmHr = prodTonHr * dist;
 
-      } else if (loaderQty > 0 && haulerQty > 0) {
-        displayCT = calculatedLoadTimeMin + travelLoadedMin + dumpSpotMin + travelEmptyMin;
-        mf = (haulerQty * calculatedLoadTimeMin) / (loaderQty * displayCT);
+          if (rawHaulerTonHr > loaderMaxCapacityTonHr) isLoaderBottleneck = true;
+          mf = (haulerQty * effectiveLoadTime) / (activeLoaderQtyForProd * displayCT);
 
-        const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
-        const rawProdBcmHr = tripsPerHour * bcmPerTrip;
-        const rawProdTonHr = tripsPerHour * tonPerTrip;
+        } else if (loaderQty > 0 && haulerQty > 0) {
+          displayCT = calculatedLoadTimeMin + travelLoadedMin + dumpSpotMin + travelEmptyMin;
+          mf = (haulerQty * calculatedLoadTimeMin) / (loaderQty * displayCT);
 
-        const loaderMaxTripsPerHour = (60.0 / calculatedLoadTimeMin) * eff * loaderQty;
-        const loaderMaxProdBcmHr = loaderMaxTripsPerHour * bcmPerTrip;
-        const loaderMaxProdTonHr = loaderMaxTripsPerHour * tonPerTrip;
+          const tripsPerHour = (60.0 / displayCT) * eff * haulerQty;
+          const rawProdBcmHr = tripsPerHour * bcmPerTrip;
+          const rawProdTonHr = tripsPerHour * tonPerTrip;
 
-        prodBcmHr = Math.min(rawProdBcmHr, loaderMaxProdBcmHr);
-        prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
-        prodTonKmHr = prodTonHr * dist;
+          const loaderMaxTripsPerHour = (60.0 / calculatedLoadTimeMin) * eff * loaderQty;
+          const loaderMaxProdBcmHr = loaderMaxTripsPerHour * bcmPerTrip;
+          const loaderMaxProdTonHr = loaderMaxTripsPerHour * tonPerTrip;
 
-        if (rawProdBcmHr > loaderMaxProdBcmHr) isLoaderBottleneck = true;
+          prodBcmHr = Math.min(rawProdBcmHr, loaderMaxProdBcmHr);
+          prodTonHr = Math.min(rawProdTonHr, loaderMaxProdTonHr);
+          prodTonKmHr = prodTonHr * dist;
+
+          if (rawProdBcmHr > loaderMaxProdBcmHr) isLoaderBottleneck = true;
+        }
       }
 
       document.getElementById("ct-load").innerText = `${effectiveLoadTime.toFixed(2)} mnt`;
@@ -1469,9 +1534,10 @@
         }
       }
 
-      const chargedLoaderCost = (loaderOwner === "owner") ? 0.0 : (effectiveLoaderCost * loaderQty);
-      const equipmentCostHr = chargedLoaderCost + (effectiveHaulerCost * haulerQty);
-      const fleetOverheadHr = (loaderQty > 0 || haulerQty > 0) ? (savedRates.overheadHr || 50.00) : 0.0;
+      const chargedLoaderCost = (loaderOwner === "owner" || loaderName.includes("None")) ? 0.0 : (effectiveLoaderCost * loaderQty);
+      const chargedHaulerCost = haulerName.includes("None") ? 0.0 : (effectiveHaulerCost * haulerQty);
+      const equipmentCostHr = chargedLoaderCost + chargedHaulerCost;
+      const fleetOverheadHr = (!isNoneUnit) ? (savedRates.overheadHr || 50.00) : 0.0;
       const totalBlastingCostHr = (currentJobType === "OB" && currentObMaterial === "blasting") ? (prodBcmHr * blastingCostPerBcm) : 0.0;
       const totalFleetCostHr = equipmentCostHr + supportCostHr + fleetOverheadHr + totalBlastingCostHr;
 
@@ -1496,7 +1562,7 @@
       const bepProd = contractRate > 0 ? (totalFleetCostHr / contractRate) : 0;
       let bepDistance = 0;
 
-      if (haulerQty > 0 && contractRate > 0 && totalFleetCostHr > 0 && currentJobType !== "CoHauling") {
+      if (haulerQty > 0 && contractRate > 0 && totalFleetCostHr > 0 && currentJobType !== "CoHauling" && !isNoneUnit) {
         let payload = (currentJobType === "OB") ? bcmPerTrip : tonPerTrip;
         const maxCycleTimeAllowed = (60.0 * payload * eff * haulerQty * contractRate) / totalFleetCostHr;
         const maxTravelTimeAllowed = maxCycleTimeAllowed - calculatedLoadTimeMin - hauler.dumpMin;
@@ -1507,11 +1573,11 @@
 
       document.getElementById("res-mf").innerText = mf.toFixed(2);
       const mfBadge = document.getElementById("res-mf-badge");
-      if (currentJobType === "CoHauling") {
-        if (haulerQty === 0) {
-          mfBadge.innerText = "No Operation";
-          mfBadge.style.color = "#94a3b8";
-        } else if (isLoaderBottleneck) {
+      if (isNoneUnit) {
+        mfBadge.innerText = "No Operation";
+        mfBadge.style.color = "#94a3b8";
+      } else if (currentJobType === "CoHauling") {
+        if (isLoaderBottleneck) {
           mfBadge.innerText = `Terkunci Max ROM (${loaderMaxCapacityTonHr.toFixed(0)} T/h)`;
           mfBadge.style.color = "#f87171";
         } else if (mf > 1.05) {
@@ -1521,9 +1587,6 @@
           mfBadge.innerText = "Optimal Match (Ideal)";
           mfBadge.style.color = "#34d399";
         }
-      } else if (loaderQty === 0 || haulerQty === 0) {
-        mfBadge.innerText = "No Operation";
-        mfBadge.style.color = "#94a3b8";
       } else if (mf < 0.95) {
         mfBadge.innerText = "Under-trucked (Loader Antri)";
         mfBadge.style.color = "#fbbf24";
