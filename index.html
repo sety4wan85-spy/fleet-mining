@@ -70,7 +70,7 @@
         <div>
           <label class="label-title" style="color: #fbbf24;">LOKASI KERJA (SITE PROYEK)</label>
           <select id="login-site" required class="form-control" style="font-weight: 700; color: #fbbf24;">
-            <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
+            <option value="BSS-SITE MSJ">BSS-SITE MSJ (Khusus Coal Hauling)</option>
             <option value="BSS-SITE TDM">BSS-SITE TDM (Khusus Coal Hauling)</option>
             <option value="BSS-SITE MHU">BSS-SITE MHU</option>
             <option value="BSS-SITE CDI">BSS-SITE CDI</option>
@@ -181,7 +181,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label class="label-title" style="margin-bottom: 0;">PILIHAN SITE PROYEK</label>
             <select id="main-site-switch" onchange="changeActiveSite(this.value)" class="form-control" style="width: auto; padding: 0.25rem 0.6rem; font-weight: 700; color: #fbbf24; font-size: 0.75rem;">
-              <option value="BSS-SITE MSJ">BSS-SITE MSJ</option>
+              <option value="BSS-SITE MSJ">BSS-SITE MSJ (Khusus Coal Hauling)</option>
               <option value="BSS-SITE TDM">BSS-SITE TDM (Khusus Coal Hauling)</option>
               <option value="BSS-SITE MHU">BSS-SITE MHU</option>
               <option value="BSS-SITE CDI">BSS-SITE CDI</option>
@@ -551,7 +551,7 @@
     var defaultSiteConfigs = {
       "BSS-SITE MSJ": {
         rates: { ob: 1.80, co: 3.50, cohauling: 0.12, overheadHr: 50.00 },
-        pit: { dist: 2.0, speedL: 20, speedE: 26, hours: 10, density: 2.10, sf: 0.80, eff: 83 }
+        pit: { dist: 25.0, speedL: 25, speedE: 35, hours: 10, density: 1.30, sf: 0.85, eff: 83 }
       },
       "BSS-SITE TDM": {
         rates: { ob: 1.85, co: 3.60, cohauling: 0.12, overheadHr: 55.00 },
@@ -718,12 +718,13 @@
       runSimulation();
     }
 
+    // ATURAN KHUSUS: SITE MSJ & TDM HANYA COAL HAULING
     function applySiteRestrictions(siteName) {
       var btnOb = document.getElementById("btn-job-ob");
       var btnCo = document.getElementById("btn-job-co");
       var selectorGrid = document.getElementById("job-type-selector-grid");
 
-      if (siteName === "BSS-SITE TDM") {
+      if (siteName === "BSS-SITE MSJ" || siteName === "BSS-SITE TDM") {
         if (btnOb) btnOb.classList.add("hidden");
         if (btnCo) btnCo.classList.add("hidden");
         if (selectorGrid) selectorGrid.style.gridTemplateColumns = "1fr";
@@ -732,7 +733,7 @@
         if (btnOb) btnOb.classList.remove("hidden");
         if (btnCo) btnCo.classList.remove("hidden");
         if (selectorGrid) selectorGrid.style.gridTemplateColumns = "repeat(3, 1fr)";
-        if (currentJobType === "CoHauling" && siteName !== "BSS-SITE TDM") {
+        if (currentJobType === "CoHauling" && siteName !== "BSS-SITE MSJ" && siteName !== "BSS-SITE TDM") {
           setJobType("OB");
         }
       }
@@ -1097,7 +1098,7 @@
             var bucket = parseFloat(cols[1]) || 0;
             var ctSec = parseFloat(cols[2]) || 25.0;
             var cost = parseFloat(cols[3]) || 0;
-            if (name) newLoaders.push({ name: name, bucket: bucket, ctSec: ctSec, cost: cost });
+            if (name) newLoaders.push({ name, bucket, ctSec, cost });
           }
         }
 
@@ -1147,7 +1148,7 @@
             var vessel = parseFloat(cols[1]) || 0;
             var dumpMin = parseFloat(cols[2]) || 1.2;
             var cost = parseFloat(cols[3]) || 0;
-            if (name) newHaulers.push({ name: name, vessel: vessel, dumpMin: dumpMin, cost: cost });
+            if (name) newHaulers.push({ name, vessel, dumpMin, cost });
           }
         }
 
@@ -1200,7 +1201,7 @@
             var name = cols[0];
             var role = cols[1] || "-";
             var cost = parseFloat(cols[2]) || 0;
-            if (name) newSupports.push({ name: name, role: role, cost: cost });
+            if (name) newSupports.push({ name, role, cost });
           }
         }
 
@@ -1226,7 +1227,7 @@
       var ctSec = parseFloat(prompt("CT Standar (detik):", "25.0")) || 25.0;
       var cost = parseFloat(prompt("Biaya Base ($/h):", "180.00")) || 150.0;
 
-      db.loaders.push({ name: name.trim(), bucket: bucket, ctSec: ctSec, cost: cost });
+      db.loaders.push({ name: name.trim(), bucket, ctSec, cost });
       saveCustomDb();
       renderDatabaseTables();
       rebuildDropdowns();
@@ -1252,7 +1253,7 @@
       var dumpMin = parseFloat(prompt("Dumping / Spot (menit):", "1.2")) || 1.2;
       var cost = parseFloat(prompt("Biaya Base ($/h):", "55.00")) || 50.0;
 
-      db.haulers.push({ name: name.trim(), vessel: vessel, dumpMin: dumpMin, cost: cost });
+      db.haulers.push({ name: name.trim(), vessel, dumpMin, cost });
       saveCustomDb();
       renderDatabaseTables();
       rebuildDropdowns();
@@ -1427,27 +1428,6 @@
         '</tr>';
       }
       document.getElementById("table-supports").innerHTML = suppHtml;
-    }
-
-    function setObMaterial(matType) {
-      currentObMaterial = matType;
-      var buttons = {
-        softsoil: document.getElementById("btn-mat-softsoil"),
-        hardsoil: document.getElementById("btn-mat-hardsoil"),
-        blasting: document.getElementById("btn-mat-blasting"),
-        mud:      document.getElementById("btn-mat-mud")
-      };
-
-      for (var k in buttons) {
-        if (buttons[k]) buttons[k].className = (k === matType) ? "btn btn-primary" : "btn btn-dark";
-      }
-
-      var spec = obMaterialSpecs[matType];
-      var blastLabel = (matType === 'blasting' && spec.blastingCostBcm > 0) ? " | Blast: $" + spec.blastingCostBcm.toFixed(2) : "";
-      var effectBadge = document.getElementById("badge-material-effect");
-      if (effectBadge) effectBadge.innerText = "BFF: " + spec.bff.toFixed(2) + " | CT: " + (spec.ctFactor * 100).toFixed(0) + "%" + blastLabel;
-
-      runSimulation();
     }
 
     function switchTab(tab) {
