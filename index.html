@@ -216,28 +216,24 @@
 
         <!-- Executive KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <!-- Kartu 1: Match Factor -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800 relative overflow-hidden">
             <span class="text-xs text-slate-400">Match Factor (MF)</span>
             <div id="res-mf" class="text-xl font-bold mt-1 text-white">0.00</div>
             <span id="res-mf-badge" class="text-[10px] mt-1 font-semibold inline-block px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">-</span>
           </div>
 
-          <!-- Kartu 2: Produksi Utama -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-prod-primary" class="text-xs text-slate-400">Produksi (BCM/Jam)</span>
             <div id="res-prod-primary" class="text-xl font-bold mt-1 text-amber-400">0.0</div>
             <span id="res-prod-secondary" class="text-[11px] text-slate-400 mt-1 block">0.0 Ton/Jam</span>
           </div>
 
-          <!-- Kartu 3: Unit Cost (Admin/Manajemen) / Pdty per Hauler (Operasional) -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-unit-cost" class="text-xs text-slate-400">Unit Cost ($/BCM)</span>
             <div id="res-unit-cost" class="text-xl font-bold mt-1 text-rose-400">$0.000</div>
             <span id="res-total-cost" class="text-[11px] text-slate-400 mt-1 block font-mono">$0.00/Jam Total</span>
           </div>
 
-          <!-- Kartu 4: Net Profit (Admin/Manajemen) / Deviasi Produksi BCM (Operasional) -->
           <div class="bg-slate-900 rounded-xl p-3 border border-slate-800">
             <span id="label-profit-hr" class="text-xs text-slate-400">Net Profit ($/Jam)</span>
             <div id="res-profit-hr" class="text-xl font-bold mt-1 text-emerald-400">$0.00</div>
@@ -245,7 +241,7 @@
           </div>
         </div>
 
-        <!-- Detail Cost Breakdown (Khusus Admin / Manajemen) -->
+        <!-- Detail Cost Breakdown -->
         <div id="cost-breakdown-banner" class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs">
           <div class="flex items-center gap-4">
             <div class="text-slate-400">Komposisi Biaya per Jam:</div>
@@ -302,49 +298,60 @@
           </div>
         </div>
 
-        <!-- Fleet Unit Configurations -->
-        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
+        <!-- ==================== KONFIGURASI UNIT (RESPONSIF MOBILE RAMAH HP) ==================== -->
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-4">
           <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="layers" class="w-4 h-4"></i> Konfigurasi Unit
+            <i data-lucide="layers" class="w-4 h-4"></i> Konfigurasi Unit Armada
           </h2>
 
-          <!-- Loader Row -->
-          <div id="container-loader-row" class="space-y-1.5">
+          <!-- 1. Loader Card -->
+          <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-2">
+            <div class="flex flex-wrap justify-between items-center gap-1">
+              <label class="text-xs font-semibold text-slate-300">Loading Unit (Excavator)</label>
+              <select id="sim-loader-owner" onchange="runSimulation()" class="bg-slate-900 border border-slate-700 text-amber-400 text-[11px] rounded-lg px-2 py-1 outline-none font-medium">
+                <option value="contractor">Unit Kontraktor (Cost Masuk)</option>
+                <option value="owner">Disediakan Owner ($0.00)</option>
+              </select>
+            </div>
+            
+            <select id="sim-loader" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-100 outline-none focus:border-amber-500"></select>
+
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-400 font-medium mr-1">Jumlah:</span>
+                <button type="button" onclick="adjustQty('sim-loader-qty', -1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">-</button>
+                <input type="number" id="sim-loader-qty" value="1" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-14 h-8 bg-slate-900 border border-slate-700 rounded-lg text-center font-bold text-amber-400 text-sm outline-none">
+                <button type="button" onclick="adjustQty('sim-loader-qty', 1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">+</button>
+                <span class="text-[11px] text-slate-500 ml-1">unit</span>
+              </div>
+              <div id="sim-loader-rate" class="px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 font-mono text-center min-w-[90px]">$0.00/h</div>
+            </div>
+          </div>
+
+          <!-- 2. Hauler Card -->
+          <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-2">
+            <label class="block text-xs font-semibold text-slate-300">Hauling Unit (Dump Truck)</label>
+            <select id="sim-hauler" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-100 outline-none focus:border-amber-500"></select>
+
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-400 font-medium mr-1">Jumlah:</span>
+                <button type="button" onclick="adjustQty('sim-hauler-qty', -1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">-</button>
+                <input type="number" id="sim-hauler-qty" value="5" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-14 h-8 bg-slate-900 border border-slate-700 rounded-lg text-center font-bold text-amber-400 text-sm outline-none">
+                <button type="button" onclick="adjustQty('sim-hauler-qty', 1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-sm border border-slate-700 active:scale-95 transition">+</button>
+                <span class="text-[11px] text-slate-500 ml-1">unit</span>
+              </div>
+              <div id="sim-hauler-rate" class="px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300 font-mono text-center min-w-[90px]">$0.00/h</div>
+            </div>
+          </div>
+
+          <!-- 3. Support Units -->
+          <div class="space-y-2 pt-1">
             <div class="flex justify-between items-center">
-              <label class="block text-xs text-slate-400">Loading Unit di Pit / ROM (Excavator)</label>
-              <div class="flex items-center gap-2">
-                <label class="text-[11px] text-slate-400">Beban Biaya:</label>
-                <select id="sim-loader-owner" onchange="runSimulation()" class="bg-slate-950 border border-slate-700 text-amber-400 text-[11px] rounded px-2 py-0.5 outline-none font-semibold">
-                  <option value="contractor">Unit Milik Sendiri (Cost Masuk)</option>
-                  <option value="owner">Disediakan Owner ($0.00 / Bebas Biaya)</option>
-                </select>
-              </div>
+              <label class="block text-xs font-semibold text-slate-300">Alat Support (Dozer, Grader, WT)</label>
+              <span class="text-[10px] text-slate-500">Pilih "None" otomatis Qty = 0</span>
             </div>
-            <div class="flex gap-2">
-              <select id="sim-loader" onchange="runSimulation()" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none"></select>
-              <div class="w-24">
-                <input type="number" id="sim-loader-qty" value="1" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-sm text-center font-bold text-slate-100 outline-none" placeholder="Qty">
-              </div>
-              <div id="sim-loader-rate" class="w-36 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono">$0.00/h</div>
-            </div>
-          </div>
-
-          <!-- Hauler Row -->
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Hauling Unit (Dump Truck)</label>
-            <div class="flex gap-2">
-              <select id="sim-hauler" onchange="runSimulation()" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none"></select>
-              <div class="w-24">
-                <input type="number" id="sim-hauler-qty" value="5" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-sm text-center font-bold text-slate-100 outline-none" placeholder="Qty">
-              </div>
-              <div id="sim-hauler-rate" class="w-36 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono">$0.00/h</div>
-            </div>
-          </div>
-
-          <!-- Support Units Section -->
-          <div class="pt-2 border-t border-slate-800 space-y-2">
-            <label class="block text-xs text-slate-400 font-semibold">Alat Support (Dozer, Grader, WT)</label>
-            <div id="support-container" class="space-y-2"></div>
+            <div id="support-container" class="space-y-2.5"></div>
           </div>
         </div>
 
@@ -354,7 +361,7 @@
             <h2 class="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="sliders" class="w-4 h-4"></i> Parameter Lapangan
             </h2>
-            <span class="text-[10px] text-slate-400">Input parameter aktual pit / lab (Manual)</span>
+            <span class="text-[10px] text-slate-400">Parameter aktual pit / lab</span>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
@@ -421,7 +428,6 @@
             </div>
           </div>
 
-          <!-- Fitur Reset PIN User oleh Admin -->
           <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
             <span class="text-slate-400">Manajemen Akses User:</span>
             <button onclick="adminResetUserPin()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-lg font-semibold flex items-center gap-1">
@@ -436,7 +442,7 @@
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
               <i data-lucide="layers-3" class="w-4 h-4"></i> Master Karakteristik, Cost Multipliers & Blasting ($/BCM)
             </h3>
-            <span class="text-[11px] text-slate-400">Pengaruh fisik & tambahan biaya peledakan / operasional</span>
+            <span class="text-[11px] text-slate-400">Pengaruh fisik & biaya peledakan</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-slate-300">
@@ -456,7 +462,7 @@
           </div>
         </div>
 
-        <!-- 1. Master Loaders (CSV Suite) -->
+        <!-- Master Loaders -->
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
           <div class="flex flex-wrap justify-between items-center gap-2">
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
@@ -491,7 +497,7 @@
           </div>
         </div>
 
-        <!-- 2. Master Haulers (CSV Suite) -->
+        <!-- Master Haulers -->
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
           <div class="flex flex-wrap justify-between items-center gap-2">
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
@@ -526,7 +532,7 @@
           </div>
         </div>
 
-        <!-- 3. Master Supports (CSV Suite) -->
+        <!-- Master Supports -->
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-3">
           <div class="flex flex-wrap justify-between items-center gap-2">
             <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
@@ -569,7 +575,6 @@
   </div>
 
   <script>
-    // Database Akun Pengguna Lokal
     let customUserAccounts = JSON.parse(localStorage.getItem("fleet_user_accounts")) || {};
 
     const defaultObMaterialSpecs = {
@@ -637,6 +642,36 @@
       overheadHr: 50.00
     };
 
+    // Helper Penyesuaian Qty dengan Tombol +/-
+    function adjustQty(elementId, change) {
+      const el = document.getElementById(elementId);
+      if (!el || el.disabled) return;
+      let currentVal = parseInt(el.value, 10) || 0;
+      let newVal = Math.max(0, currentVal + change);
+      el.value = newVal;
+      runSimulation();
+    }
+
+    // Handler Khusus Support Saat Dipilih "None"
+    function handleSupportUnitChange(slotIndex) {
+      const selectEl = document.getElementById(`sim-support-${slotIndex}`);
+      const qtyEl = document.getElementById(`sim-support-qty-${slotIndex}`);
+      if (!selectEl || !qtyEl) return;
+
+      if (selectEl.value.includes("None")) {
+        qtyEl.value = 0;
+        qtyEl.disabled = true;
+        qtyEl.classList.add("opacity-40", "bg-slate-900");
+      } else {
+        qtyEl.disabled = false;
+        qtyEl.classList.remove("opacity-40", "bg-slate-900");
+        if (parseInt(qtyEl.value, 10) === 0) {
+          qtyEl.value = 1;
+        }
+      }
+      runSimulation();
+    }
+
     function togglePassVisibility(inputId, iconId) {
       const passInput = document.getElementById(inputId);
       const icon = document.getElementById(iconId);
@@ -660,7 +695,6 @@
       document.getElementById("modal-forgot-pin").classList.add("hidden");
     }
 
-    // ==================== LOGIKA EMERGENCY MASTER RESET MANDIRI ====================
     function submitEmergencyReset() {
       const inputNik = document.getElementById("reset-nik").value.trim();
       const emergencyPass = document.getElementById("reset-emergency-pass").value.trim();
@@ -676,25 +710,22 @@
         return;
       }
 
-      // Validasi Emergency Master Pass
       if (emergencyPass === "0000@@") {
-        // Reset ke Operasional (Default: 0000)
         customUserAccounts[inputNik] = { pin: "0000", role: "operational", name: `Dispatcher / GL (${inputNik})` };
         localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
-        alert(`BERHASIL! NIK ${inputNik} telah di-reset ke akun OPERASIONAL dengan default PIN: 0000\nSilakan masuk kembali.`);
+        alert(`BERHASIL! NIK ${inputNik} di-reset ke OPERASIONAL (PIN: 0000). Silakan masuk.`);
         closeForgotPinModal();
         document.getElementById("login-nik").value = inputNik;
         document.getElementById("login-password").value = "0000";
       } else if (emergencyPass === "1234@@") {
-        // Reset ke Manajemen (Default: 1234)
         customUserAccounts[inputNik] = { pin: "1234", role: "management", name: `Management (${inputNik})` };
         localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
-        alert(`BERHASIL! NIK ${inputNik} telah di-reset ke akun MANAJEMEN dengan default PIN: 1234\nSilakan masuk kembali.`);
+        alert(`BERHASIL! NIK ${inputNik} di-reset ke MANAJEMEN (PIN: 1234). Silakan masuk.`);
         closeForgotPinModal();
         document.getElementById("login-nik").value = inputNik;
         document.getElementById("login-password").value = "1234";
       } else {
-        alert("Master Pass Pemulihan Salah! Hubungi Admin jika Anda tidak memiliki otorisasi darurat.");
+        alert("Master Pass Pemulihan Salah! Hubungi Super Admin.");
       }
     }
 
@@ -715,19 +746,16 @@
       const confPin = document.getElementById("pin-confirm").value.trim();
 
       if (!currentUser) return;
-
       const userRecord = customUserAccounts[currentUser.nik] || { pin: currentUser.pin, role: currentUser.role, name: currentUser.name };
 
       if (oldPin !== userRecord.pin) {
         alert("PIN lama salah!");
         return;
       }
-
       if (newPin.length < 4) {
         alert("PIN baru minimal 4 karakter / digit!");
         return;
       }
-
       if (newPin !== confPin) {
         alert("Konfirmasi PIN baru tidak cocok!");
         return;
@@ -740,13 +768,13 @@
       currentUser.pin = newPin;
       sessionStorage.setItem("fleet_auth_user", JSON.stringify(currentUser));
 
-      alert("PIN berhasil diubah! Gunakan PIN baru ini untuk login berikutnya.");
+      alert("PIN berhasil diubah!");
       closeChangePinModal();
     }
 
     function adminResetUserPin() {
       if (!currentUser || currentUser.role !== 'admin') return;
-      const targetNik = prompt("Masukkan 7 digit NIK user yang ingin di-reset PIN-nya:");
+      const targetNik = prompt("Masukkan 7 digit NIK user yang ingin di-reset:");
       if (!targetNik) return;
 
       const trimmedNik = targetNik.trim();
@@ -757,22 +785,18 @@
         return;
       }
 
-      const roleChoice = prompt("Reset PIN untuk role apa? Ketik 1 untuk Manajemen (Default PIN: 1234), Ketik 2 untuk Operasional (Default PIN: 0000):", "2");
-
+      const roleChoice = prompt("Reset ke: Ketik 1 untuk Manajemen (PIN: 1234), Ketik 2 untuk Operasional (PIN: 0000):", "2");
       if (roleChoice === "1") {
         customUserAccounts[trimmedNik] = { pin: "1234", role: "management", name: `Management (${trimmedNik})` };
         localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
-        alert(`Berhasil! NIK ${trimmedNik} di-reset ke Manajemen dengan default PIN: 1234`);
+        alert(`NIK ${trimmedNik} di-reset ke Manajemen (PIN: 1234).`);
       } else if (roleChoice === "2") {
         customUserAccounts[trimmedNik] = { pin: "0000", role: "operational", name: `Staff Lapangan (${trimmedNik})` };
         localStorage.setItem("fleet_user_accounts", JSON.stringify(customUserAccounts));
-        alert(`Berhasil! NIK ${trimmedNik} di-reset ke Operasional dengan default PIN: 0000`);
-      } else {
-        alert("Pilihan dibatalkan.");
+        alert(`NIK ${trimmedNik} di-reset ke Operasional (PIN: 0000).`);
       }
     }
 
-    // ==================== ALUR LOGIN ====================
     function handleLogin(e) {
       e.preventDefault();
       const inputNik = document.getElementById("login-nik").value.trim();
@@ -782,7 +806,6 @@
 
       let user = null;
 
-      // 1. Cek Admin (NIK 9999, Default PIN 2000)
       if (inputNik === "9999") {
         const savedAdmin = customUserAccounts["9999"] || { pin: "2000", role: "admin", name: "Super Admin / Commercial Head" };
         if (inputPass === savedAdmin.pin) {
@@ -792,12 +815,9 @@
           errEl.classList.remove("hidden");
           return;
         }
-      } 
-      // 2. Cek Range NIK 1000000 s/d 1999999
-      else {
+      } else {
         const nikNum = parseInt(inputNik, 10);
         if (!isNaN(nikNum) && nikNum >= 1000000 && nikNum <= 1999999) {
-          
           if (customUserAccounts[inputNik]) {
             const acc = customUserAccounts[inputNik];
             if (inputPass === acc.pin) {
@@ -808,7 +828,6 @@
               return;
             }
           } else {
-            // Pertama kali aktivasi akun baru
             if (inputPass === "1234") {
               user = { nik: inputNik, name: `Management (${inputNik})`, role: "management", pin: "1234" };
               customUserAccounts[inputNik] = user;
@@ -823,7 +842,6 @@
               return;
             }
           }
-
         } else {
           errText.innerText = "NIK tidak terdaftar! NIK harus 7 digit (1000000 s/d 1999999) atau 9999 untuk Admin.";
           errEl.classList.remove("hidden");
@@ -881,27 +899,37 @@
 
       rebuildDropdowns();
 
+      // Render Support Units dengan Layout Ramah Mobile
       const supportContainer = document.getElementById("support-container");
       supportContainer.innerHTML = "";
+      
+      const sortedSupports = [...db.supports].sort((a, b) => {
+        if (a.name.includes("None")) return -1;
+        if (b.name.includes("None")) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
       for (let i = 1; i <= supportSlotCount; i++) {
         let defaultSupportName = i === 1 ? "KOMATSU D375A-6R" : "None (Tidak Pakai)";
         let defaultQty = i === 1 ? 1 : 0;
-        
-        const sortedSupports = [...db.supports].sort((a, b) => {
-          if (a.name.includes("None")) return -1;
-          if (b.name.includes("None")) return 1;
-          return a.name.localeCompare(b.name);
-        });
+        let isNone = defaultSupportName.includes("None");
 
         let optionsHtml = sortedSupports.map(s => `<option value="${s.name}" ${s.name === defaultSupportName ? 'selected' : ''}>${s.name} ($${s.cost.toFixed(2)}/h)</option>`).join("");
         
         supportContainer.innerHTML += `
-          <div class="flex gap-2">
-            <select id="sim-support-${i}" onchange="runSimulation()" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 outline-none">
+          <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 space-y-1.5">
+            <select id="sim-support-${i}" onchange="handleSupportUnitChange(${i})" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-slate-100 outline-none focus:border-amber-500">
               ${optionsHtml}
             </select>
-            <div class="w-20">
-              <input type="number" id="sim-support-qty-${i}" value="${defaultQty}" min="0" onchange="runSimulation()" onkeyup="runSimulation()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center font-bold text-slate-100 outline-none" placeholder="Qty">
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-400 font-medium mr-1">Jumlah:</span>
+                <button type="button" onclick="adjustQty('sim-support-qty-${i}', -1)" class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-xs border border-slate-700 active:scale-95 transition">-</button>
+                <input type="number" id="sim-support-qty-${i}" value="${defaultQty}" min="0" ${isNone ? 'disabled' : ''} onchange="runSimulation()" onkeyup="runSimulation()" class="w-12 h-7 bg-slate-900 border border-slate-700 rounded-lg text-center font-bold text-amber-400 text-xs outline-none ${isNone ? 'opacity-40 bg-slate-900' : ''}">
+                <button type="button" onclick="adjustQty('sim-support-qty-${i}', 1)" class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-xs border border-slate-700 active:scale-95 transition">+</button>
+                <span class="text-[11px] text-slate-500 ml-1">unit</span>
+              </div>
+              <div id="sim-support-rate-${i}" class="text-xs text-slate-400 font-mono">Rate Standar</div>
             </div>
           </div>
         `;
@@ -971,7 +999,7 @@
           renderDatabaseTables();
           rebuildDropdowns();
           runSimulation();
-          alert(`Berhasil mengimpor ${newLoaders.length} unit Excavator dari file CSV!`);
+          alert(`Berhasil mengimpor ${newLoaders.length} unit Excavator dari CSV!`);
         } else {
           alert("Format CSV Excavator salah! Kolom wajib: Model Unit, Bucket, CT, Cost.");
         }
@@ -1023,7 +1051,7 @@
           renderDatabaseTables();
           rebuildDropdowns();
           runSimulation();
-          alert(`Berhasil mengimpor ${newHaulers.length} unit Dump Truck dari file CSV!`);
+          alert(`Berhasil mengimpor ${newHaulers.length} unit Dump Truck dari CSV!`);
         } else {
           alert("Format CSV Dump Truck salah! Kolom wajib: Model Unit, Vessel, Dump, Cost.");
         }
@@ -1077,7 +1105,7 @@
           saveCustomDb();
           renderDatabaseTables();
           initApp();
-          alert(`Berhasil mengimpor ${newSupports.length} unit Support dari file CSV!`);
+          alert(`Berhasil mengimpor ${newSupports.length} unit Support dari CSV!`);
         } else {
           alert("Format CSV Support salah! Kolom wajib: Model Unit, Fungsi Lapangan, Cost.");
         }
@@ -1087,7 +1115,7 @@
 
     function addNewLoaderRow() {
       if (currentUser && currentUser.role === 'operational') return;
-      const name = prompt("Masukkan Nama / Model Excavator Baru:", "CATERPILLAR CAT390D (5.5m³)");
+      const name = prompt("Nama / Model Excavator Baru:", "CATERPILLAR CAT390D (5.5m³)");
       if (!name || name.trim() === "") return;
       const bucket = parseFloat(prompt("Kapasitas Bucket (m³):", "5.5")) || 5.0;
       const ctSec = parseFloat(prompt("Cycle Time Standar (detik):", "25.0")) || 25.0;
@@ -1102,7 +1130,7 @@
 
     function deleteLoaderRow(idx) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm(`Hapus unit "${db.loaders[idx].name}" dari master data?`)) {
+      if (confirm(`Hapus unit "${db.loaders[idx].name}" dari database?`)) {
         db.loaders.splice(idx, 1);
         saveCustomDb();
         renderDatabaseTables();
@@ -1113,7 +1141,7 @@
 
     function addNewHaulerRow() {
       if (currentUser && currentUser.role === 'operational') return;
-      const name = prompt("Masukkan Nama / Model Dump Truck Baru:", "SCANIA P460 (30m³)");
+      const name = prompt("Nama / Model Dump Truck Baru:", "SCANIA P460 (30m³)");
       if (!name || name.trim() === "") return;
       const vessel = parseFloat(prompt("Kapasitas Bak / Vessel (m³):", "30.0")) || 30.0;
       const dumpMin = parseFloat(prompt("Waktu Dumping & Spotting (menit):", "1.2")) || 1.2;
@@ -1128,7 +1156,7 @@
 
     function deleteHaulerRow(idx) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm(`Hapus unit "${db.haulers[idx].name}" dari master data?`)) {
+      if (confirm(`Hapus unit "${db.haulers[idx].name}" dari database?`)) {
         db.haulers.splice(idx, 1);
         saveCustomDb();
         renderDatabaseTables();
@@ -1139,7 +1167,7 @@
 
     function addNewSupportRow() {
       if (currentUser && currentUser.role === 'operational') return;
-      const name = prompt("Masukkan Nama / Model Unit Support Baru:", "CAT 16M Grader");
+      const name = prompt("Nama / Model Unit Support Baru:", "CAT 16M Grader");
       if (!name || name.trim() === "") return;
       const role = prompt("Fungsi Lapangan:", "Haul Road Maintenance");
       const cost = parseFloat(prompt("Rate Sewa Base ($/jam):", "85.00")) || 80.0;
@@ -1152,7 +1180,7 @@
 
     function deleteSupportRow(idx) {
       if (currentUser && currentUser.role === 'operational') return;
-      if (confirm(`Hapus unit support "${db.supports[idx].name}" dari master data?`)) {
+      if (confirm(`Hapus unit support "${db.supports[idx].name}" dari database?`)) {
         db.supports.splice(idx, 1);
         saveCustomDb();
         renderDatabaseTables();
@@ -1243,7 +1271,6 @@
     }
 
     function renderDatabaseTables() {
-      // 1. Table Material OB
       document.getElementById("table-materials-ob").innerHTML = Object.entries(obMaterialSpecs).map(([key, m]) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
@@ -1256,7 +1283,7 @@
             <input type="number" step="0.05" value="${m.ctFactor}" onchange="updateMaterialParam('${key}', 'ctFactor', this.value)" class="w-16 bg-slate-950 border border-slate-700 rounded px-1.5 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500" title="Pengali CT">
           </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.05" value="${m.blastingCostBcm || 0}" onchange="updateMaterialParam('${key}', 'blastingCostBcm', this.value)" class="w-20 bg-slate-950 border border-rose-500/50 rounded px-2 py-1 text-center text-xs text-rose-300 font-bold outline-none focus:border-rose-500" title="Biaya Drilling & Blasting per BCM ($/BCM)">
+            <input type="number" step="0.05" value="${m.blastingCostBcm || 0}" onchange="updateMaterialParam('${key}', 'blastingCostBcm', this.value)" class="w-20 bg-slate-950 border border-rose-500/50 rounded px-2 py-1 text-center text-xs text-rose-300 font-bold outline-none focus:border-rose-500" title="Biaya Drilling & Blasting ($/BCM)">
           </td>
           <td class="p-2 text-center">
             <input type="number" step="0.01" value="${m.loaderCostFactor}" onchange="updateMaterialParam('${key}', 'loaderCostFactor', this.value)" class="w-16 bg-slate-950 border border-amber-500/40 rounded px-1.5 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Pengali Biaya Loader ($/h)">
@@ -1270,7 +1297,6 @@
         </tr>
       `).join("");
 
-      // Urutkan Loader, Hauler, dan Support A-Z
       db.loaders.sort((a, b) => a.name.localeCompare(b.name));
       db.haulers.sort((a, b) => a.name.localeCompare(b.name));
       db.supports.sort((a, b) => {
@@ -1279,7 +1305,6 @@
         return a.name.localeCompare(b.name);
       });
 
-      // 2. Table Loaders
       document.getElementById("table-loaders").innerHTML = db.loaders.map((l, idx) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
@@ -1302,14 +1327,13 @@
         </tr>
       `).join("");
 
-      // 3. Table Haulers
       document.getElementById("table-haulers").innerHTML = db.haulers.map((h, idx) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
             <input type="text" value="${h.name}" onchange="updateHaulerParam(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 font-semibold outline-none focus:border-amber-500">
           </td>
           <td class="p-2 text-center">
-            <input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500" title="Kapasitas bak">
+            <input type="number" step="0.5" value="${h.vessel}" onchange="updateHaulerParam(${idx}, 'vessel', this.value)" class="w-20 bg-slate-950 border border-amber-500/50 rounded px-2 py-1 text-center text-xs text-amber-300 font-bold outline-none focus:border-amber-500">
           </td>
           <td class="p-2 text-center">
             <input type="number" step="0.1" value="${h.dumpMin}" onchange="updateHaulerParam(${idx}, 'dumpMin', this.value)" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs text-slate-100 outline-none focus:border-amber-500">
@@ -1325,7 +1349,6 @@
         </tr>
       `).join("");
 
-      // 4. Table Supports
       document.getElementById("table-supports").innerHTML = db.supports.map((s, idx) => `
         <tr class="hover:bg-slate-800">
           <td class="p-2 font-medium">
@@ -1345,6 +1368,60 @@
         </tr>
       `).join("");
 
+      lucide.createIcons();
+    }
+
+    function setObMaterial(matType) {
+      currentObMaterial = matType;
+      const buttons = {
+        softsoil: document.getElementById("btn-mat-softsoil"),
+        hardsoil: document.getElementById("btn-mat-hardsoil"),
+        blasting: document.getElementById("btn-mat-blasting"),
+        mud:      document.getElementById("btn-mat-mud")
+      };
+
+      for (const [k, btn] of Object.entries(buttons)) {
+        if (k === matType) {
+          btn.className = "p-2 rounded-lg border text-center font-medium bg-amber-500 border-amber-500 text-slate-950 font-bold shadow transition";
+        } else {
+          btn.className = "p-2 rounded-lg border text-center font-medium bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600 transition";
+        }
+      }
+
+      const spec = obMaterialSpecs[matType];
+      const ctLabel = spec.ctFactor === 1.0 ? "CT: Normal" : spec.ctFactor < 1.0 ? `CT: -${((1.0 - spec.ctFactor) * 100).toFixed(0)}%` : `CT: +${((spec.ctFactor - 1.0) * 100).toFixed(0)}%`;
+      const blastLabel = (matType === 'blasting' && spec.blastingCostBcm > 0) ? ` | Blast: $${spec.blastingCostBcm.toFixed(2)}/BCM` : "";
+      document.getElementById("badge-material-effect").innerText = `BFF: ${spec.bff.toFixed(2)} | ${ctLabel}${blastLabel}`;
+
+      runSimulation();
+    }
+
+    function saveRates() {
+      if (currentUser && currentUser.role !== 'admin') return;
+      savedRates.ob = parseFloat(document.getElementById("master-rate-ob").value) || 0;
+      savedRates.co = parseFloat(document.getElementById("master-rate-co").value) || 0;
+      savedRates.cohauling = parseFloat(document.getElementById("master-rate-cohauling").value) || 0;
+      savedRates.overheadHr = parseFloat(document.getElementById("master-fleet-overhead").value) || 0;
+      localStorage.setItem("fleet_saved_rates", JSON.stringify(savedRates));
+      runSimulation();
+    }
+
+    function switchTab(tab) {
+      if (tab === 'sim') {
+        document.getElementById('tab-simulation').classList.remove('hidden');
+        document.getElementById('tab-database').classList.add('hidden');
+        document.getElementById('nav-sim').className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow";
+        document.getElementById('nav-db').className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white";
+      } else {
+        if (currentUser && currentUser.role === 'operational') {
+          alert("Akses Tab Master Data hanya untuk Management dan Admin.");
+          return;
+        }
+        document.getElementById('tab-simulation').classList.add('hidden');
+        document.getElementById('tab-database').classList.remove('hidden');
+        document.getElementById('nav-db').className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-slate-950 shadow";
+        document.getElementById('nav-sim').className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white";
+      }
       lucide.createIcons();
     }
 
@@ -1453,10 +1530,8 @@
       if (isFinancialAuthorized) {
         if (loaderOwner === "owner") {
           document.getElementById("sim-loader-rate").innerText = "$0.00/h (Owner)";
-          document.getElementById("sim-loader-rate").className = "w-36 bg-slate-950 border border-emerald-800/60 text-emerald-400 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center font-mono font-semibold";
         } else {
           document.getElementById("sim-loader-rate").innerText = `$${effectiveLoaderCost.toFixed(2)}/h`;
-          document.getElementById("sim-loader-rate").className = "w-36 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center flex items-center justify-center text-slate-300 font-mono";
         }
         document.getElementById("sim-hauler-rate").innerText = `$${effectiveHaulerCost.toFixed(2)}/h`;
       } else {
@@ -1563,7 +1638,18 @@
         const sQtyInput = document.getElementById(`sim-support-qty-${i}`).value;
         const sQty = sQtyInput === "" ? 0 : parseFloat(sQtyInput);
         const sObj = db.supports.find(s => s.name === sName);
-        if (sObj) supportCostHr += ((sObj.cost * supportCostMultiplier) * sQty);
+        if (sObj) {
+          const slotCost = ((sObj.cost * supportCostMultiplier) * sQty);
+          supportCostHr += slotCost;
+          const rateSlotEl = document.getElementById(`sim-support-rate-${i}`);
+          if (rateSlotEl) {
+            if (isFinancialAuthorized) {
+              rateSlotEl.innerText = sName.includes("None") ? "$0.00" : `$${(sObj.cost * supportCostMultiplier).toFixed(2)}/h`;
+            } else {
+              rateSlotEl.innerText = "🔒";
+            }
+          }
+        }
       }
 
       const chargedLoaderCost = (loaderOwner === "owner") ? 0.0 : (effectiveLoaderCost * loaderQty);
