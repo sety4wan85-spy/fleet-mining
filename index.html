@@ -520,26 +520,24 @@
   </div>
 
   <script>
-    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS ====================
+    // ==================== INTEGRASI WEBHOOK GOOGLE SHEETS (STABIL) ====================
     const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyOXBk83AX3V-N5nK0aOhyLVDM2HmCjWye1OVt_kbGUdt-tsNZ5apGWvtmCQdz3bzd0TQ/exec";
 
     function sendAccessLog(user) {
       if (!SHEET_WEBHOOK_URL) return;
 
-      const payload = {
-        timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }),
-        nik: user.nik,
-        role: user.role,
-        device: navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop")
-      };
+      const payload = new URLSearchParams();
+      payload.append("timestamp", new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }));
+      payload.append("nik", user.nik);
+      payload.append("role", user.role);
+      payload.append("device", navigator.userAgent.includes("Android") ? "Android HP" : (navigator.userAgent.includes("iPhone") ? "iPhone" : "PC / Laptop"));
 
       fetch(SHEET_WEBHOOK_URL, {
         method: "POST",
         mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: payload
       }).catch(err => {
-        console.log("Offline mode: Log disimpan secara lokal.");
+        console.log("Offline mode: Log tidak terkirim.");
       });
     }
 
@@ -1612,6 +1610,9 @@
           mfBadge.innerText = "Optimal Match (Ideal)";
           mfBadge.style.color = "#34d399";
         }
+      } else if (loaderQty === 0 || haulerQty === 0) {
+        mfBadge.innerText = "No Operation";
+        mfBadge.style.color = "#94a3b8";
       } else if (mf < 0.95) {
         mfBadge.innerText = "Under-trucked (Loader Antri)";
         mfBadge.style.color = "#fbbf24";
